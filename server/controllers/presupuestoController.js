@@ -1,4 +1,4 @@
-const supabase = require('../db/supabase');
+const { supabase } = require('../db/supabase');
 
 const getAll = (req, res) => {
     supabase

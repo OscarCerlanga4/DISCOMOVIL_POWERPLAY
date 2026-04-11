@@ -1,4 +1,4 @@
-const supabase = require('../db/supabase');
+const { supabase } = require('../db/supabase');
 
 const register = (req, res)=>{
     const { email, password, nombre, telefono, dni_nie_cif, direccion, codigo_postal, localidad, provincia } = req.body;

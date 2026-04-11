@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const presupuestoController = require('../controllers/presupuestoController');
+const { verificarToken } = require('../middleware/auth');
 
-router.get('/', presupuestoController.getAll);
-router.get('/:id', presupuestoController.getById);
-router.post('/', presupuestoController.create);
-router.put('/:id', presupuestoController.update);
-router.delete('/:id', presupuestoController.remove);
+router.get('/', verificarToken, presupuestoController.getAll);
+router.get('/:id', verificarToken, presupuestoController.getById);
+router.post('/', verificarToken, presupuestoController.create);
+router.put('/:id', verificarToken, presupuestoController.update);
+router.delete('/:id', verificarToken, presupuestoController.remove);
 
 module.exports = router;

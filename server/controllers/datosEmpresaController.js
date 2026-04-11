@@ -1,3 +1,5 @@
+const { supabase } = require('../db/supabase');
+
 const getAll = (req, res) => {
     supabase
         .from('datos_empresa')
