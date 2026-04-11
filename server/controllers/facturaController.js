@@ -86,4 +86,22 @@ const remove = (req, res) => {
         });
 };
 
-module.exports = { getAll, getById, create, update, remove };
+const getMisFacturas = (req, res) => {
+    supabase
+        .from('factura')
+        .select('*, presupuesto(id_reserva, reserva(id_usuario))')
+        .then(({ data, error }) => {
+            if (error) {
+                return res.status(500).send({ ok: false, error: error.message });
+            }
+
+            const misFacturas = data.filter(f => f.presupuesto.reserva.id_usuario === req.user.id);
+
+            res.status(200).send({ ok: true, result: misFacturas });
+        })
+        .catch(error => {
+            res.status(500).send({ ok: false, error: 'Error al obtener las facturas' });
+        });
+};
+
+module.exports = { getAll, getById, create, update, remove, getMisFacturas };

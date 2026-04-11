@@ -144,4 +144,22 @@ const remove = (req, res) => {
         });
 };
 
-module.exports = { getAll, getById, create, update, remove };
+const getMisPresupuestos = (req, res) => {
+    supabase
+        .from('presupuesto')
+        .select('*, reserva(id_usuario)')
+        .then(({ data, error }) => {
+            if (error) {
+                return res.status(500).send({ ok: false, error: error.message });
+            }
+
+            const misPresupuestos = data.filter(p => p.reserva.id_usuario === req.user.id);
+
+            res.status(200).send({ ok: true, result: misPresupuestos });
+        })
+        .catch(error => {
+            res.status(500).send({ ok: false, error: 'Error al obtener los presupuestos' });
+        });
+};
+
+module.exports = { getAll, getById, create, update, remove, getMisPresupuestos };
