@@ -19,7 +19,7 @@ const verificarToken = (req, res, next)=>{
             }
         })
         .catch(error=>{
-            res.send(500).send({ ok: false, error: "Error al verificar token" });
+            res.status(500).send({ ok: false, error: "Error al verificar token" });
         })
 }
 

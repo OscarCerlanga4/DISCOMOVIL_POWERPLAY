@@ -35,22 +35,6 @@ const getById = (req, res)=>{
         });
 };
 
-const create = (req, res)=>{
-    supabase
-        .from('usuario')
-        .insert(req.body)
-        .then(({ data, error })=>{
-            if(error){
-                res.status(500).send({ ok: false, error: error.message });
-            }else{
-                res.status(200).send({ ok: true, result: data});
-            }
-        })
-        .catch(error=>{
-            res.status(500).send({ ok: false, error: "Error al crear el usuario" });
-        });
-};
-
 const update = (req, res)=>{
     supabase 
         .from('usuario')
@@ -85,4 +69,4 @@ const remove = (req, res)=>{
         });
 };
 
-module.exports = { getAll, getById, create, update, remove };
+module.exports = { getAll, getById, update, remove };
