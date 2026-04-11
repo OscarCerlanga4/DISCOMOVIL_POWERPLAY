@@ -178,8 +178,8 @@ const create = (req, res) => {
 
                                                     // Paso 7: obtener precios de equipos y DJs
                                                     return Promise.all([
-                                                        supabase.from('equipo').select('id_equipo, precio_alquiler_hora').in('id_equipo', idsEquipos),
-                                                        supabase.from('dj').select('id_dj, precio_hora').in('id_dj', idsDjs)
+                                                        supabase.from('equipo').select('id_equipo, nombre, precio_alquiler_hora').in('id_equipo', idsEquipos),
+                                                        supabase.from('dj').select('id_dj, nombre, precio_hora').in('id_dj', idsDjs)
                                                     ]).then(([resultEquipos, resultDjs]) => {
                                                         if (resultEquipos.error || resultDjs.error) {
                                                             return res.status(500).send({ ok: false, error: 'Error al obtener precios' });
@@ -219,14 +219,54 @@ const create = (req, res) => {
                                                                     return res.status(500).send({ ok: false, error: error.message });
                                                                 }
 
-                                                                return res.status(200).send({
-                                                                    ok: true,
-                                                                    result: {
-                                                                        reserva,
-                                                                        presupuesto: data[0]
-                                                                    }
+                                                                const presupuesto = data[0];
+
+                                                                // Paso 10: insertar detalle_presupuesto
+                                                                const lineasEquipos = equipos.map(e => {
+                                                                    const equipo = resultEquipos.data.find(eq => eq.id_equipo === e.id_equipo);
+                                                                    const subtotal = equipo.precio_alquiler_hora * e.cantidad * horas;
+                                                                    return {
+                                                                        id_presupuesto: presupuesto.id_presupuesto,
+                                                                        concepto: equipo.nombre,
+                                                                        cantidad: e.cantidad,
+                                                                        precio_unitario: equipo.precio_alquiler_hora,
+                                                                        subtotal: parseFloat(subtotal.toFixed(2))
+                                                                    };
                                                                 });
+
+                                                                const lineasDjs = resultDjs.data.map(dj => {
+                                                                    const subtotal = dj.precio_hora * horas;
+                                                                    return {
+                                                                        id_presupuesto: presupuesto.id_presupuesto,
+                                                                        concepto: dj.nombre,
+                                                                        cantidad: 1,
+                                                                        precio_unitario: dj.precio_hora,
+                                                                        subtotal: parseFloat(subtotal.toFixed(2))
+                                                                    };
+                                                                });
+
+                                                                const lineasDetalle = [...lineasEquipos, ...lineasDjs];
+
+                                                                return supabase
+                                                                    .from('detalle_presupuesto')
+                                                                    .insert(lineasDetalle)
+                                                                    .select()
+                                                                    .then(({ data: detalleData, error: detalleError }) => {
+                                                                        if (detalleError) {
+                                                                            return res.status(500).send({ ok: false, error: detalleError.message });
+                                                                        }
+
+                                                                        return res.status(200).send({
+                                                                            ok: true,
+                                                                            result: {
+                                                                                reserva,
+                                                                                presupuesto,
+                                                                                detalle: detalleData
+                                                                            }
+                                                                        });
+                                                                    });
                                                             });
+
                                                     });
                                                 });
                                         });
