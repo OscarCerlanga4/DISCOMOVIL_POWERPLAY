@@ -36,16 +36,72 @@ const getById = (req, res) => {
 };
 
 const create = (req, res) => {
+    const { id_factura, metodo_pago, importe } = req.body;
+
     supabase
-        .from('pago')
-        .insert(req.body)
-        .select()
-        .then(({ data, error }) => {
-            if (error) {
-                res.status(500).send({ ok: false, error: error.message });
-            } else {
-                res.status(200).send({ ok: true, result: data[0] });
+        .from('usuario')
+        .select('rol')
+        .eq('id_usuario', req.user.id)
+        .then(({ data: usuarioData, error: usuarioError }) => {
+            if (usuarioError || !usuarioData.length) {
+                return res.status(500).send({ ok: false, error: 'Error al obtener el usuario' });
             }
+
+            const esAdmin = usuarioData[0].rol === 'admin';
+
+            return supabase
+                .from('factura')
+                .select('*, presupuesto(id_reserva, reserva(id_usuario))')
+                .eq('id_factura', id_factura)
+                .then(({ data, error }) => {
+                    if (error || !data.length) {
+                        return res.status(404).send({ ok: false, error: 'Factura no encontrada' });
+                    }
+
+                    const factura = data[0];
+
+                    if (!esAdmin && factura.presupuesto.reserva.id_usuario !== req.user.id) {
+                        return res.status(403).send({ ok: false, error: 'No tienes permiso para pagar esta factura' });
+                    }
+
+                    if (factura.estado_factura === 'pagada') {
+                        return res.status(400).send({ ok: false, error: 'Esta factura ya está pagada' });
+                    }
+
+                    return supabase
+                        .from('pago')
+                        .insert({ id_factura, metodo_pago, importe })
+                        .select()
+                        .then(({ data: pagoData, error: pagoError }) => {
+                            if (pagoError) {
+                                return res.status(500).send({ ok: false, error: pagoError.message });
+                            }
+
+                            return supabase
+                                .from('pago')
+                                .select('importe')
+                                .eq('id_factura', id_factura)
+                                .then(({ data: pagos, error: pagosError }) => {
+                                    if (pagosError) {
+                                        return res.status(500).send({ ok: false, error: pagosError.message });
+                                    }
+
+                                    const totalPagado = pagos.reduce((suma, p) => suma + parseFloat(p.importe), 0);
+
+                                    if (totalPagado >= parseFloat(factura.total)) {
+                                        return supabase
+                                            .from('factura')
+                                            .update({ estado_factura: 'pagada' })
+                                            .eq('id_factura', id_factura)
+                                            .then(() => {
+                                                res.status(200).send({ ok: true, result: { pago: pagoData[0], factura_pagada: true } });
+                                            });
+                                    }
+
+                                    res.status(200).send({ ok: true, result: { pago: pagoData[0], factura_pagada: false, total_pagado: totalPagado } });
+                                });
+                        });
+                });
         })
         .catch(error => {
             res.status(500).send({ ok: false, error: 'Error al crear el pago' });
