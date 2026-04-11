@@ -45,6 +45,9 @@ app.use('/api/contrata', contrataRouter);
 const datosEmpresasRouter = require('./routes/datosEmpresas');
 app.use('/api/datosEmpresas', datosEmpresasRouter);
 
+const authsRouter = require('./routes/auths');
+app.use('/api/auth', authsRouter);
+
 app.listen(PORT, ()=>{
     console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
