@@ -54,40 +54,73 @@ const create = (req, res) => {
 
 const update = (req, res) => {
     supabase
-        .from('presupuesto')
-        .update(req.body)
-        .eq('id_presupuesto', req.params.id)
-        .select()
-        .then(({ data, error }) => {
-            if (error) {
-                return res.status(500).send({ ok: false, error: error.message });
+        .from('usuario')
+        .select('rol')
+        .eq('id_usuario', req.user.id)
+        .then(({ data: usuarioData, error: usuarioError }) => {
+            if (usuarioError || !usuarioData.length) {
+                return res.status(500).send({ ok: false, error: 'Error al obtener el usuario' });
             }
 
-            const presupuesto = data[0];
+            const rol = usuarioData[0].rol;
 
-            if (req.body.estado === 'aceptado') {
-                const año = new Date().getFullYear();
-                const numero_factura = `FAC-${año}-${String(presupuesto.id_presupuesto).padStart(4, '0')}`;
+            return supabase
+                .from('presupuesto')
+                .select('*, reserva(id_usuario)')
+                .eq('id_presupuesto', req.params.id)
+                .then(({ data: presupuestoData, error: presupuestoError }) => {
+                    if (presupuestoError || !presupuestoData.length) {
+                        return res.status(404).send({ ok: false, error: 'Presupuesto no encontrado' });
+                    }
 
-                return supabase
-                    .from('factura')
-                    .insert({
-                        numero_factura,
-                        base_imponible: presupuesto.base_imponible,
-                        total: presupuesto.total,
-                        id_presupuesto: presupuesto.id_presupuesto,
-                        estado_factura: 'pendiente'
-                    })
-                    .select()
-                    .then(({ data: facturaData, error: facturaError }) => {
-                        if (facturaError) {
-                            return res.status(500).send({ ok: false, error: facturaError.message });
+                    const presupuesto = presupuestoData[0];
+
+                    if (rol === 'usuario') {
+                        if (presupuesto.reserva.id_usuario !== req.user.id) {
+                            return res.status(403).send({ ok: false, error: 'No tienes permiso para modificar este presupuesto' });
                         }
-                        res.status(200).send({ ok: true, result: { presupuesto, factura: facturaData[0] } });
-                    });
-            }
+                        if (!['aceptado_cliente', 'rechazado'].includes(req.body.estado)) {
+                            return res.status(403).send({ ok: false, error: 'Solo puedes aceptar o rechazar el presupuesto' });
+                        }
+                    }
 
-            res.status(200).send({ ok: true, result: presupuesto });
+                    return supabase
+                        .from('presupuesto')
+                        .update({ estado: req.body.estado })
+                        .eq('id_presupuesto', req.params.id)
+                        .select()
+                        .then(({ data: updatedData, error: updateError }) => {
+                            if (updateError) {
+                                return res.status(500).send({ ok: false, error: updateError.message });
+                            }
+
+                            const presupuestoActualizado = updatedData[0];
+
+                            if (rol === 'admin' && req.body.estado === 'aceptado') {
+                                const año = new Date().getFullYear();
+                                const numero_factura = `FAC-${año}-${String(presupuestoActualizado.id_presupuesto).padStart(4, '0')}`;
+
+                                return supabase
+                                    .from('factura')
+                                    .insert({
+                                        numero_factura,
+                                        base_imponible: presupuestoActualizado.base_imponible,
+                                        total: presupuestoActualizado.total,
+                                        id_presupuesto: presupuestoActualizado.id_presupuesto,
+                                        estado_factura: 'pendiente'
+                                    })
+                                    .select()
+                                    .then(({ data: facturaData, error: facturaError }) => {
+                                        if (facturaError) {
+                                            return res.status(500).send({ ok: false, error: facturaError.message });
+                                        }
+                                        res.status(200).send({ ok: true, result: { presupuesto: presupuestoActualizado, factura: facturaData[0] } });
+                                    });
+                            }
+
+                            res.status(200).send({ ok: true, result: presupuestoActualizado });
+                        });
+                });
         })
         .catch(error => {
             res.status(500).send({ ok: false, error: 'Error al actualizar el presupuesto' });

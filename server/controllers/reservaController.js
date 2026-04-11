@@ -104,7 +104,7 @@ const create = (req, res) => {
                     }
 
                     // Paso 3: comprobar solapamiento de DJs
-                    const idsDjs = djs;
+                    const idsDjs = djs.map(d => d.id_dj);
 
                     return supabase
                         .from('contrata')

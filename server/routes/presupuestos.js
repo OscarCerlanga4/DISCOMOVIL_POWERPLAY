@@ -7,7 +7,7 @@ const { verificarAdmin } = require('../middleware/admin');
 router.get('/', verificarToken, verificarAdmin, presupuestoController.getAll);
 router.get('/:id', verificarToken, presupuestoController.getById);
 router.post('/', verificarToken, verificarAdmin, presupuestoController.create);
-router.put('/:id', verificarToken, verificarAdmin, presupuestoController.update);
+router.put('/:id', verificarToken, presupuestoController.update);
 router.delete('/:id', verificarToken, verificarAdmin, presupuestoController.remove);
 
 module.exports = router;
