@@ -55,4 +55,16 @@ const login = (req, res)=>{
     })
 }
 
-module.exports = { register, login };
+const me = (req, res) => {
+  supabase
+    .from('usuario')
+    .select('*')
+    .eq('id_usuario', req.user.id)
+    .single()
+    .then(({ data, error }) => {
+      if (error) return res.status(404).send({ ok: false, error: 'Usuario no encontrado' })
+      res.status(200).send({ ok: true, usuario: data })
+    })
+}
+
+module.exports = { register, login, me };

@@ -101,20 +101,26 @@ const update = (req, res) => {
                                 const numero_factura = `FAC-${año}-${String(presupuestoActualizado.id_presupuesto).padStart(4, '0')}`;
 
                                 return supabase
-                                    .from('factura')
-                                    .insert({
-                                        numero_factura,
-                                        base_imponible: presupuestoActualizado.base_imponible,
-                                        total: presupuestoActualizado.total,
-                                        id_presupuesto: presupuestoActualizado.id_presupuesto,
-                                        estado_factura: 'pendiente'
-                                    })
-                                    .select()
-                                    .then(({ data: facturaData, error: facturaError }) => {
-                                        if (facturaError) {
-                                            return res.status(500).send({ ok: false, error: facturaError.message });
-                                        }
-                                        res.status(200).send({ ok: true, result: { presupuesto: presupuestoActualizado, factura: facturaData[0] } });
+                                    .from('reserva')
+                                    .update({ estado_reserva: 'confirmada' })
+                                    .eq('id_reserva', presupuestoActualizado.id_reserva)
+                                    .then(() => {
+                                        return supabase
+                                            .from('factura')
+                                            .insert({
+                                                numero_factura,
+                                                base_imponible: presupuestoActualizado.base_imponible,
+                                                total: presupuestoActualizado.total,
+                                                id_presupuesto: presupuestoActualizado.id_presupuesto,
+                                                estado_factura: 'pendiente'
+                                            })
+                                            .select()
+                                            .then(({ data: facturaData, error: facturaError }) => {
+                                                if (facturaError) {
+                                                    return res.status(500).send({ ok: false, error: facturaError.message });
+                                                }
+                                                res.status(200).send({ ok: true, result: { presupuesto: presupuestoActualizado, factura: facturaData[0] } });
+                                            });
                                     });
                             }
 
