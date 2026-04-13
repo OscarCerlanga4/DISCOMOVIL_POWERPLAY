@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Login() {
-  const { login } = useAuth()
+  const { login, errorOAuth } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
@@ -30,7 +30,7 @@ export default function Login() {
       return
     }
 
-    login(data.result.session.access_token)
+    await login(data.result.session.access_token)
     navigate('/')
   }
 
@@ -125,6 +125,15 @@ export default function Login() {
 
           {error && (
             <p style={{ color: '#ff4444', fontSize: '0.85rem' }}>{error}</p>
+          )}
+
+          {errorOAuth && (
+            <p style={{ color: '#ff4444', fontSize: '0.85rem', textAlign: 'center' }}>
+              {errorOAuth}{' '}
+              <Link to="/register" style={{ color: '#FFE600', fontWeight: 600 }}>
+                Regístrate aquí
+              </Link>
+            </p>
           )}
 
           <button
