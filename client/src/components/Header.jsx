@@ -1,18 +1,24 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function Header() {
-  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation()
+  const siempreSolido = ['/servicios', '/carrito', '/mis-pedidos'].includes(location.pathname)
+  const [scrolled, setScrolled] = useState(siempreSolido)
   const [menuAbierto, setMenuAbierto] = useState(false);
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
+    const onScroll = () => {if (!siempreSolido) setScrolled(window.scrollY > 60)};
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [siempreSolido]);
+
+  useEffect(() => {
+    setScrolled(siempreSolido || window.scrollY > 60)
+  }, [location.pathname])
 
   const handleLogout = () => {
     logout();
