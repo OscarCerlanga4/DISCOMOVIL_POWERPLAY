@@ -141,7 +141,7 @@ export default function Servicios() {
               {itemSeleccionado.tipo === 'equipo' && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Stock disponible:</span>
-                  <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>{itemSeleccionado.stock}</span>
+                  <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>{itemSeleccionado.stock_total}</span>
                 </div>
               )}
               <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: '0.5rem' }}>
@@ -187,13 +187,13 @@ export default function Servicios() {
             {/* Buscador */}
             <input
               type="text"
-              placeholder="Buscar equipos, DJs..."
+              placeholder="Buscar equipos, DJs, altavoces..."
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
               style={{
                 background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)',
                 color: '#fff', padding: '0.6rem 1.25rem', fontSize: '0.85rem',
-                outline: 'none', flex: 1, maxWidth: '480px', transition: 'border-color 0.2s',
+                outline: 'none', flex: 1, maxWidth: '750px', transition: 'border-color 0.2s',
               }}
               onFocus={e => e.target.style.borderColor = '#FFE600'}
               onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
