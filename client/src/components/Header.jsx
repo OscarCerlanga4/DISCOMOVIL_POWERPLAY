@@ -1,15 +1,16 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function Header() {
-  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation()
+  const [scrolled, setScrolled] = useState()
   const [menuAbierto, setMenuAbierto] = useState(false);
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
+    const onScroll = () => {setScrolled(window.scrollY > 60)};
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
