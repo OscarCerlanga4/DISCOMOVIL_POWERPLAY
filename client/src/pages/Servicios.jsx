@@ -50,6 +50,8 @@ export default function Servicios() {
   const categorias = [
     { id: 'todo', label: 'Todo' },
     { id: 'dj', label: 'DJs' },
+    { id: 'orquesta', label: 'Orquestas' },
+    { id: 'grupo', label: 'Grupos' },
     { id: 'sonido', label: 'Sonido' },
     { id: 'iluminacion', label: 'Iluminación' },
     { id: 'microfonia', label: 'Microfonía' },
@@ -68,8 +70,8 @@ export default function Servicios() {
   ]
 
   const todos = [
-    ...djs.map(d => ({ ...d, tipo: 'dj', precio: d.precio_hora, precioLabel: '€/hora' })),
-    ...equipos.map(e => ({ ...e, tipo: 'equipo', precio: e.precio_alquiler_hora, precioLabel: '€/hora' }))
+    ...djs.map(d => ({ ...d, tabla: 'dj', precio: d.precio_hora, precioLabel: '€/hora' })),
+    ...equipos.map(e => ({ ...e, tabla: 'equipo', precio: e.precio_alquiler_hora, precioLabel: '€/hora' }))
   ]
 
   const rangoSeleccionado = rangosPrecios.find(r => r.id === precioActivo)
@@ -78,10 +80,12 @@ export default function Servicios() {
     const coincideBusqueda = item.nombre.toLowerCase().includes(busqueda.toLowerCase())
     const coincideCategoria =
       categoriaActiva === 'todo' ||
-      (categoriaActiva === 'dj' && item.tipo === 'dj') ||
-      (item.tipo === 'equipo' && item.categoria === categoriaActiva)
+      (categoriaActiva === 'dj' && item.tabla === 'dj' && item.tipo === 'dj') ||
+      (categoriaActiva === 'orquesta' && item.tipo === 'orquesta') ||
+      (categoriaActiva === 'grupo' && item.tipo === 'grupo') ||
+      (item.tabla === 'equipo' && item.categoria === categoriaActiva)
     const coincidePrecio = item.precio >= rangoSeleccionado.min && item.precio <= rangoSeleccionado.max
-    const coincideDisponibilidad = item.tipo === 'dj'
+    const coincideDisponibilidad = item.tabla === 'dj'
       ? !ocupados.djs_ocupados.includes(item.id_dj)
       : !ocupados.equipos_ocupados.includes(item.id_equipo)
     return coincideBusqueda && coincideCategoria && coincidePrecio && coincideDisponibilidad
@@ -99,6 +103,18 @@ export default function Servicios() {
     setFechaFin('')
     setDropdownFecha(false)
     setOcupados({ equipos_ocupados: [], djs_ocupados: [] })
+  }
+
+  const getBadgeLabel = (item) => {
+    if (item.tabla === 'equipo') return item.categoria || 'Equipo'
+    if (item.tipo === 'orquesta') return 'Orquesta'
+    if (item.tipo === 'grupo') return 'Grupo'
+    return 'DJ'
+  }
+
+  const getBadgeStyle = (item) => {
+    if (item.tabla === 'dj') return { background: '#FFE600', color: '#000', border: 'none' }
+    return { background: 'rgba(0,0,0,0.7)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }
   }
 
   if (cargando) return (
@@ -140,13 +156,11 @@ export default function Servicios() {
               )}
               <span style={{
                 position: 'absolute', top: '0.6rem', left: '0.6rem',
-                background: itemSeleccionado.tipo === 'dj' ? '#FFE600' : 'rgba(0,0,0,0.7)',
-                color: itemSeleccionado.tipo === 'dj' ? '#000' : 'rgba(255,255,255,0.6)',
                 fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
                 padding: '0.2rem 0.5rem',
-                border: itemSeleccionado.tipo !== 'dj' ? '1px solid rgba(255,255,255,0.15)' : 'none',
+                ...getBadgeStyle(itemSeleccionado)
               }}>
-                {itemSeleccionado.tipo === 'dj' ? 'DJ' : itemSeleccionado.categoria || 'Equipo'}
+                {getBadgeLabel(itemSeleccionado)}
               </span>
               <button
                 onClick={() => setItemSeleccionado(null)}
@@ -166,7 +180,7 @@ export default function Servicios() {
               <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
                 {itemSeleccionado.descripcion || 'Sin descripción'}
               </p>
-              {itemSeleccionado.tipo === 'equipo' && (
+              {itemSeleccionado.tabla === 'equipo' && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Stock disponible:</span>
                   <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>{itemSeleccionado.stock_total}</span>
@@ -403,7 +417,7 @@ export default function Servicios() {
         <div style={{ padding: '0 4rem 6rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
           {filtrados.map(item => (
             <div
-              key={`${item.tipo}-${item.tipo === 'dj' ? item.id_dj : item.id_equipo}`}
+              key={`${item.tabla}-${item.tabla === 'dj' ? item.id_dj : item.id_equipo}`}
               style={{
                 background: '#1c1c1c', border: '1px solid rgba(255,255,255,0.06)',
                 display: 'flex', flexDirection: 'column',
@@ -428,13 +442,11 @@ export default function Servicios() {
                 )}
                 <span style={{
                   position: 'absolute', top: '0.6rem', left: '0.6rem',
-                  background: item.tipo === 'dj' ? '#FFE600' : 'rgba(0,0,0,0.7)',
-                  color: item.tipo === 'dj' ? '#000' : 'rgba(255,255,255,0.6)',
                   fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
                   padding: '0.2rem 0.5rem',
-                  border: item.tipo !== 'dj' ? '1px solid rgba(255,255,255,0.15)' : 'none',
+                  ...getBadgeStyle(item)
                 }}>
-                  {item.tipo === 'dj' ? 'DJ' : item.categoria || 'Equipo'}
+                  {getBadgeLabel(item)}
                 </span>
               </div>
 
