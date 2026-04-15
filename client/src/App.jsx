@@ -9,6 +9,8 @@ import Contacto from './pages/Contacto'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import { AuthProvider } from './contexts/AuthContext'
+import MisDatos from './pages/MisDatos'
+import ActualizarPassword from './pages/ActualizarPassword'
 import MisPedidos from './pages/MisPedidos'
 
 function AppContent() {
@@ -26,6 +28,8 @@ function AppContent() {
         <Route path="/contacto" element={<Contacto />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/mis-datos" element={<MisDatos />} />
+        <Route path="/actualizar-password" element={<ActualizarPassword />} />
         <Route path="/mis-pedidos" element={<MisPedidos />} />
       </Routes>
       {!sinLayoutes && <Footer />}

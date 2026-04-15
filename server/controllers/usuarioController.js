@@ -35,21 +35,40 @@ const getById = (req, res)=>{
         });
 };
 
-const update = (req, res)=>{
-    supabase 
+const update = (req, res) => {
+    const camposPermitidos = ['nombre', 'telefono', 'dni_nie_cif', 'direccion', 'codigo_postal', 'localidad', 'provincia', 'email']
+    const datosActualizar = {}
+
+    camposPermitidos.forEach(campo => {
+        if (req.body[campo] !== undefined) {
+            datosActualizar[campo] = req.body[campo]
+        }
+    })
+
+    if (Object.keys(datosActualizar).length === 0) {
+        return res.status(400).send({ ok: false, error: 'No hay campos válidos para actualizar' })
+    }
+
+    const actualizarTabla = supabase
         .from('usuario')
-        .update(req.body)
+        .update(datosActualizar)
         .eq('id_usuario', req.params.id)
-        .then(({ data, error })=>{
-            if(error){
-                res.status(500).send({ ok: false, error: error.message });
-            }else{
-                res.status(200).send({ ok: true, result: data });
-            }
+        .then(({ error }) => {
+            if (error) throw new Error(error.message)
         })
-        .catch(error=>{
-            res.status(500).send({ ok: false, error: "Error al actualizar usuario" });
-        });
+
+    const actualizarAuth = datosActualizar.email
+        ? supabase.auth.admin.updateUserById(req.params.id, { email: datosActualizar.email })
+            .then(({ error }) => { if (error) throw new Error(error.message) })
+        : Promise.resolve()
+
+    Promise.all([actualizarTabla, actualizarAuth])
+        .then(() => {
+            res.status(200).send({ ok: true, result: 'Usuario actualizado correctamente' })
+        })
+        .catch(error => {
+            res.status(500).send({ ok: false, error: error.message })
+        })
 };
 
 const remove = (req, res)=>{
