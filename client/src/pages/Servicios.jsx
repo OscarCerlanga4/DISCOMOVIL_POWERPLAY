@@ -10,7 +10,9 @@ export default function Servicios() {
   const [busqueda, setBusqueda] = useState('')
   const [categoriaActiva, setCategoriaActiva] = useState('todo')
   const [precioActivo, setPrecioActivo] = useState('todo')
-  const [fechaFiltro, setFechaFiltro] = useState('')
+  const [fechaInicio, setFechaInicio] = useState('')
+  const [fechaFin, setFechaFin] = useState('')
+  const [ocupados, setOcupados] = useState({ equipos_ocupados: [], djs_ocupados: [] })
   const [itemSeleccionado, setItemSeleccionado] = useState(null)
   const [dropdownPrecio, setDropdownPrecio] = useState(false)
   const [dropdownFecha, setDropdownFecha] = useState(false)
@@ -29,6 +31,21 @@ export default function Servicios() {
       .catch(() => setError('Error al cargar los servicios'))
       .finally(() => setCargando(false))
   }, [])
+
+  useEffect(() => {
+    if (!fechaInicio || !fechaFin) {
+      setOcupados({ equipos_ocupados: [], djs_ocupados: [] })
+      return
+    }
+    if (new Date(fechaFin) <= new Date(fechaInicio)) return
+
+    fetch(`/api/disponibilidad?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) setOcupados({ equipos_ocupados: data.equipos_ocupados, djs_ocupados: data.djs_ocupados })
+      })
+      .catch(() => {})
+  }, [fechaInicio, fechaFin])
 
   const categorias = [
     { id: 'todo', label: 'Todo' },
@@ -64,7 +81,10 @@ export default function Servicios() {
       (categoriaActiva === 'dj' && item.tipo === 'dj') ||
       (item.tipo === 'equipo' && item.categoria === categoriaActiva)
     const coincidePrecio = item.precio >= rangoSeleccionado.min && item.precio <= rangoSeleccionado.max
-    return coincideBusqueda && coincideCategoria && coincidePrecio
+    const coincideDisponibilidad = item.tipo === 'dj'
+      ? !ocupados.djs_ocupados.includes(item.id_dj)
+      : !ocupados.equipos_ocupados.includes(item.id_equipo)
+    return coincideBusqueda && coincideCategoria && coincidePrecio && coincideDisponibilidad
   })
 
   const handleCarrito = (item) => {
@@ -72,6 +92,14 @@ export default function Servicios() {
   }
 
   const precioLabel = rangosPrecios.find(r => r.id === precioActivo)?.label
+  const fechaActiva = fechaInicio && fechaFin
+
+  const quitarFecha = () => {
+    setFechaInicio('')
+    setFechaFin('')
+    setDropdownFecha(false)
+    setOcupados({ equipos_ocupados: [], djs_ocupados: [] })
+  }
 
   if (cargando) return (
     <div style={{ background: '#0d0d0d', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -249,7 +277,7 @@ export default function Servicios() {
                 )}
               </div>
 
-              {/* Dropdown fecha */}
+              {/* Dropdown disponibilidad */}
               <div
                 style={{ position: 'relative' }}
                 onMouseEnter={() => setDropdownFecha(true)}
@@ -257,13 +285,13 @@ export default function Servicios() {
               >
                 <button style={{
                   background: '#0d0d0d',
-                  border: `1px solid ${fechaFiltro ? '#FFE600' : 'rgba(255,255,255,0.15)'}`,
-                  color: fechaFiltro ? '#FFE600' : 'rgba(255,255,255,0.5)',
+                  border: `1px solid ${fechaActiva ? '#FFE600' : 'rgba(255,255,255,0.15)'}`,
+                  color: fechaActiva ? '#FFE600' : 'rgba(255,255,255,0.5)',
                   padding: '0.6rem 1rem', fontSize: '0.8rem', fontWeight: 600,
                   letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
                   whiteSpace: 'nowrap', transition: 'all 0.2s',
                 }}>
-                  {fechaFiltro ? fechaFiltro : 'Disponibilidad'}
+                  {fechaActiva ? 'Fechas activas' : 'Disponibilidad'}
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
@@ -273,35 +301,55 @@ export default function Servicios() {
                     position: 'absolute', top: '100%', right: 0, zIndex: 50,
                     background: '#1a1a1a', border: '1px solid rgba(255,230,0,0.15)',
                     boxShadow: '0 8px 30px rgba(0,0,0,0.5)', padding: '1rem',
-                    minWidth: '220px',
+                    minWidth: '260px', display: 'flex', flexDirection: 'column', gap: '0.75rem'
                   }}>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 0.75rem' }}>
-                      Selecciona una fecha
-                    </p>
-                    <input
-                      type="date"
-                      value={fechaFiltro}
-                      onChange={e => { setFechaFiltro(e.target.value); setDropdownFecha(false) }}
-                      style={{
-                        background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)',
-                        color: '#fff', padding: '0.5rem 0.75rem', fontSize: '0.85rem',
-                        outline: 'none', width: '100%', colorScheme: 'dark', transition: 'border-color 0.2s',
-                      }}
-                      onFocus={e => e.target.style.borderColor = '#FFE600'}
-                      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                    />
-                    {fechaFiltro && (
-                      <button
-                        onClick={() => { setFechaFiltro(''); setDropdownFecha(false) }}
+                    <div>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 0.4rem' }}>
+                        Fecha y hora de inicio
+                      </p>
+                      <input
+                        type="datetime-local"
+                        value={fechaInicio}
+                        onChange={e => setFechaInicio(e.target.value)}
                         style={{
-                          marginTop: '0.5rem', background: 'transparent', border: 'none',
+                          background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)',
+                          color: '#fff', padding: '0.5rem 0.75rem', fontSize: '0.85rem',
+                          outline: 'none', width: '100%', colorScheme: 'dark',
+                        }}
+                        onFocus={e => e.target.style.borderColor = '#FFE600'}
+                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                      />
+                    </div>
+                    <div>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 0.4rem' }}>
+                        Fecha y hora de fin
+                      </p>
+                      <input
+                        type="datetime-local"
+                        value={fechaFin}
+                        min={fechaInicio}
+                        onChange={e => setFechaFin(e.target.value)}
+                        style={{
+                          background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)',
+                          color: '#fff', padding: '0.5rem 0.75rem', fontSize: '0.85rem',
+                          outline: 'none', width: '100%', colorScheme: 'dark',
+                        }}
+                        onFocus={e => e.target.style.borderColor = '#FFE600'}
+                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                      />
+                    </div>
+                    {fechaActiva && (
+                      <button
+                        onClick={quitarFecha}
+                        style={{
+                          background: 'transparent', border: 'none',
                           color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: '0.75rem',
-                          padding: 0, transition: 'color 0.2s',
+                          padding: 0, textAlign: 'left', transition: 'color 0.2s',
                         }}
                         onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
                         onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
                       >
-                        ✕ Quitar fecha
+                        ✕ Quitar fechas
                       </button>
                     )}
                   </div>
@@ -347,6 +395,7 @@ export default function Servicios() {
         <div style={{ padding: '0 4rem', marginBottom: '1.5rem' }}>
           <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>
             {filtrados.length} {filtrados.length === 1 ? 'servicio' : 'servicios'} disponibles
+            {fechaActiva && <span style={{ color: 'rgba(255,230,0,0.5)', marginLeft: '0.5rem' }}>— filtrando por disponibilidad</span>}
           </p>
         </div>
 

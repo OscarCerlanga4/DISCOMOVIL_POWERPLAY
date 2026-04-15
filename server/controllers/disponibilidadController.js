@@ -1,0 +1,97 @@
+const { supabase } = require('../db/supabase')
+
+const getDisponibilidad = (req, res) => {
+  const { fecha_inicio, fecha_fin } = req.query
+
+  if (!fecha_inicio || !fecha_fin) {
+    return res.status(400).send({ ok: false, error: 'fecha_inicio y fecha_fin son requeridas' })
+  }
+
+  if (new Date(fecha_fin) <= new Date(fecha_inicio)) {
+    return res.status(400).send({ ok: false, error: 'fecha_fin debe ser posterior a fecha_inicio' })
+  }
+
+  supabase
+    .from('reserva')
+    .select('id_reserva')
+    .neq('estado_reserva', 'cancelada')
+    .lt('fecha_inicio', fecha_fin)
+    .gt('fecha_fin', fecha_inicio)
+    .then(({ data: reservas, error: reservaError }) => {
+      if (reservaError) {
+        return res.status(500).send({ ok: false, error: reservaError.message })
+      }
+
+      if (!reservas || reservas.length === 0) {
+        return res.status(200).send({ ok: true, equipos_ocupados: [], djs_ocupados: [] })
+      }
+
+      const idReservas = reservas.map(r => r.id_reserva)
+
+      supabase
+        .from('contrata')
+        .select('id_dj')
+        .in('id_reserva', idReservas)
+        .then(({ data: contratas, error: contrataError }) => {
+          if (contrataError) {
+            return res.status(500).send({ ok: false, error: contrataError.message })
+          }
+
+          const djsOcupados = []
+          if (contratas) {
+            contratas.forEach(c => {
+              if (!djsOcupados.includes(c.id_dj)) djsOcupados.push(c.id_dj)
+            })
+          }
+
+          supabase
+            .from('incluye')
+            .select('id_equipo, cantidad')
+            .in('id_reserva', idReservas)
+            .then(({ data: incluyes, error: incluyeError }) => {
+              if (incluyeError) {
+                return res.status(500).send({ ok: false, error: incluyeError.message })
+              }
+
+              if (!incluyes || incluyes.length === 0) {
+                return res.status(200).send({ ok: true, equipos_ocupados: [], djs_ocupados: djsOcupados })
+              }
+
+              const cantidadesPorEquipo = {}
+              incluyes.forEach(i => {
+                cantidadesPorEquipo[i.id_equipo] = (cantidadesPorEquipo[i.id_equipo] || 0) + i.cantidad
+              })
+
+              const idEquipos = Object.keys(cantidadesPorEquipo)
+
+              supabase
+                .from('equipo')
+                .select('id_equipo, stock')
+                .in('id_equipo', idEquipos)
+                .then(({ data: equipos, error: equipoError }) => {
+                  if (equipoError) {
+                    return res.status(500).send({ ok: false, error: equipoError.message })
+                  }
+
+                  const equiposOcupados = []
+                  if (equipos) {
+                    equipos.forEach(e => {
+                      const cantidadReservada = cantidadesPorEquipo[e.id_equipo] || 0
+                      if (cantidadReservada >= e.stock) {
+                        equiposOcupados.push(e.id_equipo)
+                      }
+                    })
+                  }
+
+                  res.status(200).send({ ok: true, equipos_ocupados: equiposOcupados, djs_ocupados: djsOcupados })
+                })
+                .catch(() => res.status(500).send({ ok: false, error: 'Error al obtener equipos' }))
+            })
+            .catch(() => res.status(500).send({ ok: false, error: 'Error al obtener incluye' }))
+        })
+        .catch(() => res.status(500).send({ ok: false, error: 'Error al obtener contratas' }))
+    })
+    .catch(() => res.status(500).send({ ok: false, error: 'Error al obtener reservas' }))
+}
+
+module.exports = { getDisponibilidad }
