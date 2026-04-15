@@ -66,7 +66,7 @@ const getDisponibilidad = (req, res) => {
 
               supabase
                 .from('equipo')
-                .select('id_equipo, stock')
+                .select('id_equipo, stock_total')
                 .in('id_equipo', idEquipos)
                 .then(({ data: equipos, error: equipoError }) => {
                   if (equipoError) {
