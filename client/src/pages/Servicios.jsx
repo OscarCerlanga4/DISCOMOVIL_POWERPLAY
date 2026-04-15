@@ -1,3 +1,7 @@
+import { useState, useEffect } from 'react'
+import { useAuth } from '../contexts/AuthContext'
+import { useNavigate } from 'react-router-dom'
+
 export default function Servicios() {
   const [equipos, setEquipos] = useState([])
   const [djs, setDjs] = useState([])
