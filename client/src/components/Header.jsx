@@ -1,16 +1,18 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useCarrito } from "../contexts/CarritoContext";
 
 export default function Header() {
   const location = useLocation()
   const [scrolled, setScrolled] = useState()
   const [menuAbierto, setMenuAbierto] = useState(false);
   const { usuario, logout } = useAuth();
+  const { items } = useCarrito();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const onScroll = () => {setScrolled(window.scrollY > 60)};
+    const onScroll = () => { setScrolled(window.scrollY > 60) };
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -115,7 +117,6 @@ export default function Header() {
               onMouseEnter={() => setMenuAbierto(true)}
               onMouseLeave={() => setMenuAbierto(false)}
             >
-              {/* Nombre */}
               <button
                 style={{
                   background: "transparent",
@@ -143,7 +144,6 @@ export default function Header() {
                 </svg>
               </button>
 
-              {/* Dropdown */}
               {menuAbierto && (
                 <div style={{
                   position: "absolute",
@@ -258,11 +258,32 @@ export default function Header() {
               transition: "color 0.2s",
               padding: "0.3rem",
               filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.8))",
+              position: "relative",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#FFE600")}
             onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")}
             title="Carrito"
           >
+            {items.length > 0 && (
+              <span style={{
+                position: "absolute",
+                top: "-4px",
+                right: "-4px",
+                background: "#FFE600",
+                color: "#000",
+                fontSize: "0.6rem",
+                fontWeight: 700,
+                width: "16px",
+                height: "16px",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1,
+              }}>
+                {items.length}
+              </span>
+            )}
             <svg width="25" height="25" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />

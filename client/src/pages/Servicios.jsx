@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import { useCarrito } from '../contexts/CarritoContext'
 
 export default function Servicios() {
   const [equipos, setEquipos] = useState([])
@@ -16,8 +17,10 @@ export default function Servicios() {
   const [itemSeleccionado, setItemSeleccionado] = useState(null)
   const [dropdownPrecio, setDropdownPrecio] = useState(false)
   const [dropdownFecha, setDropdownFecha] = useState(false)
+  const [notificacion, setNotificacion] = useState(null)
   const { usuario } = useAuth()
   const navigate = useNavigate()
+  const { añadir, items } = useCarrito()
 
   useEffect(() => {
     Promise.all([
@@ -91,8 +94,19 @@ export default function Servicios() {
     return coincideBusqueda && coincideCategoria && coincidePrecio && coincideDisponibilidad
   })
 
+  const estaEnCarrito = (item) => {
+    const id = item.tabla === 'dj' ? item.id_dj : item.id_equipo
+    return items.some(i => i._id === id && i.tabla === item.tabla)
+  }
+
   const handleCarrito = (item) => {
-    if (!usuario) navigate('/login')
+    if (!usuario) {
+      navigate('/login')
+      return
+    }
+    añadir(item)
+    setNotificacion(item.nombre)
+    setTimeout(() => setNotificacion(null), 2500)
   }
 
   const precioLabel = rangosPrecios.find(r => r.id === precioActivo)?.label
@@ -132,6 +146,22 @@ export default function Servicios() {
   return (
     <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
 
+      {/* Notificación */}
+      {notificacion && (
+        <div style={{
+          position: 'fixed', bottom: '2rem', right: '2rem',
+          background: '#1c1c1c', border: '1px solid rgba(255,230,0,0.4)',
+          boxShadow: '0 0 30px rgba(255,230,0,0.1)', padding: '1rem 1.5rem',
+          zIndex: 200, display: 'flex', alignItems: 'center', gap: '0.75rem',
+        }}>
+          <span style={{ color: '#FFE600', fontSize: '1.2rem' }}>✓</span>
+          <div>
+            <p style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem', margin: 0 }}>Añadido al carrito</p>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', margin: 0 }}>{notificacion}</p>
+          </div>
+        </div>
+      )}
+
       {/* Modal */}
       {itemSeleccionado && (
         <div
@@ -157,8 +187,7 @@ export default function Servicios() {
               <span style={{
                 position: 'absolute', top: '0.6rem', left: '0.6rem',
                 fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
-                padding: '0.2rem 0.5rem',
-                ...getBadgeStyle(itemSeleccionado)
+                padding: '0.2rem 0.5rem', ...getBadgeStyle(itemSeleccionado)
               }}>
                 {getBadgeLabel(itemSeleccionado)}
               </span>
@@ -192,16 +221,19 @@ export default function Servicios() {
                   <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', marginLeft: '0.4rem' }}>{itemSeleccionado.precioLabel}</span>
                 </div>
                 <button
-                  onClick={() => { handleCarrito(itemSeleccionado); setItemSeleccionado(null) }}
+                  onClick={() => { if (!estaEnCarrito(itemSeleccionado)) { handleCarrito(itemSeleccionado); setItemSeleccionado(null) } }}
                   style={{
-                    background: '#FFE600', border: '1px solid #FFE600', color: '#000',
+                    background: estaEnCarrito(itemSeleccionado) ? 'transparent' : '#FFE600',
+                    border: `1px solid ${estaEnCarrito(itemSeleccionado) ? 'rgba(255,230,0,0.3)' : '#FFE600'}`,
+                    color: estaEnCarrito(itemSeleccionado) ? 'rgba(255,230,0,0.4)' : '#000',
                     padding: '0.7rem 1.5rem', fontSize: '0.8rem', fontWeight: 700,
-                    letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s',
+                    letterSpacing: '0.08em', textTransform: 'uppercase',
+                    cursor: estaEnCarrito(itemSeleccionado) ? 'default' : 'pointer', transition: 'all 0.2s',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFE600' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = '#FFE600'; e.currentTarget.style.color = '#000' }}
+                  onMouseEnter={e => { if (!estaEnCarrito(itemSeleccionado)) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFE600' } }}
+                  onMouseLeave={e => { if (!estaEnCarrito(itemSeleccionado)) { e.currentTarget.style.background = '#FFE600'; e.currentTarget.style.color = '#000' } }}
                 >
-                  + Añadir al carrito
+                  {estaEnCarrito(itemSeleccionado) ? '✓ En carrito' : '+ Añadir al carrito'}
                 </button>
               </div>
             </div>
@@ -223,10 +255,7 @@ export default function Servicios() {
       <div style={{ background: '#111', borderTop: '1px solid rgba(255,230,0,0.15)' }}>
         <div style={{ padding: '2rem 4rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-          {/* Fila buscador + filtros derecha */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '2rem' }}>
-
-            {/* Buscador */}
             <input
               type="text"
               placeholder="Buscar equipos, DJs, altavoces..."
@@ -241,15 +270,9 @@ export default function Servicios() {
               onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
             />
 
-            {/* Filtros derecha */}
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
 
-              {/* Dropdown precio */}
-              <div
-                style={{ position: 'relative' }}
-                onMouseEnter={() => setDropdownPrecio(true)}
-                onMouseLeave={() => setDropdownPrecio(false)}
-              >
+              <div style={{ position: 'relative' }} onMouseEnter={() => setDropdownPrecio(true)} onMouseLeave={() => setDropdownPrecio(false)}>
                 <button style={{
                   background: '#0d0d0d',
                   border: `1px solid ${precioActivo !== 'todo' ? '#FFE600' : 'rgba(255,255,255,0.15)'}`,
@@ -291,12 +314,7 @@ export default function Servicios() {
                 )}
               </div>
 
-              {/* Dropdown disponibilidad */}
-              <div
-                style={{ position: 'relative' }}
-                onMouseEnter={() => setDropdownFecha(true)}
-                onMouseLeave={() => setDropdownFecha(false)}
-              >
+              <div style={{ position: 'relative' }} onMouseEnter={() => setDropdownFecha(true)} onMouseLeave={() => setDropdownFecha(false)}>
                 <button style={{
                   background: '#0d0d0d',
                   border: `1px solid ${fechaActiva ? '#FFE600' : 'rgba(255,255,255,0.15)'}`,
@@ -318,36 +336,24 @@ export default function Servicios() {
                     minWidth: '260px', display: 'flex', flexDirection: 'column', gap: '0.75rem'
                   }}>
                     <div>
-                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 0.4rem' }}>
-                        Fecha y hora de inicio
-                      </p>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 0.4rem' }}>Fecha y hora de inicio</p>
                       <input
                         type="datetime-local"
                         value={fechaInicio}
                         onChange={e => setFechaInicio(e.target.value)}
-                        style={{
-                          background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)',
-                          color: '#fff', padding: '0.5rem 0.75rem', fontSize: '0.85rem',
-                          outline: 'none', width: '100%', colorScheme: 'dark',
-                        }}
+                        style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.5rem 0.75rem', fontSize: '0.85rem', outline: 'none', width: '100%', colorScheme: 'dark' }}
                         onFocus={e => e.target.style.borderColor = '#FFE600'}
                         onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
                       />
                     </div>
                     <div>
-                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 0.4rem' }}>
-                        Fecha y hora de fin
-                      </p>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 0.4rem' }}>Fecha y hora de fin</p>
                       <input
                         type="datetime-local"
                         value={fechaFin}
                         min={fechaInicio}
                         onChange={e => setFechaFin(e.target.value)}
-                        style={{
-                          background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)',
-                          color: '#fff', padding: '0.5rem 0.75rem', fontSize: '0.85rem',
-                          outline: 'none', width: '100%', colorScheme: 'dark',
-                        }}
+                        style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.5rem 0.75rem', fontSize: '0.85rem', outline: 'none', width: '100%', colorScheme: 'dark' }}
                         onFocus={e => e.target.style.borderColor = '#FFE600'}
                         onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
                       />
@@ -355,11 +361,7 @@ export default function Servicios() {
                     {fechaActiva && (
                       <button
                         onClick={quitarFecha}
-                        style={{
-                          background: 'transparent', border: 'none',
-                          color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: '0.75rem',
-                          padding: 0, textAlign: 'left', transition: 'color 0.2s',
-                        }}
+                        style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: '0.75rem', padding: 0, textAlign: 'left', transition: 'color 0.2s' }}
                         onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
                         onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
                       >
@@ -373,7 +375,6 @@ export default function Servicios() {
             </div>
           </div>
 
-          {/* Categorías */}
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {categorias.map(cat => (
               <button
@@ -386,18 +387,8 @@ export default function Servicios() {
                   padding: '0.4rem 1rem', fontSize: '0.8rem', fontWeight: 600,
                   letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s',
                 }}
-                onMouseEnter={e => {
-                  if (categoriaActiva !== cat.id) {
-                    e.currentTarget.style.borderColor = '#FFE600'
-                    e.currentTarget.style.color = '#FFE600'
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (categoriaActiva !== cat.id) {
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.5)'
-                  }
-                }}
+                onMouseEnter={e => { if (categoriaActiva !== cat.id) { e.currentTarget.style.borderColor = '#FFE600'; e.currentTarget.style.color = '#FFE600' } }}
+                onMouseLeave={e => { if (categoriaActiva !== cat.id) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)' } }}
               >
                 {cat.label}
               </button>
@@ -405,7 +396,6 @@ export default function Servicios() {
           </div>
         </div>
 
-        {/* Conteo */}
         <div style={{ padding: '0 4rem', marginBottom: '1.5rem' }}>
           <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>
             {filtrados.length} {filtrados.length === 1 ? 'servicio' : 'servicios'} disponibles
@@ -413,24 +403,19 @@ export default function Servicios() {
           </p>
         </div>
 
-        {/* Grid */}
         <div style={{ padding: '0 4rem 6rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
           {filtrados.map(item => (
             <div
               key={`${item.tabla}-${item.tabla === 'dj' ? item.id_dj : item.id_equipo}`}
               style={{
-                background: '#1c1c1c', border: '1px solid rgba(255,255,255,0.06)',
+                background: '#1c1c1c',
+                border: '1px solid rgba(255,230,0,0.15)',
+                boxShadow: '0 0 15px rgba(255,230,0,0.05)',
                 display: 'flex', flexDirection: 'column',
                 transition: 'border-color 0.3s, box-shadow 0.3s', cursor: 'default',
               }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = 'rgba(255,230,0,0.4)'
-                e.currentTarget.style.boxShadow = '0 0 20px rgba(255,230,0,0.08)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,230,0,0.5)'; e.currentTarget.style.boxShadow = '0 0 25px rgba(255,230,0,0.12)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,230,0,0.15)'; e.currentTarget.style.boxShadow = '0 0 15px rgba(255,230,0,0.05)' }}
             >
               <div style={{ width: '100%', aspectRatio: '16/9', background: '#242424', overflow: 'hidden', position: 'relative' }}>
                 {item.imagen_url ? (
@@ -443,22 +428,21 @@ export default function Servicios() {
                 <span style={{
                   position: 'absolute', top: '0.6rem', left: '0.6rem',
                   fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
-                  padding: '0.2rem 0.5rem',
-                  ...getBadgeStyle(item)
+                  padding: '0.2rem 0.5rem', ...getBadgeStyle(item)
                 }}>
                   {getBadgeLabel(item)}
                 </span>
               </div>
 
-              <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-                <h3 style={{ color: '#fff', fontSize: '0.95rem', fontWeight: 700, letterSpacing: '0.03em', margin: 0 }}>
+              <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+                <h3 style={{ color: '#fff', fontSize: '1.05rem', fontWeight: 700, letterSpacing: '0.03em', margin: 0 }}>
                   {item.nombre}
                 </h3>
                 <div style={{ marginTop: 'auto', paddingTop: '0.5rem' }}>
-                  <span style={{ color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '1.4rem', letterSpacing: '0.05em' }}>
+                  <span style={{ color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '1.6rem', letterSpacing: '0.05em' }}>
                     {item.precio}€
                   </span>
-                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginLeft: '0.3rem' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', marginLeft: '0.3rem' }}>
                     {item.precioLabel}
                   </span>
                 </div>
@@ -467,7 +451,7 @@ export default function Servicios() {
                     onClick={() => setItemSeleccionado(item)}
                     style={{
                       flex: 1, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
-                      color: 'rgba(255,255,255,0.7)', padding: '0.55rem', fontSize: '0.75rem',
+                      color: 'rgba(255,255,255,0.7)', padding: '0.65rem', fontSize: '0.8rem',
                       fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
                       cursor: 'pointer', transition: 'all 0.2s',
                     }}
@@ -477,16 +461,20 @@ export default function Servicios() {
                     Ver
                   </button>
                   <button
-                    onClick={() => handleCarrito(item)}
+                    onClick={() => !estaEnCarrito(item) && handleCarrito(item)}
                     style={{
-                      flex: 1, background: '#FFE600', border: '1px solid #FFE600', color: '#000',
-                      padding: '0.55rem', fontSize: '0.75rem', fontWeight: 700,
-                      letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s',
+                      flex: 1,
+                      background: estaEnCarrito(item) ? 'transparent' : '#FFE600',
+                      border: `1px solid ${estaEnCarrito(item) ? 'rgba(255,230,0,0.3)' : '#FFE600'}`,
+                      color: estaEnCarrito(item) ? 'rgba(255,230,0,0.4)' : '#000',
+                      padding: '0.65rem', fontSize: '0.8rem', fontWeight: 700,
+                      letterSpacing: '0.08em', textTransform: 'uppercase',
+                      cursor: estaEnCarrito(item) ? 'default' : 'pointer', transition: 'all 0.2s',
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFE600' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = '#FFE600'; e.currentTarget.style.color = '#000' }}
+                    onMouseEnter={e => { if (!estaEnCarrito(item)) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFE600' } }}
+                    onMouseLeave={e => { if (!estaEnCarrito(item)) { e.currentTarget.style.background = '#FFE600'; e.currentTarget.style.color = '#000' } }}
                   >
-                    + Carrito
+                    {estaEnCarrito(item) ? '✓ En carrito' : '+ Carrito'}
                   </button>
                 </div>
               </div>

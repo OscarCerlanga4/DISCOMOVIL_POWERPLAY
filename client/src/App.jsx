@@ -9,13 +9,14 @@ import Contacto from './pages/Contacto'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import { AuthProvider } from './contexts/AuthContext'
+import { CarritoProvider } from './contexts/CarritoContext'
+import MisPedidos from './pages/MisPedidos'
 import MisDatos from './pages/MisDatos'
 import ActualizarPassword from './pages/ActualizarPassword'
-import MisPedidos from './pages/MisPedidos'
 
 function AppContent() {
   const location = useLocation()
-  const sinLayoutes = ['/login', '/register'].includes(location.pathname)
+  const sinLayoutes = ['/login', '/register', '/actualizar-password'].includes(location.pathname)
 
   return (
     <>
@@ -28,9 +29,9 @@ function AppContent() {
         <Route path="/contacto" element={<Contacto />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/mis-pedidos" element={<MisPedidos />} />
         <Route path="/mis-datos" element={<MisDatos />} />
         <Route path="/actualizar-password" element={<ActualizarPassword />} />
-        <Route path="/mis-pedidos" element={<MisPedidos />} />
       </Routes>
       {!sinLayoutes && <Footer />}
     </>
@@ -41,7 +42,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppContent />
+        <CarritoProvider>
+          <AppContent />
+        </CarritoProvider>
       </AuthProvider>
     </BrowserRouter>
   )
