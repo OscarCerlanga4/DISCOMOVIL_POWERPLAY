@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { useAuth } from './AuthContext'
 
 const CarritoContext = createContext(null)
 
@@ -26,6 +27,21 @@ export function CarritoProvider({ children }) {
     useEffect(() => {
         localStorage.setItem('carrito_ubicacion', ubicacion)
     }, [ubicacion])
+
+    const { usuario } = useAuth()
+
+    useEffect(() => {
+        if (!usuario) {
+            setItems([])
+            setFechaInicio('')
+            setFechaFin('')
+            setUbicacion('')
+            localStorage.removeItem('carrito')
+            localStorage.removeItem('carrito_fecha_inicio')
+            localStorage.removeItem('carrito_fecha_fin')
+            localStorage.removeItem('carrito_ubicacion')
+        }
+    }, [usuario])
 
     const añadir = (item) => {
         setItems(prev => {
