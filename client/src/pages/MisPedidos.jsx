@@ -12,12 +12,12 @@ export default function MisPedidos() {
     const [cargando, setCargando] = useState(true)
     const [error, setError] = useState(null)
     const [accionando, setAccionando] = useState(null)
+    const [filtroTipo, setFiltroTipo] = useState('presupuestos')
+    const [filtroEstado, setFiltroEstado] = useState('todos')
 
     useEffect(() => {
         if (!usuario) { navigate('/login'); return }
-
         const token = localStorage.getItem('token')
-
         Promise.all([
             fetch('/api/presupuestos/mis-presupuestos', {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -26,16 +26,25 @@ export default function MisPedidos() {
         ])
             .then(([presupuestosData, empresaData]) => {
                 if (presupuestosData.ok) setPresupuestos(presupuestosData.result)
-                if (empresaData.ok) setEmpresa(empresaData.result[0])
+                if (empresaData.ok) setEmpresa(empresaData.result)
             })
             .catch(() => setError('Error al cargar los datos'))
             .finally(() => setCargando(false))
     }, [usuario])
 
+    const presupuestosFiltrados = presupuestos
+        .filter(p => filtroEstado === 'todos' || p.estado === filtroEstado)
+        .sort((a, b) => b.id_presupuesto - a.id_presupuesto)
+
+    const facturas = presupuestos
+        .filter(p => p.factura !== null && p.factura !== undefined)
+        .sort((a, b) => b.id_presupuesto - a.id_presupuesto)
+
+    const contarEstado = (estado) => presupuestos.filter(p => p.estado === estado).length
+
     const handleEstado = (idPresupuesto, estado) => {
         setAccionando(idPresupuesto)
         const token = localStorage.getItem('token')
-
         fetch(`/api/presupuestos/${idPresupuesto}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -108,65 +117,112 @@ export default function MisPedidos() {
         )
     }
 
-    const cargarImagenBase64 = async (url) => {
-        try {
-            const response = await fetch(url)
-            const blob = await response.blob()
-            return new Promise((resolve, reject) => {
+    const badgeEstadoFactura = (estadoFactura) => {
+        const esPagada = estadoFactura === 'pagada'
+        return (
+            <span style={{
+                fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: esPagada ? '#60c060' : '#FFE600',
+                background: esPagada ? 'rgba(96,192,96,0.1)' : 'rgba(255,230,0,0.1)',
+                border: `1px solid ${esPagada ? 'rgba(96,192,96,0.3)' : 'rgba(255,230,0,0.3)'}`,
+                padding: '0.25rem 0.65rem', whiteSpace: 'nowrap'
+            }}>
+                {esPagada ? '✓ Pagada' : 'Pendiente de pago'}
+            </span>
+        )
+    }
+
+    const cargarImagenBase64 = (url) => {
+        return fetch(url, { mode: 'cors', cache: 'no-store' })
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`)
+                return res.blob()
+            })
+            .then(blob => new Promise((resolve, reject) => {
                 const reader = new FileReader()
                 reader.onload = () => resolve(reader.result)
                 reader.onerror = reject
                 reader.readAsDataURL(blob)
-            })
-        } catch {
-            return new Promise((resolve, reject) => {
-                const img = new Image()
-                img.crossOrigin = 'anonymous'
-                img.onload = () => {
-                    const canvas = document.createElement('canvas')
-                    canvas.width = img.width
-                    canvas.height = img.height
-                    canvas.getContext('2d').drawImage(img, 0, 0)
-                    resolve(canvas.toDataURL('image/png'))
-                }
-                img.onerror = reject
-                img.src = url
-            })
-        }
+            }))
     }
 
+    // ─── CABECERA EMPRESA — reutilizada en presupuesto y factura ──────────────
+    // Dibuja la caja de empresa con logo grande + datos. Devuelve la nueva Y.
+    const dibujarCabeceraEmpresa = (doc, margen, y, logoBase64) => {
+        const boxH = 44
+        const boxW = 174
+
+        // Fondo caja
+        doc.setFillColor(248, 248, 248)
+        doc.setDrawColor(215, 215, 215)
+        doc.setLineWidth(0.3)
+        doc.rect(margen, y, boxW, boxH, 'FD')
+
+        // Acento izquierdo amarillo
+        doc.setFillColor(255, 230, 0)
+        doc.rect(margen, y, 4, boxH, 'F')
+
+        // Logo grande dentro de la caja
+        if (logoBase64) {
+            try {
+                doc.addImage(logoBase64, 'PNG', margen + 7, y + 5, 66, 34)
+            } catch (e) { /* ignorar si falla */ }
+        }
+
+        // Datos empresa (columna derecha de la caja)
+        if (empresa) {
+            const dataX = margen + 80
+            let lineY = y + 11
+
+            doc.setFontSize(11)
+            doc.setFont('helvetica', 'bold')
+            doc.setTextColor(20, 20, 20)
+            doc.text(empresa.nombre_empresa || '', dataX, lineY)
+            lineY += 7
+
+            doc.setFont('helvetica', 'normal')
+            doc.setFontSize(8.5)
+            doc.setTextColor(75, 75, 75)
+
+            if (empresa.cif) {
+                doc.text(`CIF: ${empresa.cif}`, dataX, lineY)
+                lineY += 5.5
+            }
+            if (empresa.direccion) {
+                doc.text(empresa.direccion, dataX, lineY)
+                lineY += 5.5
+            }
+            const cpLocalProv = [empresa.codigo_postal, empresa.localidad, empresa.provincia].filter(Boolean).join(', ')
+            if (cpLocalProv) {
+                doc.text(cpLocalProv, dataX, lineY)
+                lineY += 5.5
+            }
+            const contacto = [
+                empresa.telefono ? `Tel: ${empresa.telefono}` : null,
+                empresa.email || null
+            ].filter(Boolean).join('   ·   ')
+            if (contacto) doc.text(contacto, dataX, lineY)
+        }
+
+        return y + boxH + 8   // devuelve la Y después de la caja + espacio
+    }
+
+    // ─── PDF PRESUPUESTO ───────────────────────────────────────────────────────
     const generarPdfPresupuesto = async (presupuesto) => {
         const doc = new jsPDF()
         const margen = 18
         let y = margen
 
-        // Logo
+        // Cargar logo primero
+        let logoBase64 = null
         if (empresa?.logo_url) {
-            try {
-                const base64 = await cargarImagenBase64(empresa.logo_url)
-                doc.addImage(base64, 'PNG', margen, y, 45, 18)
-            } catch (e) {
-                console.warn('Logo no disponible:', e)
-            }
+            try { logoBase64 = await cargarImagenBase64(empresa.logo_url) }
+            catch (e) { console.warn('Logo no disponible:', e) }
         }
 
-        // Datos empresa derecha
-        if (empresa) {
-            doc.setFontSize(8.5)
-            doc.setFont('helvetica', 'bold')
-            doc.setTextColor(40, 40, 40)
-            doc.text(empresa.nombre_empresa || '', 210 - margen, y + 4, { align: 'right' })
-            doc.setFont('helvetica', 'normal')
-            doc.setTextColor(100, 100, 100)
-            if (empresa.cif) doc.text(`CIF: ${empresa.cif}`, 210 - margen, y + 9, { align: 'right' })
-            if (empresa.direccion) doc.text(empresa.direccion, 210 - margen, y + 14, { align: 'right' })
-            const cpLocalProv = [empresa.codigo_postal, empresa.localidad, empresa.provincia].filter(Boolean).join(', ')
-            if (cpLocalProv) doc.text(cpLocalProv, 210 - margen, y + 19, { align: 'right' })
-            if (empresa.telefono) doc.text(`Tel: ${empresa.telefono}`, 210 - margen, y + 24, { align: 'right' })
-            if (empresa.email) doc.text(empresa.email, 210 - margen, y + 29, { align: 'right' })
-        }
-
-        y += 36
+        // Caja empresa con logo grande
+        y = dibujarCabeceraEmpresa(doc, margen, y, logoBase64)
 
         // Línea amarilla
         doc.setDrawColor(255, 230, 0)
@@ -180,16 +236,18 @@ export default function MisPedidos() {
         doc.setFont('helvetica', 'bold')
         doc.text('PRESUPUESTO', margen, y)
 
-        // Número y fechas
+        // Ref + fecha
+        const numPres = `PRES-${new Date().getFullYear()}-${String(presupuesto.id_presupuesto).padStart(4, '0')}`
         doc.setFontSize(9)
         doc.setFont('helvetica', 'bold')
         doc.setTextColor(200, 150, 0)
-        const numPres = `PRES-${new Date().getFullYear()}-${String(presupuesto.id_presupuesto).padStart(4, '0')}`
         doc.text(`Ref: ${numPres}`, 210 - margen, y - 6, { align: 'right' })
         doc.setFont('helvetica', 'normal')
         doc.setTextColor(80, 80, 80)
-        doc.text(`Fecha: ${formatearFecha(new Date(new Date(presupuesto.fecha_limite).getTime() - 48 * 3600000))}`, 210 - margen, y, { align: 'right' })
-        doc.text(`Válido hasta: ${formatearFecha(presupuesto.fecha_limite)}`, 210 - margen, y + 6, { align: 'right' })
+        doc.text(`Fecha: ${formatearFecha(presupuesto.fecha_emision)}`, 210 - margen, y, { align: 'right' })
+        if (presupuesto.estado === 'pendiente') {
+            doc.text(`Válido hasta: ${formatearFecha(presupuesto.fecha_limite)}`, 210 - margen, y + 6, { align: 'right' })
+        }
 
         y += 14
 
@@ -214,24 +272,33 @@ export default function MisPedidos() {
         const cpCliente = [presupuesto.reserva?.cliente_codigo_postal, presupuesto.reserva?.cliente_localidad, presupuesto.reserva?.cliente_provincia].filter(Boolean).join(', ')
         doc.text(cpCliente, margen + 95, y + 13)
         doc.text(`Email: ${presupuesto.reserva?.cliente_email || ''}`, margen + 95, y + 19)
-        if (presupuesto.reserva?.cliente_telefono) doc.text(`Tel: ${presupuesto.reserva.cliente_telefono}`, margen + 95, y + 25)
 
         y += 40
 
         // Evento
+        const colIzq = margen, colDer = margen + 95
         doc.setFontSize(7.5)
         doc.setFont('helvetica', 'bold')
         doc.setTextColor(130, 130, 130)
-        doc.text('EVENTO', margen, y)
+        doc.text('INICIO', colIzq, y)
+        doc.text('UBICACIÓN', colDer, y)
         y += 5
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(8.5)
         doc.setTextColor(50, 50, 50)
-        doc.text(`Inicio: ${formatearFechaHora(presupuesto.reserva?.fecha_inicio)}`, margen, y)
-        doc.text(`Fin: ${formatearFechaHora(presupuesto.reserva?.fecha_fin)}`, margen + 85, y)
+        doc.text(formatearFechaHora(presupuesto.reserva?.fecha_inicio), colIzq, y)
+        doc.text(doc.splitTextToSize(presupuesto.reserva?.ubicacion || '—', 210 - margen - colDer), colDer, y)
+        y += 9
+        doc.setFontSize(7.5)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(130, 130, 130)
+        doc.text('FIN', colIzq, y)
         y += 5
-        doc.text(`Ubicación: ${presupuesto.reserva?.ubicacion || ''}`, margen, y)
-        y += 10
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8.5)
+        doc.setTextColor(50, 50, 50)
+        doc.text(formatearFechaHora(presupuesto.reserva?.fecha_fin), colIzq, y)
+        y += 12
 
         // Tabla conceptos
         const detalles = presupuesto.detalle_presupuesto || []
@@ -249,8 +316,6 @@ export default function MisPedidos() {
         })
 
         y = doc.lastAutoTable.finalY + 10
-
-        // Totales
         const col1 = 125, col2 = 210 - margen
         doc.setFontSize(8.5)
         doc.setFont('helvetica', 'normal')
@@ -270,7 +335,6 @@ export default function MisPedidos() {
         doc.setTextColor(20, 20, 20)
         doc.text('TOTAL:', col1, y)
         doc.text(`${parseFloat(presupuesto.total).toFixed(2)} €`, col2, y, { align: 'right' })
-
         y += 14
         doc.setFontSize(7.5)
         doc.setFont('helvetica', 'italic')
@@ -281,257 +345,506 @@ export default function MisPedidos() {
         doc.save(`presupuesto-${nombreCliente}.pdf`)
     }
 
+    // ─── PDF FACTURA ───────────────────────────────────────────────────────────
+    const generarPdfFactura = async (presupuesto) => {
+        const f = presupuesto.factura
+        const doc = new jsPDF()
+        const margen = 18
+        let y = margen
+
+        // Cargar logo primero
+        let logoBase64 = null
+        if (empresa?.logo_url) {
+            try { logoBase64 = await cargarImagenBase64(empresa.logo_url) }
+            catch (e) { console.warn('Logo no disponible:', e) }
+        }
+
+        // Caja empresa con logo grande (igual que presupuesto)
+        y = dibujarCabeceraEmpresa(doc, margen, y, logoBase64)
+
+        // Línea amarilla
+        doc.setDrawColor(255, 230, 0)
+        doc.setLineWidth(1)
+        doc.line(margen, y, 210 - margen, y)
+        y += 10
+
+        // Título
+        doc.setFontSize(24)
+        doc.setTextColor(20, 20, 20)
+        doc.setFont('helvetica', 'bold')
+        doc.text('FACTURA', margen, y)
+
+        // Nº + fecha + estado
+        doc.setFontSize(9)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(200, 150, 0)
+        doc.text(`Nº: ${f.numero_factura}`, 210 - margen, y - 6, { align: 'right' })
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(80, 80, 80)
+        doc.text(`Fecha de emisión: ${formatearFecha(f.fecha_emision)}`, 210 - margen, y, { align: 'right' })
+        doc.text(`Estado: ${f.estado_factura === 'pagada' ? 'Pagada' : 'Pendiente de pago'}`, 210 - margen, y + 6, { align: 'right' })
+
+        y += 14
+
+        // Caja cliente
+        doc.setFillColor(247, 247, 247)
+        doc.setDrawColor(220, 220, 220)
+        doc.setLineWidth(0.3)
+        doc.rect(margen, y, 174, 32, 'FD')
+        doc.setFontSize(7.5)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(130, 130, 130)
+        doc.text('CLIENTE', margen + 5, y + 6)
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(9)
+        doc.setTextColor(30, 30, 30)
+        doc.text(presupuesto.reserva?.cliente_nombre || '', margen + 5, y + 13)
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8.5)
+        doc.setTextColor(80, 80, 80)
+        doc.text(`DNI/CIF: ${presupuesto.reserva?.cliente_dni_nie_cif || ''}`, margen + 5, y + 19)
+        doc.text(presupuesto.reserva?.cliente_direccion || '', margen + 5, y + 25)
+        const cpCliente = [presupuesto.reserva?.cliente_codigo_postal, presupuesto.reserva?.cliente_localidad, presupuesto.reserva?.cliente_provincia].filter(Boolean).join(', ')
+        doc.text(cpCliente, margen + 95, y + 13)
+        doc.text(`Email: ${presupuesto.reserva?.cliente_email || ''}`, margen + 95, y + 19)
+
+        y += 40
+
+        // Evento
+        const colIzq = margen, colDer = margen + 95
+        doc.setFontSize(7.5)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(130, 130, 130)
+        doc.text('INICIO', colIzq, y)
+        doc.text('UBICACIÓN', colDer, y)
+        y += 5
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8.5)
+        doc.setTextColor(50, 50, 50)
+        doc.text(formatearFechaHora(presupuesto.reserva?.fecha_inicio), colIzq, y)
+        doc.text(doc.splitTextToSize(presupuesto.reserva?.ubicacion || '—', 210 - margen - colDer), colDer, y)
+        y += 9
+        doc.setFontSize(7.5)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(130, 130, 130)
+        doc.text('FIN', colIzq, y)
+        y += 5
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8.5)
+        doc.setTextColor(50, 50, 50)
+        doc.text(formatearFechaHora(presupuesto.reserva?.fecha_fin), colIzq, y)
+        y += 12
+
+        // Tabla conceptos
+        const detalles = presupuesto.detalle_presupuesto || []
+        autoTable(doc, {
+            startY: y,
+            head: [['CONCEPTO', 'CANT.', 'PRECIO/HORA', 'SUBTOTAL']],
+            body: detalles.length > 0
+                ? detalles.map(d => [d.concepto, d.cantidad, `${parseFloat(d.precio_unitario).toFixed(2)} €`, `${parseFloat(d.subtotal).toFixed(2)} €`])
+                : [['Sin detalles disponibles', '', '', '']],
+            headStyles: { fillColor: [255, 230, 0], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8.5, cellPadding: 4 },
+            bodyStyles: { fontSize: 8.5, textColor: [50, 50, 50], cellPadding: 3.5 },
+            alternateRowStyles: { fillColor: [250, 250, 250] },
+            columnStyles: { 0: { cellWidth: 85 }, 1: { cellWidth: 20, halign: 'center' }, 2: { cellWidth: 38, halign: 'right' }, 3: { cellWidth: 31, halign: 'right' } },
+            margin: { left: margen, right: margen }
+        })
+
+        y = doc.lastAutoTable.finalY + 10
+        const col1 = 125, col2 = 210 - margen
+        doc.setFontSize(8.5)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(80, 80, 80)
+        doc.text('Base imponible:', col1, y)
+        doc.text(`${parseFloat(f.base_imponible).toFixed(2)} €`, col2, y, { align: 'right' })
+        y += 6
+        doc.text('IVA (21%):', col1, y)
+        doc.text(`${(parseFloat(f.total) - parseFloat(f.base_imponible)).toFixed(2)} €`, col2, y, { align: 'right' })
+        y += 3
+        doc.setDrawColor(255, 230, 0)
+        doc.setLineWidth(0.6)
+        doc.line(col1, y, col2, y)
+        y += 7
+        doc.setFontSize(12)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(20, 20, 20)
+        doc.text('TOTAL:', col1, y)
+        doc.text(`${parseFloat(f.total).toFixed(2)} €`, col2, y, { align: 'right' })
+        y += 14
+        doc.setFontSize(7.5)
+        doc.setFont('helvetica', 'italic')
+        doc.setTextColor(160, 160, 160)
+        doc.text('Gracias por confiar en Power Play. Para cualquier consulta, contacte con nosotros.', margen, y)
+
+        const nombreCliente = (presupuesto.reserva?.cliente_nombre || 'cliente').replace(/\s+/g, '_')
+        doc.save(`factura-${f.numero_factura}-${nombreCliente}.pdf`)
+    }
+
+    // ─── ESTILOS COMPARTIDOS ───────────────────────────────────────────────────
     const labelStyle = {
         fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.1em',
         textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', margin: 0
     }
-
     const btnAmarillo = {
         background: '#FFE600', border: 'none', color: '#000',
         fontFamily: 'Bebas Neue', fontSize: '0.9rem', letterSpacing: '0.12em',
         padding: '0.6rem 1.4rem', cursor: 'pointer', transition: 'opacity 0.2s',
     }
-
     const btnRojo = {
         background: 'rgba(255,68,68,0.12)', border: '1px solid rgba(255,68,68,0.5)',
         color: '#ff6060', fontFamily: 'Bebas Neue', fontSize: '0.9rem', letterSpacing: '0.12em',
         padding: '0.6rem 1.4rem', cursor: 'pointer', transition: 'all 0.2s',
     }
+    const btnVerde = {
+        background: 'rgba(96,192,96,0.12)', border: '1px solid rgba(96,192,96,0.4)',
+        color: '#60c060', fontFamily: 'Bebas Neue', fontSize: '0.9rem', letterSpacing: '0.12em',
+        padding: '0.6rem 1.4rem', cursor: 'pointer', transition: 'all 0.2s',
+    }
+
+    const chipsFiltro = [
+        { valor: 'todos', label: 'Todos', count: presupuestos.length },
+        { valor: 'pendiente', label: 'Pendiente', count: contarEstado('pendiente') },
+        { valor: 'aceptado_cliente', label: 'En revisión', count: contarEstado('aceptado_cliente') },
+        { valor: 'aceptado', label: 'Confirmado', count: contarEstado('aceptado') },
+        { valor: 'rechazado', label: 'Rechazado', count: contarEstado('rechazado') },
+    ]
 
     return (
         <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
 
-            <div style={{ padding: '3rem 4rem 2.5rem' }}>
+            <div style={{ padding: '3rem 4rem 2rem' }}>
                 <h1 style={{ fontFamily: 'Bebas Neue', fontSize: '3.5rem', letterSpacing: '0.1em', color: '#fff', marginBottom: '0.25rem' }}>
                     Mis <span style={{ color: '#FFE600' }}>pedidos</span>
                 </h1>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.95rem' }}>
-                    Consulta y gestiona tus presupuestos
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.95rem', margin: 0 }}>
+                    Consulta y gestiona tus presupuestos y facturas
                 </p>
             </div>
 
-            <div style={{ background: '#111', borderTop: '1px solid rgba(255,230,0,0.15)', padding: '3rem 4rem 6rem' }}>
+            <div style={{ padding: '0 4rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ display: 'flex' }}>
+                    {[
+                        { valor: 'presupuestos', label: 'Presupuestos', count: presupuestos.length },
+                        { valor: 'facturas', label: 'Facturas', count: facturas.length },
+                    ].map(tab => {
+                        const activo = filtroTipo === tab.valor
+                        return (
+                            <button key={tab.valor}
+                                onClick={() => { setFiltroTipo(tab.valor); setFiltroEstado('todos') }}
+                                style={{
+                                    background: 'none', border: 'none', cursor: 'pointer',
+                                    fontFamily: 'Bebas Neue', fontSize: '1.05rem', letterSpacing: '0.12em',
+                                    color: activo ? '#FFE600' : 'rgba(255,255,255,0.35)',
+                                    padding: '0.85rem 1.5rem 0.75rem',
+                                    borderBottom: activo ? '2px solid #FFE600' : '2px solid transparent',
+                                    transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                                }}
+                                onMouseEnter={e => { if (!activo) e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
+                                onMouseLeave={e => { if (!activo) e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}
+                            >
+                                {tab.label}
+                                <span style={{
+                                    fontSize: '0.65rem', fontFamily: 'sans-serif', fontWeight: 700,
+                                    background: activo ? 'rgba(255,230,0,0.15)' : 'rgba(255,255,255,0.07)',
+                                    color: activo ? '#FFE600' : 'rgba(255,255,255,0.3)',
+                                    padding: '0.1rem 0.45rem', borderRadius: '999px',
+                                }}>{tab.count}</span>
+                            </button>
+                        )
+                    })}
+                </div>
+
+                {filtroTipo === 'presupuestos' && (
+                    <div style={{ display: 'flex', gap: '0.5rem', padding: '0.85rem 0', flexWrap: 'wrap' }}>
+                        {chipsFiltro.map(chip => {
+                            const activo = filtroEstado === chip.valor
+                            return (
+                                <button key={chip.valor} onClick={() => setFiltroEstado(chip.valor)}
+                                    style={{
+                                        background: activo ? '#FFE600' : 'rgba(255,255,255,0.04)',
+                                        border: `1px solid ${activo ? '#FFE600' : 'rgba(255,255,255,0.1)'}`,
+                                        color: activo ? '#000' : 'rgba(255,255,255,0.5)',
+                                        fontFamily: 'Bebas Neue', fontSize: '0.82rem', letterSpacing: '0.1em',
+                                        padding: '0.3rem 0.9rem', cursor: 'pointer', transition: 'all 0.18s',
+                                        display: 'flex', alignItems: 'center', gap: '0.4rem'
+                                    }}
+                                    onMouseEnter={e => { if (!activo) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' } }}
+                                    onMouseLeave={e => { if (!activo) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)' } }}
+                                >
+                                    {chip.label}
+                                    {chip.count > 0 && (
+                                        <span style={{
+                                            fontSize: '0.6rem', fontFamily: 'sans-serif', fontWeight: 700,
+                                            background: activo ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.08)',
+                                            padding: '0.05rem 0.4rem', borderRadius: '999px'
+                                        }}>{chip.count}</span>
+                                    )}
+                                </button>
+                            )
+                        })}
+                    </div>
+                )}
+            </div>
+
+            <div style={{ background: '#111', padding: '2.5rem 4rem 6rem' }}>
 
                 {cargando && <p style={{ color: 'rgba(255,255,255,0.3)' }}>Cargando...</p>}
                 {error && <p style={{ color: '#ff4444' }}>{error}</p>}
 
-                {!cargando && presupuestos.length === 0 && (
-                    <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-                        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '1rem', marginBottom: '1.5rem' }}>
-                            Aún no tienes ningún pedido
-                        </p>
-                        <button onClick={() => navigate('/servicios')} style={btnAmarillo}
-                            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-                            onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-                            Ver servicios
-                        </button>
-                    </div>
-                )}
+                {/* ── PRESUPUESTOS ─────────────────────────────────────────────── */}
+                {!cargando && filtroTipo === 'presupuestos' && (
+                    <>
+                        {presupuestosFiltrados.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: '4rem 0' }}>
+                                <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '1rem', marginBottom: '1.5rem' }}>
+                                    {filtroEstado === 'todos' ? 'Aún no tienes ningún pedido' : 'No hay presupuestos con este estado'}
+                                </p>
+                                {filtroEstado === 'todos' && (
+                                    <button onClick={() => navigate('/servicios')} style={btnAmarillo}
+                                        onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                                        Ver servicios
+                                    </button>
+                                )}
+                            </div>
+                        )}
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {presupuestos.map(p => {
-                        const dias = p.estado === 'pendiente' ? diasRestantes(p.fecha_limite) : null
-
-                        return (
-                            <div key={p.id_presupuesto} style={{
-                                background: '#1a1a1a',
-                                border: '1px solid rgba(255,230,0,0.12)',
-                                boxShadow: '0 0 30px rgba(255,230,0,0.06), 0 4px 24px rgba(0,0,0,0.4)',
-                            }}>
-                                {/* Cabecera */}
-                                <div style={{
-                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                    padding: '1rem 1.5rem',
-                                    borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                    background: 'rgba(255,255,255,0.02)'
-                                }}>
-                                    <div>
-                                        <p style={{ ...labelStyle, marginBottom: '0.3rem' }}>Presupuesto</p>
-                                        <p style={{ fontFamily: 'Bebas Neue', fontSize: '1.25rem', letterSpacing: '0.1em', color: '#fff', margin: 0 }}>
-                                            {p.reserva?.cliente_nombre || '—'}
-                                        </p>
-                                    </div>
-                                    {badgeEstado(p.estado)}
-                                </div>
-
-                                <div style={{ padding: '1.25rem 1.5rem' }}>
-
-                                    {/* Ubicación izquierda — Fechas derecha */}
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', gap: '1rem' }}>
-                                        <div>
-                                            <p style={labelStyle}>Ubicación</p>
-                                            <p style={{ color: '#fff', fontSize: '0.88rem', margin: '0.3rem 0 0', fontWeight: 600 }}>
-                                                {p.reserva?.ubicacion || '—'}
-                                            </p>
-                                        </div>
-
-                                        {/* Fechas rediseñadas: dos bloques con flecha */}
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
-                                            {/* INICIO */}
-                                            <div style={{
-                                                textAlign: 'center',
-                                                background: 'rgba(255,255,255,0.03)',
-                                                border: '1px solid rgba(255,255,255,0.07)',
-                                                padding: '0.5rem 0.85rem',
-                                            }}>
-                                                <p style={{ ...labelStyle, marginBottom: '0.35rem' }}>Inicio</p>
-                                                <p style={{ color: '#fff', fontSize: '0.92rem', fontWeight: 700, margin: 0, lineHeight: 1.2 }}>
-                                                    {formatearSoloFecha(p.reserva?.fecha_inicio)}
-                                                </p>
-                                                <p style={{ color: '#FFE600', fontSize: '0.82rem', fontWeight: 600, margin: '0.2rem 0 0', letterSpacing: '0.04em' }}>
-                                                    {formatearSoloHora(p.reserva?.fecha_inicio)}
-                                                </p>
-                                            </div>
-
-                                            {/* Flecha */}
-                                            <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: '1rem' }}>→</span>
-
-                                            {/* FIN */}
-                                            <div style={{
-                                                textAlign: 'center',
-                                                background: 'rgba(255,255,255,0.03)',
-                                                border: '1px solid rgba(255,255,255,0.07)',
-                                                padding: '0.5rem 0.85rem',
-                                            }}>
-                                                <p style={{ ...labelStyle, marginBottom: '0.35rem' }}>Fin</p>
-                                                <p style={{ color: '#fff', fontSize: '0.92rem', fontWeight: 700, margin: 0, lineHeight: 1.2 }}>
-                                                    {formatearSoloFecha(p.reserva?.fecha_fin)}
-                                                </p>
-                                                <p style={{ color: '#FFE600', fontSize: '0.82rem', fontWeight: 600, margin: '0.2rem 0 0', letterSpacing: '0.04em' }}>
-                                                    {formatearSoloHora(p.reserva?.fecha_fin)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Líneas del presupuesto */}
-                                    {(p.detalle_presupuesto || []).length > 0 && (
-                                        <div style={{ marginBottom: '1rem', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', padding: '0.4rem 0.75rem', background: 'rgba(255,255,255,0.03)' }}>
-                                                <span style={{ ...labelStyle, fontSize: '0.65rem' }}>Concepto</span>
-                                                <span style={{ ...labelStyle, fontSize: '0.65rem' }}>Subtotal</span>
-                                            </div>
-                                            {p.detalle_presupuesto.map((d, i) => (
-                                                <div key={i} style={{
-                                                    display: 'grid', gridTemplateColumns: '1fr auto',
-                                                    padding: '0.45rem 0.75rem',
-                                                    borderTop: '1px solid rgba(255,255,255,0.04)',
-                                                }}>
-                                                    <span style={{ color: '#FFE600', fontSize: '0.85rem' }}>{d.concepto}</span>
-                                                    <span style={{ color: '#FFE600', fontSize: '0.85rem', fontWeight: 700 }}>
-                                                        {parseFloat(d.subtotal).toFixed(2)} €
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Totales */}
-                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '2rem', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <p style={labelStyle}>Base imponible</p>
-                                            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.88rem', margin: '0.25rem 0 0' }}>
-                                                {parseFloat(p.base_imponible).toFixed(2)} €
-                                            </p>
-                                        </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <p style={labelStyle}>IVA 21%</p>
-                                            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.88rem', margin: '0.25rem 0 0' }}>
-                                                {(parseFloat(p.total) - parseFloat(p.base_imponible)).toFixed(2)} €
-                                            </p>
-                                        </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <p style={labelStyle}>Total</p>
-                                            <p style={{ color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '1.4rem', margin: '0.1rem 0 0', letterSpacing: '0.05em', lineHeight: 1 }}>
-                                                {parseFloat(p.total).toFixed(2)} €
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* Días restantes — solo si pendiente */}
-                                    {dias && (
-                                        <p style={{ fontSize: '0.78rem', color: dias.color, marginBottom: '1rem', fontWeight: 600 }}>
-                                            ⏱ {dias.texto}
-                                        </p>
-                                    )}
-
-                                    {/* Mensajes de estado */}
-                                    {p.estado === 'aceptado_cliente' && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#60c060', fontSize: '0.82rem' }}>
-                                            <span>✓</span>
-                                            <span>Has aceptado el presupuesto. Nos pondremos en contacto contigo para confirmar los detalles.</span>
-                                        </div>
-                                    )}
-                                    {p.estado === 'aceptado' && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#60c060', fontSize: '0.82rem' }}>
-                                            <span>✓</span>
-                                            <span>Presupuesto confirmado por Power Play. Tu evento está reservado.</span>
-                                        </div>
-                                    )}
-
-                                    {/* Botones */}
-                                    <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-                                        {p.estado === 'pendiente' && (
-                                            <>
-                                                <button
-                                                    onClick={() => handleEstado(p.id_presupuesto, 'aceptado_cliente')}
-                                                    disabled={accionando === p.id_presupuesto}
-                                                    style={{ ...btnAmarillo, opacity: accionando === p.id_presupuesto ? 0.6 : 1 }}
-                                                    onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-                                                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                                                >
-                                                    Aceptar presupuesto
-                                                </button>
-                                                <button
-                                                    onClick={() => handleEstado(p.id_presupuesto, 'rechazado')}
-                                                    disabled={accionando === p.id_presupuesto}
-                                                    style={{ ...btnRojo, opacity: accionando === p.id_presupuesto ? 0.6 : 1 }}
-                                                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,68,68,0.2)'; e.currentTarget.style.color = '#ff4444' }}
-                                                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,68,68,0.12)'; e.currentTarget.style.color = '#ff6060' }}
-                                                >
-                                                    Rechazar
-                                                </button>
-                                            </>
-                                        )}
-                                        <button
-                                            onClick={() => generarPdfPresupuesto(p)}
-                                            style={btnAmarillo}
-                                            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-                                            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                                        >
-                                            ↓ Descargar presupuesto
-                                        </button>
-                                    </div>
-
-                                    {/* Factura */}
-                                    {p.factura && p.factura.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            {presupuestosFiltrados.map(p => {
+                                const dias = p.estado === 'pendiente' ? diasRestantes(p.fecha_limite) : null
+                                return (
+                                    <div key={p.id_presupuesto} style={{
+                                        background: '#1a1a1a',
+                                        border: '1px solid rgba(255,230,0,0.12)',
+                                        boxShadow: '0 0 30px rgba(255,230,0,0.06), 0 4px 24px rgba(0,0,0,0.4)',
+                                    }}>
                                         <div style={{
-                                            marginTop: '1.1rem', borderTop: '1px solid rgba(255,230,0,0.12)',
-                                            paddingTop: '1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                            padding: '1rem 1.5rem',
+                                            borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                            background: 'rgba(255,255,255,0.02)'
                                         }}>
                                             <div>
-                                                <p style={labelStyle}>Factura</p>
-                                                <p style={{ color: '#fff', fontFamily: 'Bebas Neue', fontSize: '1.05rem', letterSpacing: '0.08em', margin: '0.25rem 0 0.2rem' }}>
-                                                    {p.factura[0].numero_factura}
+                                                <p style={{ ...labelStyle, marginBottom: '0.3rem' }}>Presupuesto</p>
+                                                <p style={{ fontFamily: 'Bebas Neue', fontSize: '1.25rem', letterSpacing: '0.1em', color: '#fff', margin: 0 }}>
+                                                    {p.reserva?.cliente_nombre || '—'}
                                                 </p>
-                                                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem', margin: 0 }}>
-                                                    {parseFloat(p.factura[0].total).toFixed(2)} €
+                                                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', margin: '0.2rem 0 0' }}>
+                                                    Emitido el {formatearFecha(p.fecha_emision)}
                                                 </p>
                                             </div>
-                                            <button
-                                                style={btnAmarillo}
-                                                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-                                                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                                            >
-                                                ↓ Descargar factura
-                                            </button>
+                                            {badgeEstado(p.estado)}
                                         </div>
-                                    )}
-                                </div>
+
+                                        <div style={{ padding: '1.25rem 1.5rem' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', gap: '1rem' }}>
+                                                <div>
+                                                    <p style={labelStyle}>Ubicación</p>
+                                                    <p style={{ color: '#fff', fontSize: '0.88rem', margin: '0.3rem 0 0', fontWeight: 600 }}>
+                                                        {p.reserva?.ubicacion || '—'}
+                                                    </p>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
+                                                    <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', padding: '0.5rem 0.85rem' }}>
+                                                        <p style={{ ...labelStyle, marginBottom: '0.35rem' }}>Inicio</p>
+                                                        <p style={{ color: '#fff', fontSize: '0.92rem', fontWeight: 700, margin: 0, lineHeight: 1.2 }}>{formatearSoloFecha(p.reserva?.fecha_inicio)}</p>
+                                                        <p style={{ color: '#FFE600', fontSize: '0.82rem', fontWeight: 600, margin: '0.2rem 0 0' }}>{formatearSoloHora(p.reserva?.fecha_inicio)}</p>
+                                                    </div>
+                                                    <span style={{ color: 'rgba(255,255,255,0.2)' }}>→</span>
+                                                    <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', padding: '0.5rem 0.85rem' }}>
+                                                        <p style={{ ...labelStyle, marginBottom: '0.35rem' }}>Fin</p>
+                                                        <p style={{ color: '#fff', fontSize: '0.92rem', fontWeight: 700, margin: 0, lineHeight: 1.2 }}>{formatearSoloFecha(p.reserva?.fecha_fin)}</p>
+                                                        <p style={{ color: '#FFE600', fontSize: '0.82rem', fontWeight: 600, margin: '0.2rem 0 0' }}>{formatearSoloHora(p.reserva?.fecha_fin)}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {(p.detalle_presupuesto || []).length > 0 && (
+                                                <div style={{ marginBottom: '1rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', padding: '0.4rem 0.75rem', background: 'rgba(255,255,255,0.03)' }}>
+                                                        <span style={{ ...labelStyle, fontSize: '0.65rem' }}>Concepto</span>
+                                                        <span style={{ ...labelStyle, fontSize: '0.65rem' }}>Subtotal</span>
+                                                    </div>
+                                                    {p.detalle_presupuesto.map((d, i) => (
+                                                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto', padding: '0.45rem 0.75rem', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                                                            <span style={{ color: '#FFE600', fontSize: '0.85rem' }}>{d.concepto}</span>
+                                                            <span style={{ color: '#FFE600', fontSize: '0.85rem', fontWeight: 700 }}>{parseFloat(d.subtotal).toFixed(2)} €</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '2rem', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <div style={{ textAlign: 'right' }}>
+                                                    <p style={labelStyle}>Base imponible</p>
+                                                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.88rem', margin: '0.25rem 0 0' }}>{parseFloat(p.base_imponible).toFixed(2)} €</p>
+                                                </div>
+                                                <div style={{ textAlign: 'right' }}>
+                                                    <p style={labelStyle}>IVA 21%</p>
+                                                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.88rem', margin: '0.25rem 0 0' }}>{(parseFloat(p.total) - parseFloat(p.base_imponible)).toFixed(2)} €</p>
+                                                </div>
+                                                <div style={{ textAlign: 'right' }}>
+                                                    <p style={labelStyle}>Total</p>
+                                                    <p style={{ color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '1.4rem', margin: '0.1rem 0 0', letterSpacing: '0.05em', lineHeight: 1 }}>{parseFloat(p.total).toFixed(2)} €</p>
+                                                </div>
+                                            </div>
+
+                                            {dias && <p style={{ fontSize: '0.78rem', color: dias.color, marginBottom: '1rem', fontWeight: 600 }}>⏱ {dias.texto}</p>}
+
+                                            {p.estado === 'aceptado_cliente' && (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#60c060', fontSize: '0.82rem' }}>
+                                                    <span>✓</span><span>Has aceptado el presupuesto. Nos pondremos en contacto contigo para confirmar los detalles.</span>
+                                                </div>
+                                            )}
+                                            {p.estado === 'aceptado' && (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#60c060', fontSize: '0.82rem' }}>
+                                                    <span>✓</span><span>Presupuesto confirmado por Power Play. Tu evento está reservado.</span>
+                                                </div>
+                                            )}
+
+                                            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                                                {p.estado === 'pendiente' && (
+                                                    <>
+                                                        <button onClick={() => handleEstado(p.id_presupuesto, 'aceptado_cliente')} disabled={accionando === p.id_presupuesto}
+                                                            style={{ ...btnAmarillo, opacity: accionando === p.id_presupuesto ? 0.6 : 1 }}
+                                                            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                                                            onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                                                            Aceptar presupuesto
+                                                        </button>
+                                                        <button onClick={() => handleEstado(p.id_presupuesto, 'rechazado')} disabled={accionando === p.id_presupuesto}
+                                                            style={{ ...btnRojo, opacity: accionando === p.id_presupuesto ? 0.6 : 1 }}
+                                                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,68,68,0.2)'; e.currentTarget.style.color = '#ff4444' }}
+                                                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,68,68,0.12)'; e.currentTarget.style.color = '#ff6060' }}>
+                                                            Rechazar
+                                                        </button>
+                                                    </>
+                                                )}
+                                                <button onClick={() => generarPdfPresupuesto(p)} style={btnAmarillo}
+                                                    onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                                                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                                                    ↓ Descargar presupuesto
+                                                </button>
+                                            </div>
+
+                                            {p.factura && (
+                                                <div style={{
+                                                    marginTop: '1.1rem', borderTop: '1px solid rgba(255,230,0,0.12)',
+                                                    paddingTop: '1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                                                }}>
+                                                    <div>
+                                                        <p style={labelStyle}>Factura generada</p>
+                                                        <p style={{ color: '#fff', fontFamily: 'Bebas Neue', fontSize: '1.05rem', letterSpacing: '0.08em', margin: '0.25rem 0 0.1rem' }}>
+                                                            {p.factura.numero_factura}
+                                                        </p>
+                                                        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem', margin: 0 }}>
+                                                            {parseFloat(p.factura.total).toFixed(2)} € · {formatearFecha(p.factura.fecha_emision)}
+                                                        </p>
+                                                    </div>
+                                                    <button onClick={() => { setFiltroTipo('facturas'); setFiltroEstado('todos') }}
+                                                        style={btnAmarillo}
+                                                        onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                                                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                                                        Ver factura →
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </>
+                )}
+
+                {/* ── FACTURAS ─────────────────────────────────────────────────── */}
+                {!cargando && filtroTipo === 'facturas' && (
+                    <>
+                        {facturas.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: '4rem 0' }}>
+                                <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '1rem' }}>Aún no tienes ninguna factura</p>
+                                <p style={{ color: 'rgba(255,255,255,0.12)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                                    Las facturas se generan cuando Power Play confirma tu reserva
+                                </p>
                             </div>
-                        )
-                    })}
-                </div>
+                        )}
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {facturas.map(p => {
+                                const f = p.factura
+                                const pagada = f.estado_factura === 'pagada'
+                                return (
+                                    <div key={f.id_factura} style={{
+                                        background: '#1a1a1a',
+                                        border: '1px solid rgba(255,230,0,0.12)',
+                                        boxShadow: '0 0 30px rgba(255,230,0,0.06), 0 4px 24px rgba(0,0,0,0.4)',
+                                    }}>
+                                        <div style={{
+                                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                            padding: '1rem 1.5rem',
+                                            borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                            background: 'rgba(255,255,255,0.02)'
+                                        }}>
+                                            <div>
+                                                <p style={{ ...labelStyle, marginBottom: '0.3rem' }}>Factura</p>
+                                                <p style={{ fontFamily: 'Bebas Neue', fontSize: '1.3rem', letterSpacing: '0.1em', color: '#FFE600', margin: 0 }}>
+                                                    {f.numero_factura}
+                                                </p>
+                                                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', margin: '0.2rem 0 0' }}>
+                                                    Emitida el {formatearFecha(f.fecha_emision)}
+                                                </p>
+                                            </div>
+                                            {badgeEstadoFactura(f.estado_factura)}
+                                        </div>
+
+                                        <div style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
+                                            <div>
+                                                <p style={labelStyle}>Cliente</p>
+                                                <p style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600, margin: '0.25rem 0 0' }}>
+                                                    {p.reserva?.cliente_nombre || '—'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p style={labelStyle}>Fecha del evento</p>
+                                                <p style={{ color: '#fff', fontSize: '0.88rem', margin: '0.25rem 0 0' }}>
+                                                    {formatearSoloFecha(p.reserva?.fecha_inicio)}
+                                                </p>
+                                                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', margin: '0.1rem 0 0' }}>
+                                                    {p.reserva?.ubicacion || '—'}
+                                                </p>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginLeft: 'auto' }}>
+                                                <div style={{ textAlign: 'right' }}>
+                                                    <p style={labelStyle}>Total</p>
+                                                    <p style={{ color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '1.4rem', margin: '0.15rem 0 0', letterSpacing: '0.05em', lineHeight: 1 }}>
+                                                        {parseFloat(f.total).toFixed(2)} €
+                                                    </p>
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                                    <button onClick={() => generarPdfFactura(p)} style={btnAmarillo}
+                                                        onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                                                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                                                        ↓ Descargar
+                                                    </button>
+                                                    {pagada ? (
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#60c060', fontSize: '0.82rem', fontWeight: 600 }}>
+                                                            <span>✓</span><span>Ya pagada</span>
+                                                        </div>
+                                                    ) : (
+                                                        <button onClick={() => navigate(`/pago/${f.id_factura}`)} style={btnVerde}
+                                                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(96,192,96,0.22)'; e.currentTarget.style.color = '#80e080' }}
+                                                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(96,192,96,0.12)'; e.currentTarget.style.color = '#60c060' }}>
+                                                            Pagar
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     )
