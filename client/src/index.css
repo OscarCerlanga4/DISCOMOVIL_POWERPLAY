@@ -13,3 +13,7 @@ body {
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+.stripe-badge-container {
+    display: none !important;
+}

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import Inicio from './pages/Inicio'
@@ -11,8 +12,17 @@ import Register from './pages/Register'
 import { AuthProvider } from './contexts/AuthContext'
 import { CarritoProvider } from './contexts/CarritoContext'
 import MisPedidos from './pages/MisPedidos'
+import Pago from './pages/Pago'
 import MisDatos from './pages/MisDatos'
 import ActualizarPassword from './pages/ActualizarPassword'
+
+function ScrollToTop() {
+    const { pathname } = useLocation()
+    useEffect(() => {
+        window.scrollTo(0, 0)
+    }, [pathname])
+    return null
+}
 
 function AppContent() {
   const location = useLocation()
@@ -20,6 +30,8 @@ function AppContent() {
 
   return (
     <>
+      <ScrollToTop />
+      {!sinLayoutes && <Header />}
       {!sinLayoutes && <Header />}
       <Routes>
         <Route path="/" element={<Inicio />} />
@@ -30,6 +42,7 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/mis-pedidos" element={<MisPedidos />} />
+        <Route path="/pago/:id" element={<Pago />} />
         <Route path="/mis-datos" element={<MisDatos />} />
         <Route path="/actualizar-password" element={<ActualizarPassword />} />
       </Routes>

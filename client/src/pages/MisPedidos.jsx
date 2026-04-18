@@ -825,14 +825,8 @@ export default function MisPedidos() {
                                                         onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
                                                         ↓ Descargar
                                                     </button>
-                                                    {pagada ? (
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#60c060', fontSize: '0.82rem', fontWeight: 600 }}>
-                                                            <span>✓</span><span>Ya pagada</span>
-                                                        </div>
-                                                    ) : (
-                                                        <button onClick={() => navigate(`/pago/${f.id_factura}`)} style={btnVerde}
-                                                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(96,192,96,0.22)'; e.currentTarget.style.color = '#80e080' }}
-                                                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(96,192,96,0.12)'; e.currentTarget.style.color = '#60c060' }}>
+                                                    {!pagada && (
+                                                        <button onClick={() => navigate(`/pago/${f.id_factura}`)} style={btnVerde}>
                                                             Pagar
                                                         </button>
                                                     )}

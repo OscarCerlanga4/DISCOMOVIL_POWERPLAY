@@ -5,6 +5,10 @@ require('dotenv').config();
 const app = express();
 
 app.use(cors());
+
+const stripeWebhookRouter = require('./routes/stripeWebhook');
+app.use('/api/stripe/webhook', stripeWebhookRouter);
+
 app.use(express.json());
 
 const PORT = process.env.PORT || 3005;

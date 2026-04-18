@@ -142,4 +142,41 @@ const remove = (req, res) => {
         });
 };
 
-module.exports = { getAll, getById, create, update, remove };
+const crearIntencion = (req, res) => {
+    const { id_factura, importe } = req.body;
+
+    if (!id_factura || !importe) {
+        return res.status(400).send({ ok: false, error: 'Faltan datos' });
+    }
+
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    stripe.paymentIntents.create({
+        amount: Math.round(importe * 100),
+        currency: 'eur',
+        metadata: {
+            id_factura: String(id_factura),
+            id_usuario: String(req.user.id)
+        }
+    })
+        .then(paymentIntent => {
+            res.status(200).send({ ok: true, clientSecret: paymentIntent.client_secret });
+        })
+        .catch(err => {
+            res.status(500).send({ ok: false, error: err.message });
+        });
+};
+
+const getByFactura = (req, res) => {
+    supabase
+        .from('pago')
+        .select('*')
+        .eq('id_factura', req.params.id_factura)
+        .then(({ data, error }) => {
+            if (error) return res.status(500).send({ ok: false, error: error.message });
+            res.status(200).send({ ok: true, result: data });
+        })
+        .catch(() => res.status(500).send({ ok: false, error: 'Error al obtener los pagos' }));
+};
+
+module.exports = { getAll, getById, create, update, remove, crearIntencion, getByFactura };
