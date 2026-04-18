@@ -51,6 +51,9 @@ app.use('/api/auth', authsRouter);
 const disponibilidadRouter = require('./routes/disponibilidad');
 app.use('/api/disponibilidad', disponibilidadRouter);
 
+const eventosRouter = require('./routes/eventos');
+app.use('/api/eventos', eventosRouter);
+
 app.listen(PORT, ()=>{
     console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
