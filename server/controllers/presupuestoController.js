@@ -3,7 +3,8 @@ const { supabase } = require('../db/supabase');
 const getAll = (req, res) => {
     supabase
         .from('presupuesto')
-        .select('*')
+        .select('*, reserva(id_reserva, fecha_inicio, fecha_fin, ubicacion, cliente_nombre, cliente_email), detalle_presupuesto(*), factura(id_factura, estado_factura)')
+        .order('id_presupuesto', { ascending: false })
         .then(({ data, error }) => {
             if (error) {
                 res.status(500).send({ ok: false, error: error.message });

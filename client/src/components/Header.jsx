@@ -159,7 +159,9 @@ export default function Header() {
                     boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
                   }}>
                     {[
-                      { label: "Mis pedidos", to: "/mis-pedidos" },
+                      usuario?.rol === 'admin'
+                        ? { label: "Panel Admin", to: "/admin" }
+                        : { label: "Mis pedidos", to: "/mis-pedidos" },
                       { label: "Mis datos", to: "/mis-datos" },
                     ].map(({ label, to }) => (
                       <Link

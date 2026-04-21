@@ -15,6 +15,7 @@ import MisPedidos from './pages/MisPedidos'
 import Pago from './pages/Pago'
 import MisDatos from './pages/MisDatos'
 import ActualizarPassword from './pages/ActualizarPassword'
+import Admin from './pages/Admin'
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -45,6 +46,7 @@ function AppContent() {
         <Route path="/pago/:id" element={<Pago />} />
         <Route path="/mis-datos" element={<MisDatos />} />
         <Route path="/actualizar-password" element={<ActualizarPassword />} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
       {!sinLayoutes && <Footer />}
     </>
