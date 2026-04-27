@@ -9,7 +9,7 @@ app.use(cors());
 const stripeWebhookRouter = require('./routes/stripeWebhook');
 app.use('/api/stripe/webhook', stripeWebhookRouter);
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 const PORT = process.env.PORT || 3005;
 
@@ -57,6 +57,9 @@ app.use('/api/disponibilidad', disponibilidadRouter);
 
 const eventosRouter = require('./routes/eventos');
 app.use('/api/eventos', eventosRouter);
+
+const uploadRouter = require('./routes/uploads');
+app.use('/api/upload', uploadRouter);
 
 app.listen(PORT, ()=>{
     console.log(`Servidor escuchando en el puerto ${PORT}`);
