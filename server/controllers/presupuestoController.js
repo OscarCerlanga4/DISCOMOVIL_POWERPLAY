@@ -172,7 +172,7 @@ const remove = (req, res) => {
 const getMisPresupuestos = (req, res) => {
     supabase
         .from('presupuesto')
-        .select('*, reserva(id_usuario, fecha_inicio, fecha_fin, ubicacion, cliente_nombre, cliente_email, cliente_dni_nie_cif, cliente_direccion, cliente_codigo_postal, cliente_localidad, cliente_provincia), detalle_presupuesto(*), factura(*)')
+        .select('*, reserva(id_usuario, fecha_inicio, fecha_fin, ubicacion, cliente_nombre, cliente_email, cliente_telefono, cliente_dni_nie_cif, cliente_direccion, cliente_codigo_postal, cliente_localidad, cliente_provincia), detalle_presupuesto(*), factura(*)')
         .then(({ data, error }) => {
             if (error) {
                 return res.status(500).send({ ok: false, error: error.message });

@@ -14,6 +14,7 @@ export default function MisPedidos() {
     const [accionando, setAccionando] = useState(null)
     const [filtroTipo, setFiltroTipo] = useState('presupuestos')
     const [filtroEstado, setFiltroEstado] = useState('todos')
+    const [facturaDestacada, setFacturaDestacada] = useState(null)
 
     useEffect(() => {
         if (!usuario) { navigate('/login'); return }
@@ -31,6 +32,16 @@ export default function MisPedidos() {
             .catch(() => setError('Error al cargar los datos'))
             .finally(() => setCargando(false))
     }, [usuario])
+
+    useEffect(() => {
+        if (!facturaDestacada) return
+        const timerScroll = setTimeout(() => {
+            const el = document.getElementById(`factura-${facturaDestacada}`)
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 100)
+        const timerLimpiar = setTimeout(() => setFacturaDestacada(null), 2500)
+        return () => { clearTimeout(timerScroll); clearTimeout(timerLimpiar) }
+    }, [facturaDestacada])
 
     const presupuestosFiltrados = presupuestos
         .filter(p => filtroEstado === 'todos' || p.estado === filtroEstado)
@@ -272,7 +283,7 @@ export default function MisPedidos() {
         const cpCliente = [presupuesto.reserva?.cliente_codigo_postal, presupuesto.reserva?.cliente_localidad, presupuesto.reserva?.cliente_provincia].filter(Boolean).join(', ')
         doc.text(cpCliente, margen + 95, y + 13)
         doc.text(`Email: ${presupuesto.reserva?.cliente_email || ''}`, margen + 95, y + 19)
-
+        doc.text(`Tel: ${presupuesto.reserva?.cliente_telefono || ''}`, margen + 95, y + 25)
         y += 40
 
         // Evento
@@ -407,7 +418,7 @@ export default function MisPedidos() {
         const cpCliente = [presupuesto.reserva?.cliente_codigo_postal, presupuesto.reserva?.cliente_localidad, presupuesto.reserva?.cliente_provincia].filter(Boolean).join(', ')
         doc.text(cpCliente, margen + 95, y + 13)
         doc.text(`Email: ${presupuesto.reserva?.cliente_email || ''}`, margen + 95, y + 19)
-
+        doc.text(`Tel: ${presupuesto.reserva?.cliente_telefono || ''}`, margen + 95, y + 25)
         y += 40
 
         // Evento
@@ -530,7 +541,7 @@ export default function MisPedidos() {
                         const activo = filtroTipo === tab.valor
                         return (
                             <button key={tab.valor}
-                                onClick={() => { setFiltroTipo(tab.valor); setFiltroEstado('todos') }}
+                                onClick={() => { setFiltroTipo(tab.valor); setFiltroEstado('todos'); window.scrollTo(0, 0) }}
                                 style={{
                                     background: 'none', border: 'none', cursor: 'pointer',
                                     fontFamily: 'Bebas Neue', fontSize: '1.05rem', letterSpacing: '0.12em',
@@ -740,7 +751,7 @@ export default function MisPedidos() {
                                                             {parseFloat(p.factura.total).toFixed(2)} € · {formatearFecha(p.factura.fecha_emision)}
                                                         </p>
                                                     </div>
-                                                    <button onClick={() => { setFiltroTipo('facturas'); setFiltroEstado('todos') }}
+                                                    <button onClick={() => { setFiltroTipo('facturas'); setFiltroEstado('todos'); setFacturaDestacada(p.factura.id_factura) }}
                                                         style={btnAmarillo}
                                                         onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
                                                         onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
@@ -773,10 +784,11 @@ export default function MisPedidos() {
                                 const f = p.factura
                                 const pagada = f.estado_factura === 'pagada'
                                 return (
-                                    <div key={f.id_factura} style={{
+                                    <div key={f.id_factura} id={`factura-${f.id_factura}`} style={{
                                         background: '#1a1a1a',
-                                        border: '1px solid rgba(255,230,0,0.12)',
-                                        boxShadow: '0 0 30px rgba(255,230,0,0.06), 0 4px 24px rgba(0,0,0,0.4)',
+                                        border: facturaDestacada === f.id_factura ? '1px solid rgba(255,230,0,0.7)' : '1px solid rgba(255,230,0,0.12)',
+                                        boxShadow: facturaDestacada === f.id_factura ? '0 0 40px rgba(255,230,0,0.2), 0 4px 24px rgba(0,0,0,0.4)' : '0 0 30px rgba(255,230,0,0.06), 0 4px 24px rgba(0,0,0,0.4)',
+                                        transition: 'border 0.4s, box-shadow 0.4s',
                                     }}>
                                         <div style={{
                                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',

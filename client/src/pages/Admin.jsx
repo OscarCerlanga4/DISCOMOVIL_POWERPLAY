@@ -65,16 +65,24 @@ const btnAmarillo = {
     whiteSpace: 'nowrap', flexShrink: 0
 }
 
+const btnVerde = {
+    background: 'transparent', border: '1px solid rgba(96,192,96,0.4)', color: '#60c060',
+    fontFamily: 'Bebas Neue', fontSize: '0.85rem', letterSpacing: '0.12em',
+    padding: '0.55rem 1.1rem', cursor: 'pointer', transition: 'all 0.2s',
+    whiteSpace: 'nowrap', flexShrink: 0
+}
+
+const btnRojo = {
+    background: 'transparent', border: '1px solid rgba(255,68,68,0.4)', color: '#ff4444',
+    fontFamily: 'Bebas Neue', fontSize: '0.85rem', letterSpacing: '0.12em',
+    padding: '0.55rem 1.1rem', cursor: 'pointer', transition: 'all 0.2s',
+    whiteSpace: 'nowrap', flexShrink: 0
+}
+
 const inputStyle = {
     background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)',
     color: '#fff', padding: '0.75rem 1rem', fontSize: '0.9rem',
     outline: 'none', transition: 'border-color 0.2s', width: '100%', boxSizing: 'border-box'
-}
-
-const selectStyle = {
-    background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)',
-    color: '#fff', padding: '0.65rem 1rem', fontSize: '0.9rem',
-    outline: 'none', width: '100%', cursor: 'pointer', boxSizing: 'border-box',
 }
 
 // ── Badge ──────────────────────────────────────────────────────────────────────
@@ -187,6 +195,7 @@ const generarPdfPresupuesto = async (presupuesto, empresa) => {
     const cpCliente = [presupuesto.reserva?.cliente_codigo_postal, presupuesto.reserva?.cliente_localidad, presupuesto.reserva?.cliente_provincia].filter(Boolean).join(', ')
     doc.text(cpCliente, margen + 95, y + 13)
     doc.text(`Email: ${presupuesto.reserva?.cliente_email || ''}`, margen + 95, y + 19)
+    doc.text(`Tel: ${presupuesto.reserva?.cliente_telefono || ''}`, margen + 95, y + 25)
     y += 40
     const colIzq = margen, colDer = margen + 95
     doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(130, 130, 130)
@@ -258,6 +267,7 @@ const generarPdfFactura = async (factura, empresa) => {
     const cpCliente = [r?.cliente_codigo_postal, r?.cliente_localidad, r?.cliente_provincia].filter(Boolean).join(', ')
     doc.text(cpCliente, margen + 95, y + 13)
     doc.text(`Email: ${r?.cliente_email || ''}`, margen + 95, y + 19)
+    doc.text(`Tel: ${r?.cliente_telefono || ''}`, margen + 95, y + 25)
     y += 40
     const colIzq = margen, colDer = margen + 95
     doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(130, 130, 130)
@@ -345,80 +355,15 @@ function FiltroTabs({ filtros, activo, onChange, contar }) {
     )
 }
 
-// ── Modal editar ──────────────────────────────────────────────────────────────
-function ModalEditar({ titulo, campos, valores, onChange, onGuardar, onCerrar, guardando }) {
-    return (
-        <div
-            onClick={e => { if (e.target === e.currentTarget) onCerrar() }}
-            style={{
-                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
-                backdropFilter: 'blur(4px)', zIndex: 1000,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: '1.5rem', animation: 'fadeIn 0.2s ease',
-            }}
-        >
-            <style>{`@keyframes fadeIn{from{opacity:0}to{opacity:1}} @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`}</style>
-            <div style={{
-                background: '#1a1a1a', border: '1px solid rgba(255,230,0,0.25)',
-                boxShadow: '0 24px 80px rgba(0,0,0,0.8)',
-                padding: '2rem', width: '100%', maxWidth: '420px',
-                display: 'flex', flexDirection: 'column', gap: '1.25rem',
-                animation: 'slideUp 0.22s ease',
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2 style={{ fontFamily: 'Bebas Neue', fontSize: '1.5rem', letterSpacing: '0.1em', color: '#fff', margin: 0 }}>
-                        {titulo}
-                    </h2>
-                    <button onClick={onCerrar}
-                        style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: '1.5rem', lineHeight: 1, padding: '0.25rem', transition: 'color 0.2s' }}
-                        onMouseEnter={e => e.currentTarget.style.color = '#fff'}
-                        onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
-                    >×</button>
-                </div>
-
-                {campos.map(c => (
-                    <div key={c.key}>
-                        <p style={{ ...LABEL, marginBottom: '0.5rem' }}>{c.label}</p>
-                        <select
-                            value={valores[c.key] || ''}
-                            onChange={e => onChange(c.key, e.target.value)}
-                            style={selectStyle}
-                        >
-                            {c.opciones.map(o => (
-                                <option key={o.value} value={o.value}>{o.label}</option>
-                            ))}
-                        </select>
-                    </div>
-                ))}
-
-                <button
-                    onClick={onGuardar}
-                    disabled={guardando}
-                    style={{
-                        ...btnAmarillo, width: '100%', padding: '0.9rem',
-                        fontSize: '1.05rem', marginTop: '0.25rem',
-                        opacity: guardando ? 0.7 : 1,
-                        cursor: guardando ? 'not-allowed' : 'pointer',
-                    }}
-                >
-                    {guardando ? 'Guardando...' : 'Guardar cambios'}
-                </button>
-            </div>
-        </div>
-    )
-}
-
 // ── Sección Presupuestos ──────────────────────────────────────────────────────
-function SeccionPresupuestos() {
+function SeccionPresupuestos({ onVerFactura }) {
     const [presupuestos, setPresupuestos] = useState([])
     const [empresa, setEmpresa] = useState(null)
     const [cargando, setCargando] = useState(true)
     const [filtro, setFiltro] = useState('todos')
     const [busqueda, setBusqueda] = useState('')
     const [expandido, setExpandido] = useState(null)
-    const [editando, setEditando] = useState(null)
-    const [valoresEdit, setValoresEdit] = useState({})
-    const [guardandoEdit, setGuardandoEdit] = useState(false)
+    const [cambiando, setCambiando] = useState(null)
     const token = localStorage.getItem('token')
 
     const cargar = () => {
@@ -436,26 +381,16 @@ function SeccionPresupuestos() {
 
     useEffect(() => { cargar() }, [])
 
-    const abrirEditar = (p) => {
-        setEditando(p)
-        setValoresEdit({ estado: p.estado })
-    }
-
-    const guardarEdicion = () => {
-        setGuardandoEdit(true)
-        fetch(`/api/presupuestos/${editando.id_presupuesto}`, {
+    const cambiarEstado = (p, estado) => {
+        setCambiando(p.id_presupuesto)
+        fetch(`/api/presupuestos/${p.id_presupuesto}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify(valoresEdit)
+            body: JSON.stringify({ estado })
         })
             .then(r => r.json())
-            .then(data => {
-                if (data.ok) {
-                    setEditando(null)
-                    cargar()
-                }
-            })
-            .finally(() => setGuardandoEdit(false))
+            .then(data => { if (data.ok) cargar() })
+            .finally(() => setCambiando(null))
     }
 
     const contar = (id) => id === 'todos' ? presupuestos.length : presupuestos.filter(p => p.estado === id).length
@@ -478,26 +413,6 @@ function SeccionPresupuestos() {
 
     return (
         <div>
-            {editando && (
-                <ModalEditar
-                    titulo={`Editar presupuesto #${String(editando.id_presupuesto).padStart(4, '0')}`}
-                    campos={[{
-                        key: 'estado', label: 'Estado',
-                        opciones: [
-                            { value: 'pendiente', label: 'Pendiente' },
-                            { value: 'aceptado_cliente', label: 'Aceptado por cliente' },
-                            { value: 'aceptado', label: 'Aceptado' },
-                            { value: 'rechazado', label: 'Rechazado' },
-                        ]
-                    }]}
-                    valores={valoresEdit}
-                    onChange={(key, val) => setValoresEdit(prev => ({ ...prev, [key]: val }))}
-                    onGuardar={guardarEdicion}
-                    onCerrar={() => setEditando(null)}
-                    guardando={guardandoEdit}
-                />
-            )}
-
             <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar por cliente, ubicación, fecha, nº..." />
             <FiltroTabs filtros={FILTROS_PRES} activo={filtro} onChange={setFiltro} contar={contar} />
 
@@ -509,6 +424,8 @@ function SeccionPresupuestos() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {filtrados.map(p => {
                         const abierto = expandido === p.id_presupuesto
+                        const procesando = cambiando === p.id_presupuesto
+                        const puedeActuar = p.estado === 'pendiente' || p.estado === 'aceptado_cliente'
                         return (
                             <div key={p.id_presupuesto} style={{ background: '#141414', borderLeft: `3px solid ${ACCENT_PRES[p.estado] || 'rgba(255,255,255,0.1)'}` }}>
                                 <div style={{ padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
@@ -534,12 +451,6 @@ function SeccionPresupuestos() {
                                             <p style={LABEL}>Estado</p>
                                             <div style={{ marginTop: '0.2rem' }}><Badge estado={p.estado} mapa={BADGE_PRES} /></div>
                                         </div>
-                                        {p.factura?.length > 0 && (
-                                            <div>
-                                                <p style={LABEL}>Factura</p>
-                                                <p style={{ color: '#60c060', margin: '0.2rem 0 0', fontSize: '0.8rem', fontWeight: 700 }}>Generada</p>
-                                            </div>
-                                        )}
                                     </div>
                                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
                                         <button onClick={() => setExpandido(abierto ? null : p.id_presupuesto)}
@@ -548,18 +459,43 @@ function SeccionPresupuestos() {
                                             onMouseLeave={e => e.currentTarget.style.opacity = abierto ? '0.75' : '1'}>
                                             {abierto ? 'Cerrar ▲' : 'Ver ▼'}
                                         </button>
-                                        <button onClick={() => abrirEditar(p)}
-                                            style={{ background: 'transparent', border: '1px solid rgba(255,230,0,0.35)', color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '0.85rem', letterSpacing: '0.12em', padding: '0.55rem 1.1rem', cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap', flexShrink: 0 }}
-                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,230,0,0.08)'}
-                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                        >
-                                            Editar
-                                        </button>
+                                        {puedeActuar && (
+                                            <>
+                                                <button
+                                                    onClick={() => cambiarEstado(p, 'aceptado')}
+                                                    disabled={procesando}
+                                                    style={{ ...btnVerde, opacity: procesando ? 0.5 : 1, cursor: procesando ? 'not-allowed' : 'pointer' }}
+                                                    onMouseEnter={e => { if (!procesando) e.currentTarget.style.background = 'rgba(96,192,96,0.08)' }}
+                                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    {procesando ? '...' : 'Aceptar'}
+                                                </button>
+                                                <button
+                                                    onClick={() => cambiarEstado(p, 'rechazado')}
+                                                    disabled={procesando}
+                                                    style={{ ...btnRojo, opacity: procesando ? 0.5 : 1, cursor: procesando ? 'not-allowed' : 'pointer' }}
+                                                    onMouseEnter={e => { if (!procesando) e.currentTarget.style.background = 'rgba(255,68,68,0.08)' }}
+                                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    Rechazar
+                                                </button>
+                                            </>
+                                        )}
                                         <button onClick={() => generarPdfPresupuesto(p, empresa)} style={btnAmarillo}
                                             onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
                                             onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
                                             PDF
                                         </button>
+                                        {p.factura != null && (
+                                            <button
+                                                onClick={() => onVerFactura(p.factura.id_factura)}
+                                                style={btnVerde}
+                                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(96,192,96,0.08)'}
+                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                                            >
+                                                Ver factura ↗
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
@@ -625,16 +561,13 @@ function SeccionPresupuestos() {
 }
 
 // ── Sección Facturas ──────────────────────────────────────────────────────────
-function SeccionFacturas() {
+function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
     const [facturas, setFacturas] = useState([])
     const [empresa, setEmpresa] = useState(null)
     const [cargando, setCargando] = useState(true)
     const [filtro, setFiltro] = useState('todos')
     const [busqueda, setBusqueda] = useState('')
     const [expandido, setExpandido] = useState(null)
-    const [editando, setEditando] = useState(null)
-    const [valoresEdit, setValoresEdit] = useState({})
-    const [guardandoEdit, setGuardandoEdit] = useState(false)
     const token = localStorage.getItem('token')
 
     const cargar = () => {
@@ -652,29 +585,17 @@ function SeccionFacturas() {
 
     useEffect(() => { cargar() }, [])
 
-    const abrirEditar = (f) => {
-        setEditando(f)
-        setValoresEdit({ estado_factura: f.estado_factura || 'pendiente' })
-    }
-
-    const guardarEdicion = () => {
-        setGuardandoEdit(true)
-        fetch(`/api/facturas/${editando.id_factura}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify(valoresEdit)
-        })
-            .then(r => r.json())
-            .then(data => {
-                if (data.ok) {
-                    setFacturas(prev => prev.map(f =>
-                        f.id_factura === editando.id_factura ? { ...f, ...valoresEdit } : f
-                    ))
-                    setEditando(null)
-                }
-            })
-            .finally(() => setGuardandoEdit(false))
-    }
+    useEffect(() => {
+        if (!facturaDestacada || facturas.length === 0) return
+        const timerScroll = setTimeout(() => {
+            const el = document.getElementById(`factura-admin-${facturaDestacada}`)
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 100)
+        const timerLimpiar = setTimeout(() => {
+            if (onLimpiarDestacada) onLimpiarDestacada()
+        }, 2500)
+        return () => { clearTimeout(timerScroll); clearTimeout(timerLimpiar) }
+    }, [facturaDestacada, facturas])
 
     const contar = (id) => id === 'todos' ? facturas.length : facturas.filter(f => (f.estado_factura || 'pendiente') === id).length
 
@@ -697,27 +618,6 @@ function SeccionFacturas() {
 
     return (
         <div>
-            {editando && (
-                <ModalEditar
-                    titulo={`Editar ${editando.numero_factura}`}
-                    campos={[{
-                        key: 'estado_factura', label: 'Estado de pago',
-                        opciones: [
-                            { value: 'pendiente', label: 'Pendiente' },
-                            { value: 'pagada', label: 'Pagada' },
-                            { value: 'efectivo', label: 'Efectivo' },
-                            { value: 'transferencia', label: 'Transferencia' },
-                            { value: 'tarjeta', label: 'Tarjeta' },
-                        ]
-                    }]}
-                    valores={valoresEdit}
-                    onChange={(key, val) => setValoresEdit(prev => ({ ...prev, [key]: val }))}
-                    onGuardar={guardarEdicion}
-                    onCerrar={() => setEditando(null)}
-                    guardando={guardandoEdit}
-                />
-            )}
-
             <Buscador value={busqueda} onChange={setBusqueda} placeholder="Buscar por nº, cliente, ubicación, fecha..." />
             <FiltroTabs filtros={FILTROS_FACT} activo={filtro} onChange={setFiltro} contar={contar} />
 
@@ -731,8 +631,15 @@ function SeccionFacturas() {
                         const r = f.presupuesto?.reserva
                         const abierto = expandido === f.id_factura
                         const estado = f.estado_factura || 'pendiente'
+                        const destacada = facturaDestacada === f.id_factura
                         return (
-                            <div key={f.id_factura} style={{ background: '#141414', borderLeft: `3px solid ${ACCENT_FACT[estado] || '#FFE600'}` }}>
+                            <div key={f.id_factura} id={`factura-admin-${f.id_factura}`} style={{
+                                background: '#141414',
+                                borderLeft: `3px solid ${ACCENT_FACT[estado] || '#FFE600'}`,
+                                outline: destacada ? '1px solid rgba(255,230,0,0.7)' : 'none',
+                                boxShadow: destacada ? '0 0 40px rgba(255,230,0,0.2), 0 4px 24px rgba(0,0,0,0.4)' : 'none',
+                                transition: 'outline 0.4s, box-shadow 0.4s',
+                            }}>
                                 <div style={{ padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
                                     <div style={{ flex: 1, display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'flex-start', minWidth: 0 }}>
                                         <div>
@@ -769,13 +676,6 @@ function SeccionFacturas() {
                                             onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
                                             onMouseLeave={e => e.currentTarget.style.opacity = abierto ? '0.75' : '1'}>
                                             {abierto ? 'Cerrar ▲' : 'Ver ▼'}
-                                        </button>
-                                        <button onClick={() => abrirEditar(f)}
-                                            style={{ background: 'transparent', border: '1px solid rgba(255,230,0,0.35)', color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '0.85rem', letterSpacing: '0.12em', padding: '0.55rem 1.1rem', cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap', flexShrink: 0 }}
-                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,230,0,0.08)'}
-                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                        >
-                                            Editar
                                         </button>
                                         <button onClick={() => generarPdfFactura(f, empresa)} style={btnAmarillo}
                                             onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
@@ -1003,10 +903,20 @@ export default function Admin() {
     const { usuario } = useAuth()
     const navigate = useNavigate()
     const [seccionActiva, setSeccionActiva] = useState('presupuestos')
+    const [facturaDestacada, setFacturaDestacada] = useState(null)
+
+    const irAFactura = (idFactura) => {
+        setFacturaDestacada(idFactura)
+        setSeccionActiva('facturas')
+    }
 
     useEffect(() => {
         if (usuario && usuario.rol !== 'admin') navigate('/')
     }, [usuario])
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }, [seccionActiva])
 
     if (!usuario || usuario.rol !== 'admin') return null
 
@@ -1045,8 +955,8 @@ export default function Admin() {
                     <h1 style={{ fontFamily: 'Bebas Neue', fontSize: '2.8rem', letterSpacing: '0.08em', color: '#fff', margin: 0, lineHeight: 1 }}>{seccionLabel}</h1>
                 </div>
                 <div style={{ flex: 1, padding: '2.5rem 3.5rem' }}>
-                    {seccionActiva === 'presupuestos' && <SeccionPresupuestos />}
-                    {seccionActiva === 'facturas' && <SeccionFacturas />}
+                    {seccionActiva === 'presupuestos' && <SeccionPresupuestos onVerFactura={irAFactura} />}
+                    {seccionActiva === 'facturas' && <SeccionFacturas facturaDestacada={facturaDestacada} onLimpiarDestacada={() => setFacturaDestacada(null)} />}
                     {seccionActiva === 'usuarios' && <SeccionUsuarios />}
                     {seccionActiva === 'empresa' && <SeccionEmpresa />}
                 </div>

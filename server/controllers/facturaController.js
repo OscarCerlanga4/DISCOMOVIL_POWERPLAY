@@ -4,6 +4,7 @@ const getAll = (req, res) => {
     supabase
         .from('factura')
         .select('*, presupuesto(id_presupuesto, base_imponible, detalle_presupuesto(*), reserva(cliente_nombre, cliente_email, cliente_dni_nie_cif, cliente_telefono, cliente_direccion, cliente_codigo_postal, cliente_localidad, cliente_provincia, fecha_inicio, fecha_fin, ubicacion))')
+        .order('id_factura', { ascending: false })
         .then(({ data, error }) => {
             if (error) {
                 res.status(500).send({ ok: false, error: error.message });
