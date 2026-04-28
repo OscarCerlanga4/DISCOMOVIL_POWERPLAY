@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -16,6 +16,7 @@ import Pago from './pages/Pago'
 import MisDatos from './pages/MisDatos'
 import ActualizarPassword from './pages/ActualizarPassword'
 import Admin from './pages/Admin'
+import { useAuth } from './contexts/AuthContext'
 
 function ScrollToTop() {
     const { pathname } = useLocation()
@@ -25,6 +26,13 @@ function ScrollToTop() {
     return null
 }
 
+function RutaAdmin({ children }) {
+  const { usuario } = useAuth()
+  if (!usuario) return <Navigate to="/login" />
+  if (usuario.rol !== 'admin') return <Navigate to="/" />
+  return children
+}
+
 function AppContent() {
   const location = useLocation()
   const sinLayoutes = ['/login', '/register', '/actualizar-password'].includes(location.pathname)
@@ -32,7 +40,6 @@ function AppContent() {
   return (
     <>
       <ScrollToTop />
-      {!sinLayoutes && <Header />}
       {!sinLayoutes && <Header />}
       <Routes>
         <Route path="/" element={<Inicio />} />
@@ -46,7 +53,8 @@ function AppContent() {
         <Route path="/pago/:id" element={<Pago />} />
         <Route path="/mis-datos" element={<MisDatos />} />
         <Route path="/actualizar-password" element={<ActualizarPassword />} />
-        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin" element={<RutaAdmin><Admin /></RutaAdmin>} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
       {!sinLayoutes && <Footer />}
     </>
