@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useCarrito } from '../contexts/CarritoContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -9,24 +9,24 @@ export default function Carrito() {
     const navigate = useNavigate()
     const [cargando, setCargando] = useState(false)
     const [error, setError] = useState(null)
+    const [clienteAdmin, setClienteAdmin] = useState({ nombre: '', email: '', telefono: '', dni: '', direccion: '', cp: '', localidad: '', provincia: '' })
+    const [mostrarModal, setMostrarModal] = useState(false)
     const [sugerencias, setSugerencias] = useState([])
     const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
     const debounceRef = useRef(null)
+
+    const clienteRelleno = Object.values(clienteAdmin).every(v => v.trim() !== '')
 
     const buscarDirecciones = (valor) => {
         setUbicacion(valor)
         if (debounceRef.current) clearTimeout(debounceRef.current)
         if (valor.length < 3) { setSugerencias([]); return }
-
         debounceRef.current = setTimeout(() => {
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(valor)}&countrycodes=es&limit=5&addressdetails=1`, {
                 headers: { 'Accept-Language': 'es' }
             })
                 .then(r => r.json())
-                .then(data => {
-                    setSugerencias(data)
-                    setMostrarSugerencias(true)
-                })
+                .then(data => { setSugerencias(data); setMostrarSugerencias(true) })
                 .catch(() => setSugerencias([]))
         }, 350)
     }
@@ -42,6 +42,11 @@ export default function Carrito() {
         if (!fechaInicio || !fechaFin) { setError('Selecciona las fechas del evento'); return }
         if (!ubicacion) { setError('Introduce la ubicación del evento'); return }
         if (items.length === 0) { setError('El carrito está vacío'); return }
+        if (usuario.rol === 'admin' && !clienteRelleno) {
+            setError('Añade los datos del cliente antes de confirmar')
+            return
+        }
+
         setError(null)
         setCargando(true)
 
@@ -49,22 +54,35 @@ export default function Carrito() {
         const djsIds = items.filter(i => i.tabla === 'dj').map(i => i._id)
         const equiposItems = items.filter(i => i.tabla === 'equipo').map(i => ({ id_equipo: i._id, cantidad: i.cantidad }))
 
+        const body = {
+            fecha_inicio: fechaInicio,
+            fecha_fin: fechaFin,
+            ubicacion,
+            djs: djsIds,
+            equipos: equiposItems
+        }
+
+        if (usuario.rol === 'admin') {
+            body.cliente_nombre = clienteAdmin.nombre
+            body.cliente_email = clienteAdmin.email
+            body.cliente_telefono = clienteAdmin.telefono
+            body.cliente_dni_nie_cif = clienteAdmin.dni
+            body.cliente_direccion = clienteAdmin.direccion
+            body.cliente_codigo_postal = clienteAdmin.cp
+            body.cliente_localidad = clienteAdmin.localidad
+            body.cliente_provincia = clienteAdmin.provincia
+        }
+
         fetch('/api/reservas', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({
-                fecha_inicio: fechaInicio,
-                fecha_fin: fechaFin,
-                ubicacion,
-                djs: djsIds,
-                equipos: equiposItems
-            })
+            body: JSON.stringify(body)
         })
             .then(r => r.json())
             .then(data => {
                 if (data.ok) {
                     vaciar()
-                    navigate('/mis-pedidos')
+                    navigate(usuario.rol === 'admin' ? '/admin' : '/mis-pedidos')
                 } else {
                     setError(data.error)
                 }
@@ -74,7 +92,7 @@ export default function Carrito() {
     }
 
     const inputStyle = {
-        background: '#141414',
+        background: '#0d0d0d',
         border: '1px solid rgba(255,255,255,0.1)',
         color: '#fff',
         padding: '0.75rem 1rem',
@@ -82,6 +100,7 @@ export default function Carrito() {
         outline: 'none',
         width: '100%',
         transition: 'border-color 0.2s',
+        boxSizing: 'border-box',
     }
 
     const labelStyle = {
@@ -101,17 +120,144 @@ export default function Carrito() {
         return 'DJ'
     }
 
+    const campoModal = (campo, label, tipo = 'text') => (
+        <div>
+            <label style={{ ...labelStyle, color: 'rgba(255,255,255,0.45)' }}>{label}</label>
+            <input
+                type={tipo}
+                value={clienteAdmin[campo]}
+                onChange={e => setClienteAdmin(prev => ({ ...prev, [campo]: e.target.value }))}
+                style={inputStyle}
+                onFocus={e => e.target.style.borderColor = '#FFE600'}
+                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+            />
+        </div>
+    )
+
+    const resumenInputStyle = {
+        background: '#141414',
+        border: '1px solid rgba(255,255,255,0.1)',
+        color: '#fff',
+        padding: '0.75rem 1rem',
+        fontSize: '0.9rem',
+        outline: 'none',
+        width: '100%',
+        transition: 'border-color 0.2s',
+    }
+
     return (
         <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
+
+            {/* Modal datos cliente */}
+            {mostrarModal && (
+                <div
+                    onClick={e => { if (e.target === e.currentTarget) setMostrarModal(false) }}
+                    style={{
+                        position: 'fixed', inset: 0,
+                        background: 'rgba(0,0,0,0.75)',
+                        backdropFilter: 'blur(4px)',
+                        zIndex: 1000,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '1.5rem',
+                        animation: 'fadeIn 0.2s ease',
+                    }}
+                >
+                    <style>{`
+                        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+                        @keyframes slideUp { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: translateY(0) } }
+                    `}</style>
+                    <div style={{
+                        background: '#1a1a1a',
+                        border: '1px solid rgba(255,230,0,0.25)',
+                        boxShadow: '0 24px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,230,0,0.05)',
+                        padding: '2rem',
+                        width: '100%',
+                        maxWidth: '560px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1.25rem',
+                        animation: 'slideUp 0.25s ease',
+                    }}>
+                        {/* Cabecera modal */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <h2 style={{
+                                    fontFamily: 'Bebas Neue', fontSize: '1.8rem',
+                                    letterSpacing: '0.1em', color: '#fff', margin: '0 0 0.2rem'
+                                }}>
+                                    Datos del <span style={{ color: '#FFE600' }}>cliente</span>
+                                </h2>
+                                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem', margin: 0 }}>
+                                    Todos los campos son obligatorios
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setMostrarModal(false)}
+                                style={{
+                                    background: 'transparent', border: 'none',
+                                    color: 'rgba(255,255,255,0.3)', cursor: 'pointer',
+                                    fontSize: '1.5rem', lineHeight: 1, padding: '0.25rem',
+                                    transition: 'color 0.2s',
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
+                            >×</button>
+                        </div>
+
+                        {/* Fila 1 */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                            {campoModal('nombre', 'Nombre completo')}
+                            {campoModal('dni', 'DNI / NIE / CIF')}
+                        </div>
+
+                        {/* Fila 2 */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                            {campoModal('email', 'Email', 'email')}
+                            {campoModal('telefono', 'Teléfono', 'tel')}
+                        </div>
+
+                        {/* Fila 3 */}
+                        {campoModal('direccion', 'Dirección')}
+
+                        {/* Fila 4 */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr', gap: '0.75rem' }}>
+                            {campoModal('cp', 'C. Postal')}
+                            {campoModal('localidad', 'Localidad')}
+                            {campoModal('provincia', 'Provincia')}
+                        </div>
+
+                        {/* Botón guardar */}
+                        <button
+                            onClick={() => {
+                                if (!clienteRelleno) return
+                                setMostrarModal(false)
+                            }}
+                            disabled={!clienteRelleno}
+                            style={{
+                                marginTop: '0.25rem',
+                                background: clienteRelleno ? '#FFE600' : 'rgba(255,255,255,0.05)',
+                                border: clienteRelleno ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                                color: clienteRelleno ? '#000' : 'rgba(255,255,255,0.3)',
+                                fontFamily: 'Bebas Neue', fontSize: '1.1rem', letterSpacing: '0.15em',
+                                padding: '0.9rem', cursor: clienteRelleno ? 'pointer' : 'not-allowed',
+                                transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={e => { if (clienteRelleno) e.currentTarget.style.transform = 'translateY(-2px)' }}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                        >
+                            {clienteRelleno ? 'Guardar datos del cliente' : 'Rellena todos los campos'}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Cabecera */}
             <div style={{ padding: '3rem 4rem 2.5rem' }}>
                 <h1 style={{
-                    fontFamily: 'Bebas Neue',
-                    fontSize: '3.5rem',
-                    letterSpacing: '0.1em',
-                    color: '#fff',
-                    marginBottom: '0.25rem'
+                    fontFamily: 'Bebas Neue', fontSize: '3.5rem',
+                    letterSpacing: '0.1em', color: '#fff', marginBottom: '0.25rem'
                 }}>
                     Tu <span style={{ color: '#FFE600' }}>carrito</span>
                 </h1>
@@ -159,10 +305,7 @@ export default function Carrito() {
                                     }}
                                 >
                                     {/* Imagen */}
-                                    <div style={{
-                                        width: '120px', height: '80px', flexShrink: 0,
-                                        background: '#242424', overflow: 'hidden',
-                                    }}>
+                                    <div style={{ width: '120px', height: '80px', flexShrink: 0, background: '#242424', overflow: 'hidden' }}>
                                         {item.imagen_url ? (
                                             <img src={item.imagen_url} alt={item.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                         ) : (
@@ -178,15 +321,10 @@ export default function Carrito() {
                                             {item.nombre}
                                         </p>
                                         <span style={{
-                                            display: 'inline-block',
-                                            fontSize: '0.7rem',
-                                            fontWeight: 700,
-                                            letterSpacing: '0.1em',
-                                            textTransform: 'uppercase',
-                                            color: '#FFE600',
-                                            background: 'rgba(255,230,0,0.08)',
-                                            border: '1px solid rgba(255,230,0,0.2)',
-                                            padding: '0.2rem 0.55rem',
+                                            display: 'inline-block', fontSize: '0.7rem', fontWeight: 700,
+                                            letterSpacing: '0.1em', textTransform: 'uppercase',
+                                            color: '#FFE600', background: 'rgba(255,230,0,0.08)',
+                                            border: '1px solid rgba(255,230,0,0.2)', padding: '0.2rem 0.55rem',
                                         }}>
                                             {getBadgeLabel(item)}
                                         </span>
@@ -277,7 +415,7 @@ export default function Carrito() {
                                     type="datetime-local"
                                     value={fechaInicio}
                                     onChange={e => setFechaInicio(e.target.value)}
-                                    style={inputStyle}
+                                    style={resumenInputStyle}
                                     onFocus={e => e.target.style.borderColor = '#FFE600'}
                                     onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
                                 />
@@ -289,13 +427,13 @@ export default function Carrito() {
                                     value={fechaFin}
                                     min={fechaInicio}
                                     onChange={e => setFechaFin(e.target.value)}
-                                    style={inputStyle}
+                                    style={resumenInputStyle}
                                     onFocus={e => e.target.style.borderColor = '#FFE600'}
                                     onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
                                 />
                             </div>
 
-                            {/* Ubicación con Nominatim */}
+                            {/* Ubicación */}
                             <div style={{ position: 'relative' }}>
                                 <label style={labelStyle}>Ubicación del evento</label>
                                 <input
@@ -308,33 +446,24 @@ export default function Carrito() {
                                         e.target.style.borderColor = '#FFE600'
                                         if (sugerencias.length > 0) setMostrarSugerencias(true)
                                     }}
-                                    style={inputStyle}
+                                    style={resumenInputStyle}
                                 />
                                 {mostrarSugerencias && sugerencias.length > 0 && (
                                     <div style={{
-                                        position: 'absolute',
-                                        top: '100%',
-                                        left: 0,
-                                        right: 0,
-                                        background: '#141414',
-                                        border: '1px solid rgba(255,230,0,0.2)',
-                                        borderTop: 'none',
-                                        boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
-                                        zIndex: 100,
-                                        maxHeight: '220px',
-                                        overflowY: 'auto',
+                                        position: 'absolute', top: '100%', left: 0, right: 0,
+                                        background: '#141414', border: '1px solid rgba(255,230,0,0.2)',
+                                        borderTop: 'none', boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
+                                        zIndex: 100, maxHeight: '220px', overflowY: 'auto',
                                     }}>
                                         {sugerencias.map((lugar, i) => (
                                             <div
                                                 key={i}
                                                 onMouseDown={() => seleccionarDireccion(lugar)}
                                                 style={{
-                                                    padding: '0.65rem 1rem',
-                                                    fontSize: '0.82rem',
+                                                    padding: '0.65rem 1rem', fontSize: '0.82rem',
                                                     color: 'rgba(255,255,255,0.75)',
                                                     borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                                    cursor: 'pointer',
-                                                    transition: 'background 0.15s',
+                                                    cursor: 'pointer', transition: 'background 0.15s',
                                                 }}
                                                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,230,0,0.08)'}
                                                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -345,6 +474,44 @@ export default function Carrito() {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Botón datos cliente — solo admin */}
+                            {usuario?.rol === 'admin' && (
+                                <button
+                                    onClick={() => setMostrarModal(true)}
+                                    style={{
+                                        background: clienteRelleno ? 'rgba(34,197,94,0.08)' : 'rgba(255,230,0,0.06)',
+                                        border: clienteRelleno ? '1px solid rgba(34,197,94,0.4)' : '1px solid rgba(255,230,0,0.35)',
+                                        color: clienteRelleno ? 'rgb(34,197,94)' : '#FFE600',
+                                        cursor: 'pointer',
+                                        padding: '0.8rem 1rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.6rem',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 600,
+                                        letterSpacing: '0.03em',
+                                        transition: 'all 0.2s',
+                                        textAlign: 'left',
+                                        width: '100%',
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+                                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                                >
+                                    <span style={{ fontSize: '1rem' }}>{clienteRelleno ? '✓' : '+'}</span>
+                                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {clienteRelleno ? `Cliente: ${clienteAdmin.nombre}` : 'Añadir datos del cliente'}
+                                    </span>
+                                    {clienteRelleno && (
+                                        <span style={{
+                                            fontSize: '0.72rem', color: 'rgba(34,197,94,0.7)',
+                                            fontWeight: 400, flexShrink: 0
+                                        }}>
+                                            editar
+                                        </span>
+                                    )}
+                                </button>
+                            )}
 
                             <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
 
