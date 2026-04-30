@@ -11,13 +11,37 @@ export default function Contacto() {
   const [loading, setLoading] = useState(false)
   const [exito, setExito] = useState(false)
   const [error, setError] = useState(null)
+  const [errors, setErrors] = useState({
+    nombre: '', email: '', titulo_problema: '', tipo_contacto: '', descripcion: ''
+  })
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
+    setErrors(prev => ({ ...prev, [e.target.name]: '' }))
+  }
+
+
+  const validate = () => {
+    const e = {}
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+    if (!form.nombre.trim() || form.nombre.trim().length < 3)
+      e.nombre = 'Introduce un nombre válido (mínimo 3 caracteres)'
+    if (!form.email.trim()) e.email = 'El email es obligatorio'
+    else if (!emailRegex.test(form.email)) e.email = 'Introduce un email válido'
+    if (!form.titulo_problema.trim() || form.titulo_problema.trim().length < 3)
+      e.titulo_problema = 'El título debe tener al menos 3 caracteres'
+    if (!form.tipo_contacto) e.tipo_contacto = 'Selecciona un tipo'
+    if (!form.descripcion.trim() || form.descripcion.trim().length < 20)
+      e.descripcion = 'La descripción debe tener al menos 20 caracteres'
+
+    setErrors(prev => ({ ...prev, ...e }))
+    return Object.keys(e).length === 0
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!validate()) return
     setLoading(true)
     setError(null)
 
@@ -38,6 +62,7 @@ export default function Contacto() {
     setExito(true)
     setLoading(false)
     setForm({ nombre: '', email: '', titulo_problema: '', tipo_contacto: '', descripcion: '' })
+    setErrors({ nombre: '', email: '', titulo_problema: '', tipo_contacto: '', descripcion: '' })
   }
 
   const inputStyle = {
@@ -60,6 +85,12 @@ export default function Contacto() {
     marginBottom: '0.4rem',
     display: 'block'
   }
+
+  const getOnBlur = (field) => (e) => {
+  e.target.style.borderColor = errors[field] ? '#ff4444' : 'rgba(255,255,255,0.1)'
+  }
+
+  const formularioRelleno = Object.values(form).every(v => v.trim() !== '')
 
   return (
     <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
@@ -120,24 +151,22 @@ export default function Contacto() {
                     name="nombre"
                     value={form.nombre}
                     onChange={handleChange}
-                    required
-                    style={inputStyle}
+                    style={{ ...inputStyle, border: errors.nombre ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
                     onFocus={e => e.target.style.borderColor = '#FFE600'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                  />
+                    onBlur={getOnBlur('nombre')} />
+                {errors.nombre && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.nombre}</p>}
                 </div>
                 <div>
                   <label style={labelStyle}>Email</label>
                   <input
-                    type="email"
+                    type="text"
                     name="email"
                     value={form.email}
                     onChange={handleChange}
-                    required
-                    style={inputStyle}
+                    style={{ ...inputStyle, border: errors.email ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
                     onFocus={e => e.target.style.borderColor = '#FFE600'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                  />
+                    onBlur={getOnBlur('email')} />
+                {errors.email && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.email}</p>}
                 </div>
               </div>
 
@@ -150,11 +179,10 @@ export default function Contacto() {
                     name="titulo_problema"
                     value={form.titulo_problema}
                     onChange={handleChange}
-                    required
-                    style={inputStyle}
+                    style={{ ...inputStyle, border: errors.titulo_problema ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
                     onFocus={e => e.target.style.borderColor = '#FFE600'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                  />
+                    onBlur={getOnBlur('titulo_problema')} />
+                {errors.titulo_problema && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.titulo_problema}</p>}
                 </div>
                 <div>
                   <label style={labelStyle}>Tipo</label>
@@ -162,14 +190,14 @@ export default function Contacto() {
                     name="tipo_contacto"
                     value={form.tipo_contacto}
                     onChange={handleChange}
-                    required
                     style={{
                       ...inputStyle,
                       colorScheme: 'dark',
-                      color: form.tipo_contacto ? '#fff' : 'rgba(255,255,255,0.3)'
+                      color: form.tipo_contacto ? '#fff' : 'rgba(255,255,255,0.3)',
+                      border: errors.tipo_contacto ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)'
                     }}
                     onFocus={e => e.target.style.borderColor = '#FFE600'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                    onBlur={getOnBlur('tipo_contacto')}
                   >
                     <option value="" disabled>Selecciona</option>
                     <option value="duda">Duda</option>
@@ -177,6 +205,7 @@ export default function Contacto() {
                     <option value="opinion">Opinión</option>
                     <option value="otro">Otro</option>
                   </select>
+                  {errors.tipo_contacto && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.tipo_contacto}</p>}
                 </div>
               </div>
 
@@ -187,16 +216,17 @@ export default function Contacto() {
                   name="descripcion"
                   value={form.descripcion}
                   onChange={handleChange}
-                  required
                   rows={6}
                   style={{
                     ...inputStyle,
                     resize: 'vertical',
                     fontFamily: 'Inter, sans-serif',
+                    border: errors.descripcion ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)'
                   }}
                   onFocus={e => e.target.style.borderColor = '#FFE600'}
-                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                  onBlur={getOnBlur('descripcion')}
                 />
+                {errors.descripcion && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.descripcion}</p>}
               </div>
 
               {error && (
@@ -205,7 +235,7 @@ export default function Contacto() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !formularioRelleno}
                 style={{
                   background: '#FFE600',
                   border: 'none',
@@ -214,8 +244,8 @@ export default function Contacto() {
                   fontSize: '1.1rem',
                   letterSpacing: '0.15em',
                   padding: '0.85rem 2rem',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.7 : 1,
+                  cursor: (loading || !formularioRelleno) ? 'not-allowed' : 'pointer',
+                  opacity: (loading || !formularioRelleno) ? 0.5 : 1,
                   transition: 'transform 0.2s',
                   alignSelf: 'flex-start',
                 }}

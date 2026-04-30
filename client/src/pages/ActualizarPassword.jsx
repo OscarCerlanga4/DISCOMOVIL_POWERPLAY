@@ -8,6 +8,7 @@ export default function ActualizarPassword() {
     const [cargando, setCargando] = useState(false)
     const [mensaje, setMensaje] = useState(null)
     const [error, setError] = useState(null)
+    const [errors, setErrors] = useState({ password: '', confirmar: '' })
     const [sesionLista, setSesionLista] = useState(false)
     const navigate = useNavigate()
 
@@ -25,18 +26,20 @@ export default function ActualizarPassword() {
         return () => subscription.unsubscribe()
     }, [])
 
+    const validate = () => {
+        const e = {}
+        if (!password) e.password = 'La contraseña es obligatoria'
+        else if (password.length < 6) e.password = 'Mínimo 6 caracteres'
+        if (!confirmar) e.confirmar = 'Confirma la contraseña'
+        else if (password !== confirmar) e.confirmar = 'Las contraseñas no coinciden'
+        setErrors(e)
+        return Object.keys(e).length === 0
+    }
+
     const handleSubmit = (e) => {
         e.preventDefault()
         setError(null)
-
-        if (password !== confirmar) {
-            setError('Las contraseñas no coinciden')
-            return
-        }
-        if (password.length < 6) {
-            setError('La contraseña debe tener al menos 6 caracteres')
-            return
-        }
+        if (!validate()) return
 
         setCargando(true)
 
@@ -72,6 +75,8 @@ export default function ActualizarPassword() {
         marginBottom: '0.4rem',
         display: 'block'
     }
+
+    const puedeEnviar = password !== '' && confirmar !== ''
 
     return (
         <div style={{
@@ -129,12 +134,12 @@ export default function ActualizarPassword() {
                             <input
                                 type="password"
                                 value={password}
-                                onChange={e => setPassword(e.target.value)}
-                                required
-                                style={inputStyle}
+                                onChange={e => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: '' })) }}
+                                style={{ ...inputStyle, border: errors.password ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }} 
                                 onFocus={e => e.target.style.borderColor = '#FFE600'}
-                                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                                onBlur={e => e.target.style.borderColor = errors.password ? '#ff4444' : 'rgba(255,255,255,0.1)'}
                             />
+                            {errors.password && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.password}</p>}
                         </div>
 
                         <div>
@@ -142,12 +147,12 @@ export default function ActualizarPassword() {
                             <input
                                 type="password"
                                 value={confirmar}
-                                onChange={e => setConfirmar(e.target.value)}
-                                required
-                                style={inputStyle}
+                                onChange={e => { setConfirmar(e.target.value); setErrors(prev => ({ ...prev, confirmar: '' })) }}
+                                style={{ ...inputStyle, border: errors.confirmar ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }} 
                                 onFocus={e => e.target.style.borderColor = '#FFE600'}
-                                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                                onBlur={e => e.target.style.borderColor = errors.confirmar ? '#ff4444' : 'rgba(255,255,255,0.1)'}
                             />
+                            {errors.confirmar && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.confirmar}</p>}
                         </div>
 
                         {error && (
@@ -156,7 +161,7 @@ export default function ActualizarPassword() {
 
                         <button
                             type="submit"
-                            disabled={cargando}
+                            disabled={cargando || !puedeEnviar}
                             style={{
                                 background: '#FFE600',
                                 border: 'none',
@@ -165,8 +170,8 @@ export default function ActualizarPassword() {
                                 fontSize: '1.1rem',
                                 letterSpacing: '0.15em',
                                 padding: '0.85rem 2rem',
-                                cursor: cargando ? 'not-allowed' : 'pointer',
-                                opacity: cargando ? 0.7 : 1,
+                                cursor: (cargando || !puedeEnviar) ? 'not-allowed' : 'pointer',
+                                opacity: (cargando || !puedeEnviar) ? 0.5 : 1,
                                 transition: 'transform 0.2s',
                             }}
                             onMouseEnter={e => { if (!cargando) e.currentTarget.style.transform = 'translateY(-2px)' }}

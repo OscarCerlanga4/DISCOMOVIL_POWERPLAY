@@ -11,6 +11,16 @@ export default function Carrito() {
     const [error, setError] = useState(null)
     const [clienteAdmin, setClienteAdmin] = useState({ nombre: '', email: '', telefono: '', dni: '', direccion: '', cp: '', localidad: '', provincia: '' })
     const [mostrarModal, setMostrarModal] = useState(false)
+    const [errorsModal, setErrorsModal] = useState({
+        nombre: '', 
+        email: '', 
+        telefono: '', 
+        dni: '',
+        direccion: '', 
+        cp: '', 
+        localidad: '', 
+        provincia: ''
+    })
     const [sugerencias, setSugerencias] = useState([])
     const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
     const debounceRef = useRef(null)
@@ -29,6 +39,36 @@ export default function Carrito() {
                 .then(data => { setSugerencias(data); setMostrarSugerencias(true) })
                 .catch(() => setSugerencias([]))
         }, 350)
+    }
+
+    const validateModal = () => {
+        const e = {}
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        const telefonoRegex = /^[6789]\d{8}$/
+        const dniNieCifRegex = /^(\d{8}[A-Z]|[XYZ]\d{7}[A-Z]|[A-Z]\d{7}[A-Z0-9])$/i
+        const cpRegex = /^(?:0[1-9]|[1-4]\d|5[0-2])\d{3}$/
+
+        if (!clienteAdmin.nombre.trim() || clienteAdmin.nombre.trim().length < 3)
+            e.nombre = 'Nombre no válido (mínimo 3 caracteres)'
+        if (!clienteAdmin.email.trim()) e.email = 'El email es obligatorio'
+        else if (!emailRegex.test(clienteAdmin.email)) e.email = 'Email no válido'
+        if (!clienteAdmin.telefono.trim()) e.telefono = 'El teléfono es obligatorio'
+        else if (!telefonoRegex.test(clienteAdmin.telefono.replace(/\s/g, '')))
+            e.telefono = 'Teléfono no válido (9 dígitos, empieza por 6, 7, 8 o 9)'
+        if (!clienteAdmin.dni.trim()) e.dni = 'El DNI/NIE/CIF es obligatorio'
+        else if (!dniNieCifRegex.test(clienteAdmin.dni.trim()))
+            e.dni = 'Formato no válido'
+        if (!clienteAdmin.direccion.trim() || clienteAdmin.direccion.trim().length < 5)
+            e.direccion = 'Introduce una dirección válida'
+        if (!clienteAdmin.cp.trim()) e.cp = 'Obligatorio'
+        else if (!cpRegex.test(clienteAdmin.cp.trim())) e.cp = 'CP no válido'
+        if (!clienteAdmin.localidad.trim() || clienteAdmin.localidad.trim().length < 2)
+            e.localidad = 'Introduce una localidad'
+        if (!clienteAdmin.provincia.trim() || clienteAdmin.provincia.trim().length < 2)
+            e.provincia = 'Introduce una provincia'
+
+        setErrorsModal(prev => ({ ...prev, ...e }))
+        return Object.keys(e).length === 0
     }
 
     const seleccionarDireccion = (lugar) => {
@@ -124,13 +164,17 @@ export default function Carrito() {
         <div>
             <label style={{ ...labelStyle, color: 'rgba(255,255,255,0.45)' }}>{label}</label>
             <input
-                type={tipo}
-                value={clienteAdmin[campo]}
-                onChange={e => setClienteAdmin(prev => ({ ...prev, [campo]: e.target.value }))}
-                style={inputStyle}
-                onFocus={e => e.target.style.borderColor = '#FFE600'}
-                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+            type={tipo}
+            value={clienteAdmin[campo]}
+            onChange={e => {
+                setClienteAdmin(prev => ({ ...prev, [campo]: e.target.value }))
+                setErrorsModal(prev => ({ ...prev, [campo]: '' }))
+            }}
+            style={{ ...inputStyle, border: errorsModal[campo] ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
+            onFocus={e => e.target.style.borderColor = '#FFE600'}
+            onBlur={e => e.target.style.borderColor = errorsModal[campo] ? '#ff4444' : 'rgba(255,255,255,0.1)'}
             />
+            {errorsModal[campo] && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errorsModal[campo]}</p>}
         </div>
     )
 
@@ -231,7 +275,7 @@ export default function Carrito() {
                         {/* Botón guardar */}
                         <button
                             onClick={() => {
-                                if (!clienteRelleno) return
+                                if (!validateModal()) return
                                 setMostrarModal(false)
                             }}
                             disabled={!clienteRelleno}
@@ -478,7 +522,10 @@ export default function Carrito() {
                             {/* Botón datos cliente — solo admin */}
                             {usuario?.rol === 'admin' && (
                                 <button
-                                    onClick={() => setMostrarModal(true)}
+                                    onClick={() => {
+                                        setErrorsModal({ nombre: '', email: '', telefono: '', dni: '', direccion: '', cp: '', localidad: '', provincia: '' })
+                                        setMostrarModal(true)
+                                    }}
                                     style={{
                                         background: clienteRelleno ? 'rgba(34,197,94,0.08)' : 'rgba(255,230,0,0.06)',
                                         border: clienteRelleno ? '1px solid rgba(34,197,94,0.4)' : '1px solid rgba(255,230,0,0.35)',

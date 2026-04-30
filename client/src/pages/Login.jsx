@@ -8,11 +8,24 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
+  const [errors, setErrors] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
+  const validate = () => {
+    const newErrors = { email: '', password: '' }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!email.trim()) newErrors.email = 'El email es obligatorio'
+    else if (!emailRegex.test(email)) newErrors.email = 'El email no es válido'
+    if (!password) newErrors.password = 'La contraseña es obligatoria'
+    else if (password.length < 6) newErrors.password = 'La contraseña debe tener al menos 6 caracteres'
+    setErrors(newErrors)
+    return !newErrors.email && !newErrors.password
+  }
+
   const handleLogin = async (e) => {
     e.preventDefault()
+    if (!validate()) return
     setLoading(true)
     setError(null)
 
@@ -40,6 +53,8 @@ export default function Login() {
       options: { redirectTo: window.location.origin }
     })
   }
+
+  const puedeEnviar = email.trim() !== '' && password !== ''
 
   return (
     <div style={{
@@ -84,11 +99,10 @@ export default function Login() {
             <input
               type="email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
+              onChange = {e => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: '' }))}}
               style={{
                 background: '#141414',
-                border: '1px solid rgba(255,255,255,0.1)',
+                border: errors.email ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)',
                 color: '#fff',
                 padding: '0.75rem 1rem',
                 fontSize: '0.9rem',
@@ -96,8 +110,9 @@ export default function Login() {
                 transition: 'border-color 0.2s',
               }}
               onFocus={e => e.target.style.borderColor = '#FFE600'}
-              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+              onBlur={e => e.target.style.borderColor = errors.email ? '#ff4444' : 'rgba(255,255,255,0.1)'}
             />
+            {errors.email && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.email}</p>}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -107,11 +122,10 @@ export default function Login() {
             <input
               type="password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
+              onChange={e => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: '' })) }}
               style={{
                 background: '#141414',
-                border: '1px solid rgba(255,255,255,0.1)',
+                border: errors.password ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)',
                 color: '#fff',
                 padding: '0.75rem 1rem',
                 fontSize: '0.9rem',
@@ -119,8 +133,9 @@ export default function Login() {
                 transition: 'border-color 0.2s',
               }}
               onFocus={e => e.target.style.borderColor = '#FFE600'}
-              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+              onBlur={e => e.target.style.borderColor = errors.password ? '#ff4444' : 'rgba(255,255,255,0.1)'}
             />
+            {errors.password && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.password}</p>}
           </div>
 
           {error && (
@@ -138,7 +153,7 @@ export default function Login() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !puedeEnviar}
             style={{
               background: '#FFE600',
               color: '#000',
@@ -147,8 +162,8 @@ export default function Login() {
               letterSpacing: '0.15em',
               padding: '0.85rem',
               border: 'none',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.7 : 1,
+              cursor: (loading || !puedeEnviar) ? 'not-allowed' : 'pointer',
+              opacity: (loading || !puedeEnviar) ? 0.5 : 1,
               transition: 'transform 0.2s, box-shadow 0.2s',
               marginTop: '0.5rem',
             }}

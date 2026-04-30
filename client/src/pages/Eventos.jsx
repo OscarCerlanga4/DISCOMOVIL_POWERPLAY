@@ -17,6 +17,8 @@ export default function Eventos() {
     const [formEditar, setFormEditar] = useState({})
     const [guardandoEdicion, setGuardandoEdicion] = useState(false)
     const [errorEdicion, setErrorEdicion] = useState('')
+    const [errorsForm, setErrorsForm] = useState({ titulo: '', fecha: '', lugar: '' })
+    const [errorsEdicion, setErrorsEdicion] = useState({ titulo: '', fecha: '', lugar: '' })
 
     const cargarEventos = () => {
         fetch('/api/eventos')
@@ -52,9 +54,21 @@ export default function Eventos() {
 
     const esPasado = (iso) => new Date(iso) < ahora
 
+    const validateEvento = (f) => {
+        const e = {}
+        if (!f.titulo.trim() || f.titulo.trim().length < 3)
+            e.titulo = 'El título debe tener al menos 3 caracteres'
+        if (!f.fecha)
+            e.fecha = 'La fecha y hora son obligatorias'
+        if (!f.lugar.trim() || f.lugar.trim().length < 3)
+            e.lugar = 'El lugar debe tener al menos 3 caracteres'
+        return e
+    }
+
     const handleGuardar = () => {
-        if (!form.titulo.trim() || !form.fecha || !form.lugar.trim()) {
-            setError('Título, fecha y lugar son obligatorios.')
+        const e = validateEvento(form)
+        if (Object.keys(e).length > 0) {
+            setErrorsForm(prev => ({ ...prev, ...e }))
             return
         }
         setGuardando(true)
@@ -73,6 +87,7 @@ export default function Eventos() {
                     setEventos(prev => [...prev, data.result].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)))
                     setForm({ titulo: '', fecha: '', lugar: '', artistas: '', descripcion: '', imagen_url: '' })
                     setMostrarForm(false)
+                    setErrorsForm({ titulo: '', fecha: '', lugar: '' })
                 } else {
                     setError(data.error || 'Error al crear el evento.')
                 }
@@ -97,11 +112,13 @@ export default function Eventos() {
         })
         setEditandoId(evento.id_evento)
         setErrorEdicion('')
+        setErrorsEdicion({ titulo: '', fecha: '', lugar: '' })
     }
 
     const handleGuardarEdicion = (id) => {
-        if (!formEditar.titulo.trim() || !formEditar.fecha || !formEditar.lugar.trim()) {
-            setErrorEdicion('Título, fecha y lugar son obligatorios.')
+        const e = validateEvento(formEditar)
+        if (Object.keys(e).length > 0) {
+            setErrorsEdicion(prev => ({ ...prev, ...e }))
             return
         }
         setGuardandoEdicion(true)
@@ -158,78 +175,81 @@ export default function Eventos() {
         marginBottom: '6px'
     }
 
-    const formLayout = (f, setF) => (
+    const formLayout = (f, setF, errs, setErrs) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div style={{ display: 'flex', gap: '1rem' }}>
-                <div style={{ flex: 2 }}>
-                    <label style={labelForm}>Título *</label>
-                    <input
-                        type="text"
-                        value={f.titulo}
-                        onChange={e => setF(p => ({ ...p, titulo: e.target.value }))}
-                        style={inputStyle}
-                        onFocus={e => e.target.style.borderColor = '#FFE600'}
-                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                    />
-                </div>
-                <div style={{ flex: 1 }}>
-                    <label style={labelForm}>Fecha y hora *</label>
-                    <input
-                        type="datetime-local"
-                        value={f.fecha}
-                        onChange={e => setF(p => ({ ...p, fecha: e.target.value }))}
-                        style={{ ...inputStyle, colorScheme: 'dark' }}
-                        onFocus={e => e.target.style.borderColor = '#FFE600'}
-                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                    />
-                </div>
+            <div style={{ flex: 2 }}>
+                <label style={labelForm}>Título *</label>
+                <input
+                type="text"
+                value={f.titulo}
+                onChange={e => { setF(p => ({ ...p, titulo: e.target.value })); setErrs(p => ({ ...p, titulo: '' })) }}
+                style={{ ...inputStyle, border: errs.titulo ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
+                onFocus={e => e.target.style.borderColor = '#FFE600'}
+                onBlur={e => e.target.style.borderColor = errs.titulo ? '#ff4444' : 'rgba(255,255,255,0.1)'}
+                />
+                {errs.titulo && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errs.titulo}</p>}
+            </div>
+            <div style={{ flex: 1 }}>
+                <label style={labelForm}>Fecha y hora *</label>
+                <input
+                type="datetime-local"
+                value={f.fecha}
+                onChange={e => { setF(p => ({ ...p, fecha: e.target.value })); setErrs(p => ({ ...p, fecha: '' })) }}
+                style={{ ...inputStyle, colorScheme: 'dark', border: errs.fecha ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
+                onFocus={e => e.target.style.borderColor = '#FFE600'}
+                onBlur={e => e.target.style.borderColor = errs.fecha ? '#ff4444' : 'rgba(255,255,255,0.1)'}
+                />
+                {errs.fecha && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errs.fecha}</p>}
+            </div>
             </div>
             <div style={{ display: 'flex', gap: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                    <label style={labelForm}>Lugar *</label>
-                    <input
-                        type="text"
-                        value={f.lugar}
-                        onChange={e => setF(p => ({ ...p, lugar: e.target.value }))}
-                        style={inputStyle}
-                        onFocus={e => e.target.style.borderColor = '#FFE600'}
-                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                    />
-                </div>
-                <div style={{ flex: 1 }}>
-                    <label style={labelForm}>Artistas (separados por coma)</label>
-                    <input
-                        type="text"
-                        value={f.artistas}
-                        onChange={e => setF(p => ({ ...p, artistas: e.target.value }))}
-                        placeholder="DJ X, DJ Y, ..."
-                        style={inputStyle}
-                        onFocus={e => e.target.style.borderColor = '#FFE600'}
-                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                    />
-                </div>
+            <div style={{ flex: 1 }}>
+                <label style={labelForm}>Lugar *</label>
+                <input
+                type="text"
+                value={f.lugar}
+                onChange={e => { setF(p => ({ ...p, lugar: e.target.value })); setErrs(p => ({ ...p, lugar: '' })) }}
+                style={{ ...inputStyle, border: errs.lugar ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
+                onFocus={e => e.target.style.borderColor = '#FFE600'}
+                onBlur={e => e.target.style.borderColor = errs.lugar ? '#ff4444' : 'rgba(255,255,255,0.1)'}
+                />
+                {errs.lugar && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errs.lugar}</p>}
+            </div>
+            <div style={{ flex: 1 }}>
+                <label style={labelForm}>Artistas (separados por coma)</label>
+                <input
+                type="text"
+                value={f.artistas}
+                onChange={e => setF(p => ({ ...p, artistas: e.target.value }))}
+                placeholder="DJ X, DJ Y, ..."
+                style={inputStyle}
+                onFocus={e => e.target.style.borderColor = '#FFE600'}
+                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                />
+            </div>
             </div>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'stretch' }}>
-                <div style={{ width: '220px', flexShrink: 0 }}>
-                    <SubidaImagen
-                        label="Imagen"
-                        value={f.imagen_url}
-                        onChange={url => setF(p => ({ ...p, imagen_url: url }))}
-                    />
-                </div>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <label style={labelForm}>Descripción</label>
-                    <textarea
-                        value={f.descripcion}
-                        onChange={e => setF(p => ({ ...p, descripcion: e.target.value }))}
-                        style={{ ...inputStyle, resize: 'none', flex: 1 }}
-                        onFocus={e => e.target.style.borderColor = '#FFE600'}
-                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                    />
-                </div>
+            <div style={{ width: '220px', flexShrink: 0 }}>
+                <SubidaImagen
+                label="Imagen"
+                value={f.imagen_url}
+                onChange={url => setF(p => ({ ...p, imagen_url: url }))}
+                />
+            </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <label style={labelForm}>Descripción</label>
+                <textarea
+                value={f.descripcion}
+                onChange={e => setF(p => ({ ...p, descripcion: e.target.value }))}
+                style={{ ...inputStyle, resize: 'none', flex: 1 }}
+                onFocus={e => e.target.style.borderColor = '#FFE600'}
+                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                />
+            </div>
             </div>
         </div>
-    )
+        )
 
     return (
         <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
@@ -286,7 +306,7 @@ export default function Eventos() {
                             color: '#FFE600', margin: '0 0 1.5rem'
                         }}>Nuevo evento</p>
 
-                        {formLayout(form, setForm)}
+                        {formLayout(form, setForm, errorsForm, setErrorsForm)}
 
                         {error && (
                             <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '1rem 0 0' }}>{error}</p>
@@ -295,7 +315,7 @@ export default function Eventos() {
                         <div style={{ display: 'flex', gap: '12px', marginTop: '1.5rem' }}>
                             <button
                                 onClick={handleGuardar}
-                                disabled={guardando}
+                                disabled={guardando || !form.titulo.trim() || !form.fecha || !form.lugar.trim()}
                                 style={{
                                     background: '#FFE600',
                                     color: '#000',
@@ -305,14 +325,14 @@ export default function Eventos() {
                                     fontSize: '0.8rem',
                                     letterSpacing: '0.12em',
                                     textTransform: 'uppercase',
-                                    cursor: guardando ? 'not-allowed' : 'pointer',
-                                    opacity: guardando ? 0.6 : 1
+                                    cursor: (guardando || !form.titulo.trim() || !form.fecha || !form.lugar.trim()) ? 'not-allowed' : 'pointer',
+                                    opacity: (guardando || !form.titulo.trim() || !form.fecha || !form.lugar.trim()) ? 0.5 : 1
                                 }}
                             >
                                 {guardando ? 'Guardando...' : 'Guardar evento'}
                             </button>
                             <button
-                                onClick={() => { setMostrarForm(false); setError('') }}
+                                onClick={() => { setMostrarForm(false); setError(''); setErrorsForm({ titulo: '', fecha: '', lugar: '' }) }}
                                 style={{
                                     background: 'transparent',
                                     color: 'rgba(255,255,255,0.4)',
@@ -528,7 +548,7 @@ export default function Eventos() {
                                             color: '#FFE600', margin: '0 0 1.5rem'
                                         }}>Editar evento</p>
 
-                                        {formLayout(formEditar, setFormEditar)}
+                                        {formLayout(formEditar, setFormEditar, errorsEdicion, setErrorsEdicion)}
 
                                         {errorEdicion && (
                                             <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '1rem 0 0' }}>{errorEdicion}</p>
@@ -537,7 +557,7 @@ export default function Eventos() {
                                         <div style={{ display: 'flex', gap: '12px', marginTop: '1.5rem' }}>
                                             <button
                                                 onClick={() => handleGuardarEdicion(evento.id_evento)}
-                                                disabled={guardandoEdicion}
+                                                disabled={guardandoEdicion || !formEditar.titulo.trim() || !formEditar.fecha || !formEditar.lugar.trim()}
                                                 style={{
                                                     background: '#FFE600',
                                                     color: '#000',
@@ -547,14 +567,14 @@ export default function Eventos() {
                                                     fontSize: '0.8rem',
                                                     letterSpacing: '0.12em',
                                                     textTransform: 'uppercase',
-                                                    cursor: guardandoEdicion ? 'not-allowed' : 'pointer',
-                                                    opacity: guardandoEdicion ? 0.6 : 1
+                                                    cursor: (guardandoEdicion || !formEditar.titulo.trim() || !formEditar.fecha || !formEditar.lugar.trim()) ? 'not-allowed' : 'pointer',
+                                                    opacity: (guardandoEdicion || !formEditar.titulo.trim() || !formEditar.fecha || !formEditar.lugar.trim()) ? 0.5 : 1
                                                 }}
                                             >
                                                 {guardandoEdicion ? 'Guardando...' : 'Guardar cambios'}
                                             </button>
                                             <button
-                                                onClick={() => { setEditandoId(null); setErrorEdicion('') }}
+                                                onClick={() => { setEditandoId(null); setErrorEdicion(''); setErrorsEdicion({ titulo: '', fecha: '', lugar: '' }) }}
                                                 style={{
                                                     background: 'transparent',
                                                     color: 'rgba(255,255,255,0.4)',

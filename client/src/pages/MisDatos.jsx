@@ -22,6 +22,16 @@ export default function MisDatos() {
     const [mensajePassword, setMensajePassword] = useState(null)
     const [errorPassword, setErrorPassword] = useState(null)
     const [correoEnviado, setCorreoEnviado] = useState(false)
+    const [errors, setErrors] = useState({
+        nombre: '', 
+        email: '',
+        telefono: '', 
+        dni_nie_cif: '',
+        direccion: '', 
+        codigo_postal: '', 
+        localidad: '', 
+        provincia: ''
+    })
 
     useEffect(() => {
         if (usuario) {
@@ -40,10 +50,40 @@ export default function MisDatos() {
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value })
+        setErrors(prev => ({ ...prev, [e.target.name]: '' }))
+    }
+
+    const validate = () => {
+        const e = {}
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        const telefonoRegex = /^[6789]\d{8}$/
+        const dniNieCifRegex = /^(\d{8}[A-Z]|[XYZ]\d{7}[A-Z]|[A-Z]\d{7}[A-Z0-9])$/i
+        const cpRegex = /^(?:0[1-9]|[1-4]\d|5[0-2])\d{3}$/
+
+        if (!form.nombre.trim() || form.nombre.trim().length < 3)
+            e.nombre = 'Introduce un nombre válido (mínimo 3 caracteres)'
+        if (!form.email.trim()) e.email = 'El email es obligatorio'
+        else if (!emailRegex.test(form.email)) e.email = 'Introduce un email válido'
+        if (form.telefono.trim() && !telefonoRegex.test(form.telefono.replace(/\s/g, '')))
+            e.telefono = 'Teléfono no válido (9 dígitos, empieza por 6, 7, 8 o 9)'
+        if (form.dni_nie_cif.trim() && !dniNieCifRegex.test(form.dni_nie_cif.trim()))
+            e.dni_nie_cif = 'Formato de DNI, NIE o CIF no válido'
+        if (form.direccion.trim() && form.direccion.trim().length < 5)
+            e.direccion = 'Introduce una dirección válida'
+        if (form.codigo_postal.trim() && !cpRegex.test(form.codigo_postal.trim()))
+            e.codigo_postal = 'CP no válido'
+        if (form.localidad.trim() && form.localidad.trim().length < 2)
+            e.localidad = 'Introduce una localidad válida'
+        if (form.provincia.trim() && form.provincia.trim().length < 2)
+            e.provincia = 'Introduce una provincia válida'
+
+        setErrors(prev => ({ ...prev, ...e }))
+        return Object.keys(e).length === 0
     }
 
     const handleGuardar = (e) => {
         e.preventDefault()
+        if (!validate()) return
         setCargando(true)
         setMensaje(null)
         setError(null)
@@ -105,6 +145,12 @@ export default function MisDatos() {
         display: 'block'
     }
 
+    const getOnBlur = (field) => (e) => {
+        e.target.style.borderColor = errors[field] ? '#ff4444' : 'rgba(255,255,255,0.1)'
+    }
+
+    const puedeEnviar = form.nombre.trim() !== '' && form.email.trim() !== ''
+
     return (
         <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
 
@@ -139,24 +185,22 @@ export default function MisDatos() {
                                     name="nombre"
                                     value={form.nombre}
                                     onChange={handleChange}
-                                    required
-                                    style={inputStyle}
-                                    onFocus={e => e.target.style.borderColor = '#FFE600'}
-                                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                                />
+                                    style={{ ...inputStyle, border: errors.nombre ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
+                                    onFocus={e => e.target.style.borderColor = '#FFE600'} 
+                                    onBlur={getOnBlur('nombre')} /> 
+                                    {errors.nombre && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.nombre}</p>}
                             </div>
                             <div>
                                 <label style={labelStyle}>Email</label>
                                 <input
-                                    type="email"
+                                    type="text"
                                     name="email"
                                     value={form.email}
                                     onChange={handleChange}
-                                    required
-                                    style={inputStyle}
-                                    onFocus={e => e.target.style.borderColor = '#FFE600'}
-                                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                                />
+                                    style={{ ...inputStyle, border: errors.email ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }} 
+                                    onFocus={e => e.target.style.borderColor = '#FFE600'} 
+                                    onBlur={getOnBlur('email')} /> 
+                                {errors.email && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.email}</p>}
                             </div>
                         </div>
 
@@ -169,10 +213,10 @@ export default function MisDatos() {
                                     name="telefono"
                                     value={form.telefono}
                                     onChange={handleChange}
-                                    style={inputStyle}
+                                    style={{ ...inputStyle, border: errors.telefono ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
                                     onFocus={e => e.target.style.borderColor = '#FFE600'}
-                                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                                />
+                                    onBlur={getOnBlur('telefono')} />
+                                {errors.telefono && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.telefono}</p>}
                             </div>
                             <div>
                                 <label style={labelStyle}>DNI / NIE / CIF</label>
@@ -181,10 +225,10 @@ export default function MisDatos() {
                                     name="dni_nie_cif"
                                     value={form.dni_nie_cif}
                                     onChange={handleChange}
-                                    style={inputStyle}
+                                    style={{ ...inputStyle, border: errors.dni_nie_cif ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
                                     onFocus={e => e.target.style.borderColor = '#FFE600'}
-                                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                                />
+                                    onBlur={getOnBlur('dni_nie_cif')} />
+                                {errors.dni_nie_cif && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.dni_nie_cif}</p>}
                             </div>
                         </div>
 
@@ -196,10 +240,10 @@ export default function MisDatos() {
                                 name="direccion"
                                 value={form.direccion}
                                 onChange={handleChange}
-                                style={inputStyle}
+                                style={{ ...inputStyle, border: errors.direccion ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
                                 onFocus={e => e.target.style.borderColor = '#FFE600'}
-                                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                            />
+                                onBlur={getOnBlur('direccion')} />
+                            {errors.direccion && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.direccion}</p>}
                         </div>
 
                         {/* CP + Localidad + Provincia */}
@@ -211,10 +255,10 @@ export default function MisDatos() {
                                     name="codigo_postal"
                                     value={form.codigo_postal}
                                     onChange={handleChange}
-                                    style={inputStyle}
+                                    style={{ ...inputStyle, border: errors.codigo_postal ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
                                     onFocus={e => e.target.style.borderColor = '#FFE600'}
-                                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                                />
+                                    onBlur={getOnBlur('codigo_postal')} />
+                                {errors.codigo_postal && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.codigo_postal}</p>}
                             </div>
                             <div>
                                 <label style={labelStyle}>Localidad</label>
@@ -223,10 +267,10 @@ export default function MisDatos() {
                                     name="localidad"
                                     value={form.localidad}
                                     onChange={handleChange}
-                                    style={inputStyle}
+                                    style={{ ...inputStyle, border: errors.localidad ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
                                     onFocus={e => e.target.style.borderColor = '#FFE600'}
-                                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                                />
+                                    onBlur={getOnBlur('localidad')} />
+                                {errors.localidad && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.localidad}</p>}
                             </div>
                             <div>
                                 <label style={labelStyle}>Provincia</label>
@@ -235,10 +279,10 @@ export default function MisDatos() {
                                     name="provincia"
                                     value={form.provincia}
                                     onChange={handleChange}
-                                    style={inputStyle}
+                                    style={{ ...inputStyle, border: errors.provincia ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }}
                                     onFocus={e => e.target.style.borderColor = '#FFE600'}
-                                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                                />
+                                    onBlur={getOnBlur('provincia')} />
+                                {errors.provincia && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.provincia}</p>}
                             </div>
                         </div>
 
@@ -251,7 +295,7 @@ export default function MisDatos() {
 
                         <button
                             type="submit"
-                            disabled={cargando}
+                            disabled={cargando || !puedeEnviar}
                             style={{
                                 background: '#FFE600',
                                 border: 'none',
@@ -260,8 +304,8 @@ export default function MisDatos() {
                                 fontSize: '1.1rem',
                                 letterSpacing: '0.15em',
                                 padding: '0.85rem 2rem',
-                                cursor: cargando ? 'not-allowed' : 'pointer',
-                                opacity: cargando ? 0.7 : 1,
+                                cursor: (cargando || !puedeEnviar) ? 'not-allowed' : 'pointer',
+                                opacity: (cargando || !puedeEnviar) ? 0.5 : 1,
                                 transition: 'transform 0.2s',
                                 alignSelf: 'flex-start',
                             }}
