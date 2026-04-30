@@ -24,6 +24,7 @@ export default function Carrito() {
     const [sugerencias, setSugerencias] = useState([])
     const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
     const debounceRef = useRef(null)
+    const ahora = new Date().toISOString().slice(0, 16)
 
     const clienteRelleno = Object.values(clienteAdmin).every(v => v.trim() !== '')
 
@@ -457,6 +458,7 @@ export default function Carrito() {
                                 <label style={labelStyle}>Fecha de inicio</label>
                                 <input
                                     type="datetime-local"
+                                    min={ahora}
                                     value={fechaInicio}
                                     onChange={e => setFechaInicio(e.target.value)}
                                     style={resumenInputStyle}
@@ -468,6 +470,7 @@ export default function Carrito() {
                                 <label style={labelStyle}>Fecha de fin</label>
                                 <input
                                     type="datetime-local"
+                                    min={fechaInicio || ahora}
                                     value={fechaFin}
                                     min={fechaInicio}
                                     onChange={e => setFechaFin(e.target.value)}
