@@ -97,6 +97,14 @@ const update = (req, res) => {
 
                             const presupuestoActualizado = updatedData[0];
 
+                            // ── Presupuesto rechazado (admin o cliente) → cancelar reserva ──
+                            if (req.body.estado === 'rechazado') {
+                                return supabase
+                                    .from('reserva')
+                                    .update({ estado_reserva: 'cancelada' })
+                                    .eq('id_reserva', presupuestoActualizado.id_reserva)
+                                    .then(() => res.status(200).send({ ok: true, result: presupuestoActualizado }))
+}
                             // ── Admin confirma presupuesto ──────────────────────────────
                             if (rol === 'admin' && req.body.estado === 'aceptado') {
 

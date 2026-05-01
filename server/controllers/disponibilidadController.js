@@ -23,7 +23,7 @@ const getDisponibilidad = (req, res) => {
       }
 
       if (!reservas || reservas.length === 0) {
-        return res.status(200).send({ ok: true, equipos_ocupados: [], djs_ocupados: [] })
+        return res.status(200).send({ ok: true, equipos_ocupados: [], djs_ocupados: [], disponibilidad_equipos: {} })
       }
 
       const idReservas = reservas.map(r => r.id_reserva)
@@ -54,7 +54,7 @@ const getDisponibilidad = (req, res) => {
               }
 
               if (!incluyes || incluyes.length === 0) {
-                return res.status(200).send({ ok: true, equipos_ocupados: [], djs_ocupados: djsOcupados })
+                return res.status(200).send({ ok: true, equipos_ocupados: [], djs_ocupados: djsOcupados, disponibilidad_equipos: {} })
               }
 
               const cantidadesPorEquipo = {}
@@ -74,16 +74,25 @@ const getDisponibilidad = (req, res) => {
                   }
 
                   const equiposOcupados = []
+                  const disponibilidad_equipos = {}
+
                   if (equipos) {
                     equipos.forEach(e => {
                       const cantidadReservada = cantidadesPorEquipo[e.id_equipo] || 0
-                      if (cantidadReservada >= e.stock) {
+                      const disponible = Math.max(0, e.stock_total - cantidadReservada)
+                      disponibilidad_equipos[e.id_equipo] = disponible
+                      if (cantidadReservada >= e.stock_total) {
                         equiposOcupados.push(e.id_equipo)
                       }
                     })
                   }
 
-                  res.status(200).send({ ok: true, equipos_ocupados: equiposOcupados, djs_ocupados: djsOcupados })
+                  res.status(200).send({
+                    ok: true,
+                    equipos_ocupados: equiposOcupados,
+                    djs_ocupados: djsOcupados,
+                    disponibilidad_equipos
+                  })
                 })
                 .catch(() => res.status(500).send({ ok: false, error: 'Error al obtener equipos' }))
             })

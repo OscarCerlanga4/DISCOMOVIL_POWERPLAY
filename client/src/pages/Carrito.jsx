@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useCarrito } from '../contexts/CarritoContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -23,7 +23,18 @@ export default function Carrito() {
     })
     const [sugerencias, setSugerencias] = useState([])
     const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
+    const [disponibilidadEquipos, setDisponibilidadEquipos] = useState({})
     const debounceRef = useRef(null)
+
+    useEffect(() => {
+        if (!fechaInicio || !fechaFin) { setDisponibilidadEquipos({}); return }
+        if (new Date(fechaFin) <= new Date(fechaInicio)) return
+        fetch(`/api/disponibilidad?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`)
+            .then(r => r.json())
+            .then(data => { if (data.ok) setDisponibilidadEquipos(data.disponibilidad_equipos || {}) })
+            .catch(() => {})
+    }, [fechaInicio, fechaFin])
+
     const ahora = new Date().toISOString().slice(0, 16)
 
     const clienteRelleno = Object.values(clienteAdmin).every(v => v.trim() !== '')
@@ -380,28 +391,20 @@ export default function Carrito() {
                                         {item.tabla === 'equipo' ? (
                                             <>
                                                 <button
-                                                    onClick={() => cambiarCantidad(item._id, item.tabla, item.cantidad - 1)}
+                                                    onClick={() => {
+                                                        const max = disponibilidadEquipos[item._id] ?? item.stock_total ?? 99
+                                                        if (item.cantidad < max) cambiarCantidad(item._id, item.tabla, item.cantidad + 1)
+                                                    }}
+                                                    disabled={item.cantidad >= (disponibilidadEquipos[item._id] ?? item.stock_total ?? 99)}
                                                     style={{
                                                         width: '32px', height: '32px', background: 'transparent',
                                                         border: '1px solid rgba(255,255,255,0.15)', color: '#fff',
-                                                        cursor: 'pointer', fontSize: '1.1rem', display: 'flex',
+                                                        cursor: item.cantidad >= (disponibilidadEquipos[item._id] ?? item.stock_total ?? 99) ? 'not-allowed' : 'pointer',
+                                                        fontSize: '1.1rem', display: 'flex',
                                                         alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.2s',
+                                                        opacity: item.cantidad >= (disponibilidadEquipos[item._id] ?? item.stock_total ?? 99) ? 0.3 : 1,
                                                     }}
-                                                    onMouseEnter={e => e.currentTarget.style.borderColor = '#FFE600'}
-                                                    onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
-                                                >−</button>
-                                                <span style={{ color: '#fff', fontWeight: 700, fontSize: '1rem', minWidth: '24px', textAlign: 'center' }}>
-                                                    {item.cantidad}
-                                                </span>
-                                                <button
-                                                    onClick={() => cambiarCantidad(item._id, item.tabla, item.cantidad + 1)}
-                                                    style={{
-                                                        width: '32px', height: '32px', background: 'transparent',
-                                                        border: '1px solid rgba(255,255,255,0.15)', color: '#fff',
-                                                        cursor: 'pointer', fontSize: '1.1rem', display: 'flex',
-                                                        alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.2s',
-                                                    }}
-                                                    onMouseEnter={e => e.currentTarget.style.borderColor = '#FFE600'}
+                                                    onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.borderColor = '#FFE600' }}
                                                     onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
                                                 >+</button>
                                             </>
