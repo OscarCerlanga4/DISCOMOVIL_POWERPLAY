@@ -7,7 +7,7 @@ export default function Eventos() {
     const [eventos, setEventos] = useState([])
     const [cargando, setCargando] = useState(true)
     const [busqueda, setBusqueda] = useState('')
-    const [soloProximos, setSoloProximos] = useState(false)
+    const [soloProximos, setSoloProximos] = useState(true)
     const [hoverId, setHoverId] = useState(null)
     const [mostrarForm, setMostrarForm] = useState(false)
     const [form, setForm] = useState({ titulo: '', fecha: '', lugar: '', artistas: '', descripcion: '', imagen_url: '' })
@@ -294,62 +294,46 @@ export default function Eventos() {
 
                 {/* Formulario añadir */}
                 {mostrarForm && (
-                    <div style={{
-                        background: '#141414',
-                        border: '1px solid rgba(255,230,0,0.2)',
-                        padding: '2rem',
-                        marginBottom: '2.5rem',
-                        maxWidth: '900px'
-                    }}>
-                        <p style={{
-                            fontFamily: 'Bebas Neue', fontSize: '1.3rem', letterSpacing: '0.1em',
-                            color: '#FFE600', margin: '0 0 1.5rem'
-                        }}>Nuevo evento</p>
-
-                        {formLayout(form, setForm, errorsForm, setErrorsForm)}
-
-                        {error && (
-                            <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '1rem 0 0' }}>{error}</p>
-                        )}
-
-                        <div style={{ display: 'flex', gap: '12px', marginTop: '1.5rem' }}>
-                            <button
-                                onClick={handleGuardar}
-                                disabled={guardando || !form.titulo.trim() || !form.fecha || !form.lugar.trim()}
-                                style={{
-                                    background: '#FFE600',
-                                    color: '#000',
-                                    border: 'none',
-                                    padding: '0.75rem 2.5rem',
-                                    fontWeight: 700,
-                                    fontSize: '0.8rem',
-                                    letterSpacing: '0.12em',
-                                    textTransform: 'uppercase',
-                                    cursor: (guardando || !form.titulo.trim() || !form.fecha || !form.lugar.trim()) ? 'not-allowed' : 'pointer',
-                                    opacity: (guardando || !form.titulo.trim() || !form.fecha || !form.lugar.trim()) ? 0.5 : 1
-                                }}
-                            >
-                                {guardando ? 'Guardando...' : 'Guardar evento'}
-                            </button>
-                            <button
-                                onClick={() => { setMostrarForm(false); setError(''); setErrorsForm({ titulo: '', fecha: '', lugar: '' }) }}
-                                style={{
-                                    background: 'transparent',
-                                    color: 'rgba(255,255,255,0.4)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    padding: '0.75rem 2rem',
-                                    fontWeight: 700,
-                                    fontSize: '0.8rem',
-                                    letterSpacing: '0.12em',
-                                    textTransform: 'uppercase',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Cancelar
-                            </button>
+                    <div
+                        onClick={e => { if (e.target === e.currentTarget) { setMostrarForm(false); setError(''); setErrorsForm({ titulo: '', fecha: '', lugar: '' }) } }}
+                        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+                    >
+                        <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,230,0,0.25)', boxShadow: '0 24px 80px rgba(0,0,0,0.8)', padding: '2rem', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <p style={{ fontFamily: 'Bebas Neue', fontSize: '1.3rem', letterSpacing: '0.1em', color: '#FFE600', margin: 0 }}>Nuevo evento</p>
+                            {formLayout(form, setForm, errorsForm, setErrorsForm)}
+                            {error && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: 0 }}>{error}</p>}
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button onClick={handleGuardar} disabled={guardando || !form.titulo.trim() || !form.fecha || !form.lugar.trim()} style={{ background: '#FFE600', color: '#000', border: 'none', padding: '0.75rem 2.5rem', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: (guardando || !form.titulo.trim() || !form.fecha || !form.lugar.trim()) ? 'not-allowed' : 'pointer', opacity: (guardando || !form.titulo.trim() || !form.fecha || !form.lugar.trim()) ? 0.5 : 1 }}>
+                                    {guardando ? 'Guardando...' : 'Guardar evento'}
+                                </button>
+                                <button onClick={() => { setMostrarForm(false); setError(''); setErrorsForm({ titulo: '', fecha: '', lugar: '' }) }} style={{ background: 'transparent', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.75rem 2rem', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                                    Cancelar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
+                
+                {editandoId && (
+                    <div
+                        onClick={e => { if (e.target === e.currentTarget) { setEditandoId(null); setErrorEdicion(''); setErrorsEdicion({ titulo: '', fecha: '', lugar: '' }) } }}
+                        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+                    >
+                        <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,230,0,0.25)', boxShadow: '0 24px 80px rgba(0,0,0,0.8)', padding: '2rem', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <p style={{ fontFamily: 'Bebas Neue', fontSize: '1.3rem', letterSpacing: '0.1em', color: '#FFE600', margin: 0 }}>Editar evento</p>
+                            {formLayout(formEditar, setFormEditar, errorsEdicion, setErrorsEdicion)}
+                            {errorEdicion && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: 0 }}>{errorEdicion}</p>}
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button onClick={() => handleGuardarEdicion(editandoId)} disabled={guardandoEdicion || !formEditar.titulo?.trim() || !formEditar.fecha || !formEditar.lugar?.trim()} style={{ background: '#FFE600', color: '#000', border: 'none', padding: '0.75rem 2.5rem', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: (guardandoEdicion || !formEditar.titulo?.trim() || !formEditar.fecha || !formEditar.lugar?.trim()) ? 'not-allowed' : 'pointer', opacity: (guardandoEdicion || !formEditar.titulo?.trim() || !formEditar.fecha || !formEditar.lugar?.trim()) ? 0.5 : 1 }}>
+                                    {guardandoEdicion ? 'Guardando...' : 'Guardar cambios'}
+                                </button>
+                                <button onClick={() => { setEditandoId(null); setErrorEdicion(''); setErrorsEdicion({ titulo: '', fecha: '', lugar: '' }) }} style={{ background: 'transparent', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.75rem 2rem', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    )}
 
                 {/* Controles */}
                 <div style={{ display: 'flex', gap: '12px', marginBottom: '2.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -363,7 +347,7 @@ export default function Eventos() {
                         onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
                     />
                     <div style={{ display: 'flex', border: '1px solid rgba(255,255,255,0.1)' }}>
-                        {[{ label: 'Todos', value: false }, { label: 'Próximos', value: true }].map(op => (
+                        {[{ label: 'Próximos', value: true }, { label: 'Todos', value: false }].map(op => (
                             <button
                                 key={op.label}
                                 onClick={() => setSoloProximos(op.value)}
@@ -534,64 +518,6 @@ export default function Eventos() {
                                         )}
                                     </div>
                                 </div>
-
-                                {/* Formulario edición inline */}
-                                {estaEditando && (
-                                    <div style={{
-                                        background: '#141414',
-                                        border: '1px solid rgba(255,230,0,0.2)',
-                                        borderTop: 'none',
-                                        padding: '2rem'
-                                    }}>
-                                        <p style={{
-                                            fontFamily: 'Bebas Neue', fontSize: '1.1rem', letterSpacing: '0.1em',
-                                            color: '#FFE600', margin: '0 0 1.5rem'
-                                        }}>Editar evento</p>
-
-                                        {formLayout(formEditar, setFormEditar, errorsEdicion, setErrorsEdicion)}
-
-                                        {errorEdicion && (
-                                            <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '1rem 0 0' }}>{errorEdicion}</p>
-                                        )}
-
-                                        <div style={{ display: 'flex', gap: '12px', marginTop: '1.5rem' }}>
-                                            <button
-                                                onClick={() => handleGuardarEdicion(evento.id_evento)}
-                                                disabled={guardandoEdicion || !formEditar.titulo.trim() || !formEditar.fecha || !formEditar.lugar.trim()}
-                                                style={{
-                                                    background: '#FFE600',
-                                                    color: '#000',
-                                                    border: 'none',
-                                                    padding: '0.75rem 2.5rem',
-                                                    fontWeight: 700,
-                                                    fontSize: '0.8rem',
-                                                    letterSpacing: '0.12em',
-                                                    textTransform: 'uppercase',
-                                                    cursor: (guardandoEdicion || !formEditar.titulo.trim() || !formEditar.fecha || !formEditar.lugar.trim()) ? 'not-allowed' : 'pointer',
-                                                    opacity: (guardandoEdicion || !formEditar.titulo.trim() || !formEditar.fecha || !formEditar.lugar.trim()) ? 0.5 : 1
-                                                }}
-                                            >
-                                                {guardandoEdicion ? 'Guardando...' : 'Guardar cambios'}
-                                            </button>
-                                            <button
-                                                onClick={() => { setEditandoId(null); setErrorEdicion(''); setErrorsEdicion({ titulo: '', fecha: '', lugar: '' }) }}
-                                                style={{
-                                                    background: 'transparent',
-                                                    color: 'rgba(255,255,255,0.4)',
-                                                    border: '1px solid rgba(255,255,255,0.1)',
-                                                    padding: '0.75rem 2rem',
-                                                    fontWeight: 700,
-                                                    fontSize: '0.8rem',
-                                                    letterSpacing: '0.12em',
-                                                    textTransform: 'uppercase',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                Cancelar
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         )
                     })}

@@ -107,6 +107,7 @@ export default function Pago() {
     }
 
     const handleExito = (importePagado) => {
+        window.scrollTo(0, 0)
         const nuevoTotal = totalPagado + parseFloat(importePagado)
         setClientSecret(null)
         setImporteInput('')
@@ -148,6 +149,7 @@ export default function Pago() {
 
     return (
         <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
+        <style>{`.p-BrandingBar { display: none !important; } .p-BrandingLogo { display: none !important; }`}</style>
 
             {/* Cabecera */}
             <div style={{ padding: '3rem 4rem 2.5rem' }}>

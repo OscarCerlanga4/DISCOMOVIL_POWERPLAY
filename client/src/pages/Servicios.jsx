@@ -424,12 +424,12 @@ export default function Servicios() {
                                     <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', marginLeft: '0.4rem' }}>{itemSeleccionado.precioLabel}</span>
                                 </div>
                                 <button
-                                    onClick={() => { if (!estaEnCarrito(itemSeleccionado)) { handleCarrito(itemSeleccionado); setItemSeleccionado(null) } }}
-                                    style={{ background: estaEnCarrito(itemSeleccionado) ? 'transparent' : '#FFE600', border: `1px solid ${estaEnCarrito(itemSeleccionado) ? 'rgba(255,230,0,0.3)' : '#FFE600'}`, color: estaEnCarrito(itemSeleccionado) ? 'rgba(255,230,0,0.4)' : '#000', padding: '0.7rem 1.5rem', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: estaEnCarrito(itemSeleccionado) ? 'default' : 'pointer', transition: 'all 0.2s' }}
+                                    onClick={() => { estaEnCarrito(itemSeleccionado) ? navigate('/carrito') : (handleCarrito(itemSeleccionado), setItemSeleccionado(null)) }}
+                                    style={{ background: estaEnCarrito(itemSeleccionado) ? 'transparent' : '#FFE600', border: `1px solid ${estaEnCarrito(itemSeleccionado) ? 'rgba(255,230,0,0.3)' : '#FFE600'}`, color: estaEnCarrito(itemSeleccionado) ? 'rgba(255,230,0,0.7)' : '#000', padding: '0.7rem 1.5rem', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s' }}
                                     onMouseEnter={e => { if (!estaEnCarrito(itemSeleccionado)) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFE600' } }}
                                     onMouseLeave={e => { if (!estaEnCarrito(itemSeleccionado)) { e.currentTarget.style.background = '#FFE600'; e.currentTarget.style.color = '#000' } }}
-                                >
-                                    {estaEnCarrito(itemSeleccionado) ? '✓ En carrito' : '+ Añadir al carrito'}
+                                    >
+                                    {estaEnCarrito(itemSeleccionado) ? 'Ir al carrito' : '+ Añadir al carrito'}
                                 </button>
                             </div>
                         </div>
@@ -471,51 +471,72 @@ export default function Servicios() {
 
                     {/* Formulario añadir DJ */}
                     {mostrarFormDJ && (
-                        <FormDJ
-                            inicial={djVacio}
-                            onGuardar={handleGuardarDJ}
-                            onCancelar={() => { setMostrarFormDJ(false); setErrorDJ('') }}
-                            guardando={guardandoDJ}
-                            error={errorDJ}
-                            titulo="Nuevo DJ"
-                        />
+                        <div
+                            onClick={e => { if (e.target === e.currentTarget) { setMostrarFormDJ(false); setErrorDJ('') } }}
+                            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+                        >
+                            <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,230,0,0.25)', boxShadow: '0 24px 80px rgba(0,0,0,0.8)', padding: '2rem', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
+                                <FormDJ
+                                    inicial={djVacio}
+                                    onGuardar={handleGuardarDJ}
+                                    onCancelar={() => { setMostrarFormDJ(false); setErrorDJ('') }}
+                                    guardando={guardandoDJ}
+                                    error={errorDJ}
+                                    titulo="Nuevo DJ"
+                                />
+                            </div>
+                        </div>
                     )}
 
                     {/* Formulario añadir Equipo */}
                     {mostrarFormEquipo && (
-                        <FormEquipo
-                            inicial={equipoVacio}
-                            onGuardar={handleGuardarEquipo}
-                            onCancelar={() => { setMostrarFormEquipo(false); setErrorEquipo('') }}
-                            guardando={guardandoEquipo}
-                            error={errorEquipo}
-                            titulo="Nuevo equipo"
-                        />
+                        <div
+                            onClick={e => { if (e.target === e.currentTarget) { setMostrarFormEquipo(false); setErrorEquipo('') } }}
+                            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+                        >
+                            <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,230,0,0.25)', boxShadow: '0 24px 80px rgba(0,0,0,0.8)', padding: '2rem', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
+                                <FormEquipo
+                                    inicial={equipoVacio}
+                                    onGuardar={handleGuardarEquipo}
+                                    onCancelar={() => { setMostrarFormEquipo(false); setErrorEquipo('') }}
+                                    guardando={guardandoEquipo}
+                                    error={errorEquipo}
+                                    titulo="Nuevo equipo"
+                                />
+                            </div>
+                        </div>
                     )}
 
                     {/* Formulario editar */}
                     {editandoKey && itemEditando && (
-                        itemEditando.tabla === 'dj' ? (
-                            <FormDJ
-                                key={editandoKey}
-                                inicial={getFormEditarInicial(itemEditando)}
-                                onGuardar={(form) => handleGuardarEdicion(itemEditando, form)}
-                                onCancelar={() => { setEditandoKey(null); setErrorEdicion('') }}
-                                guardando={guardandoEdicion}
-                                error={errorEdicion}
-                                titulo={`Editar DJ — ${itemEditando.nombre}`}
-                            />
-                        ) : (
-                            <FormEquipo
-                                key={editandoKey}
-                                inicial={getFormEditarInicial(itemEditando)}
-                                onGuardar={(form) => handleGuardarEdicion(itemEditando, form)}
-                                onCancelar={() => { setEditandoKey(null); setErrorEdicion('') }}
-                                guardando={guardandoEdicion}
-                                error={errorEdicion}
-                                titulo={`Editar equipo — ${itemEditando.nombre}`}
-                            />
-                        )
+                        <div
+                            onClick={e => { if (e.target === e.currentTarget) { setEditandoKey(null); setErrorEdicion('') } }}
+                            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+                        >
+                            <div style={{ background: '#1a1a1a', border: '1px solid rgba(255,230,0,0.25)', boxShadow: '0 24px 80px rgba(0,0,0,0.8)', padding: '2rem', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
+                                {itemEditando.tabla === 'dj' ? (
+                                    <FormDJ
+                                        key={editandoKey}
+                                        inicial={getFormEditarInicial(itemEditando)}
+                                        onGuardar={(form) => handleGuardarEdicion(itemEditando, form)}
+                                        onCancelar={() => { setEditandoKey(null); setErrorEdicion('') }}
+                                        guardando={guardandoEdicion}
+                                        error={errorEdicion}
+                                        titulo={`Editar DJ — ${itemEditando.nombre}`}
+                                    />
+                                ) : (
+                                    <FormEquipo
+                                        key={editandoKey}
+                                        inicial={getFormEditarInicial(itemEditando)}
+                                        onGuardar={(form) => handleGuardarEdicion(itemEditando, form)}
+                                        onCancelar={() => { setEditandoKey(null); setErrorEdicion('') }}
+                                        guardando={guardandoEdicion}
+                                        error={errorEdicion}
+                                        titulo={`Editar equipo — ${itemEditando.nombre}`}
+                                    />
+                                )}
+                            </div>
+                        </div>
                     )}
 
                     {/* Filtros */}
@@ -636,11 +657,13 @@ export default function Servicios() {
                                             onMouseEnter={e => { e.currentTarget.style.borderColor = '#FFE600'; e.currentTarget.style.color = '#FFE600' }}
                                             onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
                                         >Ver</button>
-                                        <button onClick={() => !estaEnCarrito(item) && handleCarrito(item)}
-                                            style={{ flex: 1, background: estaEnCarrito(item) ? 'transparent' : '#FFE600', border: `1px solid ${estaEnCarrito(item) ? 'rgba(255,230,0,0.3)' : '#FFE600'}`, color: estaEnCarrito(item) ? 'rgba(255,230,0,0.4)' : '#000', padding: '0.65rem', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: estaEnCarrito(item) ? 'default' : 'pointer', transition: 'all 0.2s' }}
-                                            onMouseEnter={e => { if (!estaEnCarrito(item)) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFE600' } }}
-                                            onMouseLeave={e => { if (!estaEnCarrito(item)) { e.currentTarget.style.background = '#FFE600'; e.currentTarget.style.color = '#000' } }}
-                                        >{estaEnCarrito(item) ? '✓ En carrito' : '+ Carrito'}</button>
+                                        <button 
+                                        onClick={() => { estaEnCarrito(item) ? navigate('/carrito') : handleCarrito(item) }}
+                                        style={{ flex: 1, background: estaEnCarrito(item) ? 'transparent' : '#FFE600', border: `1px solid ${estaEnCarrito(item) ? 'rgba(255,230,0,0.3)' : '#FFE600'}`, color: estaEnCarrito(item) ? 'rgba(255,230,0,0.7)' : '#000', padding: '0.65rem', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s' }}
+                                        onMouseEnter={e => { if (!estaEnCarrito(item)) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#FFE600' } }}
+                                        onMouseLeave={e => { if (!estaEnCarrito(item)) { e.currentTarget.style.background = '#FFE600'; e.currentTarget.style.color = '#000' } }}
+                                        >{estaEnCarrito(item) ? 'Ir al carrito' : '+ Carrito'}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
