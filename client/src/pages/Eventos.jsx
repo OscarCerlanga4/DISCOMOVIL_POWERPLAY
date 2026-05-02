@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import SubidaImagen from '../components/SubidaImagen'
+import { API_URL } from '../lib/api'
 
 export default function Eventos() {
     const { usuario } = useAuth()
@@ -21,7 +22,7 @@ export default function Eventos() {
     const [errorsEdicion, setErrorsEdicion] = useState({ titulo: '', fecha: '', lugar: '' })
 
     const cargarEventos = () => {
-        fetch('/api/eventos')
+        fetch(`${API_URL}/api/eventos`)
             .then(r => r.json())
             .then(data => { if (data.ok) setEventos(data.result) })
             .finally(() => setCargando(false))
@@ -73,7 +74,7 @@ export default function Eventos() {
         }
         setGuardando(true)
         setError('')
-        fetch('/api/eventos', {
+        fetch(`${API_URL}/api/eventos`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -123,7 +124,7 @@ export default function Eventos() {
         }
         setGuardandoEdicion(true)
         setErrorEdicion('')
-        fetch(`/api/eventos/${id}`, {
+        fetch(`${API_URL}/api/eventos/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

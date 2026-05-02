@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { API_URL } from '../lib/api'
 
 export default function Contacto() {
   const [form, setForm] = useState({
@@ -45,7 +46,7 @@ export default function Contacto() {
     setLoading(true)
     setError(null)
 
-    const res = await fetch('/api/contactos', {
+    const res = await fetch(`${API_URL}/api/contactos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)

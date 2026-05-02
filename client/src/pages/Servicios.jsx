@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { useCarrito } from '../contexts/CarritoContext'
 import SubidaImagen from '../components/SubidaImagen'
+import { API_URL } from '../lib/api'
 
 const TIPOS_DJ = ['dj', 'orquesta', 'grupo']
 const CATEGORIAS_EQUIPO = ['sonido', 'iluminacion', 'microfonia', 'mezclas', 'efectos', 'pantallas']
@@ -196,8 +197,8 @@ export default function Servicios() {
 
     useEffect(() => {
         Promise.all([
-            fetch('/api/equipos').then(r => r.json()),
-            fetch('/api/djs').then(r => r.json())
+            fetch(`${API_URL}/api/equipos`).then(r => r.json()),
+            fetch(`${API_URL}/api/djs`).then(r => r.json())
         ])
             .then(([equiposData, djsData]) => {
                 if (equiposData.ok) setEquipos(equiposData.result)
@@ -210,7 +211,7 @@ export default function Servicios() {
     useEffect(() => {
         if (!fechaInicio || !fechaFin) { setOcupados({ equipos_ocupados: [], djs_ocupados: [] }); return }
         if (new Date(fechaFin) <= new Date(fechaInicio)) return
-        fetch(`/api/disponibilidad?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`)
+        fetch(`${API_URL}/api/disponibilidad?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`)
             .then(r => r.json())
             .then(data => { if (data.ok) setOcupados({ equipos_ocupados: data.equipos_ocupados, djs_ocupados: data.djs_ocupados }) })
             .catch(() => { })
@@ -270,7 +271,7 @@ export default function Servicios() {
     const handleGuardarDJ = (form) => {
         if (!form.nombre.trim() || !form.precio_hora) { setErrorDJ('Nombre y precio son obligatorios.'); return }
         setGuardandoDJ(true); setErrorDJ('')
-        fetch('/api/djs', {
+        fetch(`${API_URL}/api/djs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
             body: JSON.stringify(form)
@@ -289,7 +290,7 @@ export default function Servicios() {
     const handleGuardarEquipo = (form) => {
         if (!form.nombre.trim() || !form.precio_alquiler_hora || !form.stock_total) { setErrorEquipo('Nombre, precio y stock son obligatorios.'); return }
         setGuardandoEquipo(true); setErrorEquipo('')
-        fetch('/api/equipos', {
+        fetch(`${API_URL}/api/equipos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
             body: JSON.stringify(form)
@@ -321,7 +322,7 @@ export default function Servicios() {
 
     const handleGuardarEdicion = (item, form) => {
         setGuardandoEdicion(true); setErrorEdicion('')
-        const url = item.tabla === 'dj' ? `/api/djs/${item.id_dj}` : `/api/equipos/${item.id_equipo}`
+        const url = item.tabla === 'dj' ? `${API_URL}/api/djs/${item.id_dj}` : `${API_URL}/api/equipos/${item.id_equipo}`
         fetch(url, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },

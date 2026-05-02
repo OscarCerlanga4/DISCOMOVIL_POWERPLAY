@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { API_URL } from '../lib/api'
 
 const provincias = [
   'Álava', 'Albacete', 'Alicante', 'Almería', 'Asturias', 'Ávila',
@@ -103,7 +104,7 @@ export default function Register() {
     setLoading(true)
     setError(null)
 
-    const res = await fetch('/api/auth/register', {
+    const res = await fetch(`${API_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)

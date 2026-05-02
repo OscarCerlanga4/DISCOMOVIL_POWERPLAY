@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import SubidaImagen from '../components/SubidaImagen'
+import { API_URL } from '../lib/api'
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 const LABEL = {
@@ -369,8 +370,8 @@ function SeccionPresupuestos({ onVerFactura }) {
     const cargar = () => {
         setCargando(true)
         Promise.all([
-            fetch('/api/presupuestos', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-            fetch('/api/datosEmpresas').then(r => r.json())
+            fetch(`${API_URL}/api/presupuestos`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+            fetch(`${API_URL}/api/datosEmpresas`).then(r => r.json())
         ])
             .then(([presData, empData]) => {
                 if (presData.ok) setPresupuestos(presData.result)
@@ -383,7 +384,7 @@ function SeccionPresupuestos({ onVerFactura }) {
 
     const cambiarEstado = (p, estado) => {
         setCambiando(p.id_presupuesto)
-        fetch(`/api/presupuestos/${p.id_presupuesto}`, {
+        fetch(`${API_URL}/api/presupuestos/${p.id_presupuesto}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ estado })
@@ -577,8 +578,8 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
     const cargar = () => {
         setCargando(true)
         Promise.all([
-            fetch('/api/facturas', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-            fetch('/api/datosEmpresas').then(r => r.json())
+            fetch(`${API_URL}/api/facturas`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+            fetch(`${API_URL}/api/datosEmpresas`).then(r => r.json())
         ])
             .then(([factData, empData]) => {
                 if (factData.ok) setFacturas(factData.result)
@@ -606,7 +607,7 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
         const { id_factura, metodo, importe } = modalPago
         setModalPago(null)
         setGuardandoPago(id_factura)
-        fetch('/api/pagos', {
+        fetch(`${API_URL}/api/pagos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ id_factura, metodo_pago: metodo, importe: parseFloat(importe) })
@@ -616,8 +617,8 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
                 if (data.ok) {
                     setFormPago(prev => ({ ...prev, [id_factura]: { metodo: 'efectivo', importe: '' } }))
                     return Promise.all([
-                        fetch(`/api/pagos/factura/${id_factura}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-                        fetch('/api/facturas', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json())
+                        fetch(`${API_URL}/api/pagos/factura/${id_factura}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+                        fetch(`${API_URL}/api/facturas`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json())
                     ]).then(([pagosData, factData]) => {
                         if (pagosData.ok) setPagosMap(prev => ({ ...prev, [id_factura]: pagosData.result }))
                         if (factData.ok) setFacturas(factData.result)
@@ -705,7 +706,7 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
                                             const nuevoId = abierto ? null : f.id_factura
                                             setExpandido(nuevoId)
                                             if (nuevoId && !pagosMap[nuevoId]) {
-                                                fetch(`/api/pagos/factura/${nuevoId}`, { headers: { Authorization: `Bearer ${token}` } })
+                                                fetch(`${API_URL}/api/pagos/factura/${nuevoId}`, { headers: { Authorization: `Bearer ${token}` } })
                                                     .then(r => r.json())
                                                     .then(data => {
                                                         if (data.ok) setPagosMap(prev => ({ ...prev, [nuevoId]: data.result }))
@@ -938,7 +939,7 @@ function SeccionUsuarios() {
     const token = localStorage.getItem('token')
 
     useEffect(() => {
-        fetch('/api/usuarios', { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${API_URL}/api/usuarios`, { headers: { Authorization: `Bearer ${token}` } })
             .then(r => r.json())
             .then(data => { if (data.ok) setUsuarios(data.result) })
             .finally(() => setCargando(false))
@@ -997,7 +998,7 @@ function SeccionEmpresa() {
     const [mensaje, setMensaje] = useState(null)
 
     useEffect(() => {
-        fetch('/api/datosEmpresas')
+        fetch(`${API_URL}/api/datosEmpresas`)
             .then(r => r.json())
             .then(data => {
                 if (data.ok && data.result) {
@@ -1023,7 +1024,7 @@ function SeccionEmpresa() {
     const guardar = () => {
         setGuardando(true)
         setMensaje(null)
-        fetch('/api/datosEmpresas', {
+        fetch(`${API_URL}/api/datosEmpresas`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(form)

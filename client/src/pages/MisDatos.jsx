@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { API_URL } from '../lib/api'
 
 export default function MisDatos() {
     const { usuario, login } = useAuth()
@@ -90,7 +91,7 @@ export default function MisDatos() {
 
         const token = localStorage.getItem('token')
 
-        fetch(`/api/usuarios/${usuario.id_usuario}`, {
+        fetch(`${API_URL}/api/usuarios/${usuario.id_usuario}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

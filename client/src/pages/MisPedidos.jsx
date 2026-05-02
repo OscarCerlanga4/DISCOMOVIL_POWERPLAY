@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { API_URL } from '../lib/api'
 
 export default function MisPedidos() {
     const { usuario } = useAuth()
@@ -20,10 +21,10 @@ export default function MisPedidos() {
         if (!usuario) { navigate('/login'); return }
         const token = localStorage.getItem('token')
         Promise.all([
-            fetch('/api/presupuestos/mis-presupuestos', {
+            fetch(`${API_URL}/api/presupuestos/mis-presupuestos`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             }).then(r => r.json()),
-            fetch('/api/datosEmpresas').then(r => r.json())
+            fetch(`${API_URL}/api/datosEmpresas`).then(r => r.json())
         ])
             .then(([presupuestosData, empresaData]) => {
                 if (presupuestosData.ok) setPresupuestos(presupuestosData.result)
@@ -56,7 +57,7 @@ export default function MisPedidos() {
     const handleEstado = (idPresupuesto, estado) => {
         setAccionando(idPresupuesto)
         const token = localStorage.getItem('token')
-        fetch(`/api/presupuestos/${idPresupuesto}`, {
+        fetch(`${API_URL}/api/presupuestos/${idPresupuesto}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ estado })

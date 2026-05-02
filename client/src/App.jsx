@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { API_URL } from './lib/api'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import Inicio from './pages/Inicio'
@@ -38,7 +39,7 @@ function RutaMantenimiento() {
     const [activo, setActivo] = useState(null)
 
     useEffect(() => {
-        fetch('/api/health')
+        fetch(`${API_URL}/api/health`)
             .then(r => setActivo(r.status === 503))
             .catch(() => setActivo(false))
     }, [])
@@ -54,7 +55,7 @@ function AppContent() {
     const sinLayout = ['/login', '/register', '/actualizar-password', '/mantenimiento'].includes(location.pathname)
 
     useEffect(() => {
-        fetch('/api/health')
+        fetch(`${API_URL}/api/health`)
             .then(r => { if (r.status === 503) navigate('/mantenimiento') })
             .catch(() => { /* servidor caído — no redirigir, puede ser CORS en dev */ })
     }, [])

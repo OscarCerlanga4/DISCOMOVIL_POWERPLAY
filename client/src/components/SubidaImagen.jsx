@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { API_URL } from '../lib/api'
 
 export default function SubidaImagen({ value, onChange, label = 'Imagen' }) {
     const [subiendo, setSubiendo] = useState(false)
@@ -20,7 +21,7 @@ export default function SubidaImagen({ value, onChange, label = 'Imagen' }) {
         const reader = new FileReader()
         reader.onload = () => {
             const base64 = reader.result.split(',')[1]
-            fetch('/api/upload', {
+            fetch(`${API_URL}/api/upload`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useCarrito } from '../contexts/CarritoContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import { API_URL } from '../lib/api'
 
 export default function Carrito() {
     const { items, fechaInicio, fechaFin, ubicacion, setFechaInicio, setFechaFin, setUbicacion, eliminar, cambiarCantidad, vaciar, total } = useCarrito()
@@ -29,7 +30,7 @@ export default function Carrito() {
     useEffect(() => {
         if (!fechaInicio || !fechaFin) { setDisponibilidadEquipos({}); return }
         if (new Date(fechaFin) <= new Date(fechaInicio)) return
-        fetch(`/api/disponibilidad?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`)
+        fetch(`${API_URL}/api/disponibilidad?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`)
             .then(r => r.json())
             .then(data => { if (data.ok) setDisponibilidadEquipos(data.disponibilidad_equipos || {}) })
             .catch(() => {})
@@ -125,7 +126,7 @@ export default function Carrito() {
             body.cliente_provincia = clienteAdmin.provincia
         }
 
-        fetch('/api/reservas', {
+        fetch(`${API_URL}/api/reservas`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify(body)

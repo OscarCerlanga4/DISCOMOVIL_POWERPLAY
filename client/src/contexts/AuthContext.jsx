@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { API_URL } from '../lib/api'
 
 const AuthContext = createContext(null)
 
@@ -10,7 +11,7 @@ export function AuthProvider({ children }) {
   
   const cargarUsuario = async (token) => {
     try {
-      const res = await fetch('/api/auth/me', {
+      const res = await fetch(`${API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { API_URL } from '../lib/api'
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
 
@@ -68,7 +69,7 @@ export default function Pago() {
     const token = localStorage.getItem('token')
 
     useEffect(() => {
-        fetch(`/api/facturas/${id}`, {
+        fetch(`${API_URL}/api/facturas/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
         })
             .then(r => r.json())
@@ -78,7 +79,7 @@ export default function Pago() {
                     if (data.result.estado_factura === 'pagada') setPagado(true)
                 }
             })
-            .then(() => fetch(`/api/pagos/factura/${id}`, {
+            .then(() => fetch(`${API_URL}/api/pagos/factura/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             }))
             .then(r => r.json())
@@ -97,7 +98,7 @@ export default function Pago() {
         if (!importe || importe <= 0) { setErrorImporte('Introduce un importe válido'); return }
         if (importe > pendiente) { setErrorImporte(`El importe no puede superar ${pendiente.toFixed(2)}€`); return }
 
-        fetch('/api/pagos/crear-intencion', {
+        fetch(`${API_URL}/api/pagos/crear-intencion`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ id_factura: parseInt(id), importe })
@@ -115,7 +116,7 @@ export default function Pago() {
             setPagado(true)
         } else {
             setTimeout(() => {
-                fetch(`/api/pagos/factura/${id}`, {
+                fetch(`${API_URL}/api/pagos/factura/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                     .then(r => r.json())

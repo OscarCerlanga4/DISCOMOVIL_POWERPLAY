@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { API_URL } from '../lib/api'
 
 export default function Login() {
   const { login, errorOAuth } = useAuth()
@@ -29,7 +30,7 @@ export default function Login() {
     setLoading(true)
     setError(null)
 
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
