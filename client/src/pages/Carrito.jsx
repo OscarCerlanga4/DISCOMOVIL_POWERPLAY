@@ -4,6 +4,11 @@ import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { API_URL } from '../lib/api'
 
+const toLocalISO = (date) => {
+    const pad = n => String(n).padStart(2, '0')
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 export default function Carrito() {
     const { items, fechaInicio, fechaFin, ubicacion, setFechaInicio, setFechaFin, setUbicacion, eliminar, cambiarCantidad, vaciar, total } = useCarrito()
     const { usuario } = useAuth()
@@ -25,6 +30,8 @@ export default function Carrito() {
     const [sugerencias, setSugerencias] = useState([])
     const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
     const [disponibilidadEquipos, setDisponibilidadEquipos] = useState({})
+    const [errorFechaInicio, setErrorFechaInicio] = useState(null)
+    const [errorFechaFin, setErrorFechaFin] = useState(null)
     const debounceRef = useRef(null)
 
     useEffect(() => {
@@ -36,9 +43,9 @@ export default function Carrito() {
             .catch(() => {})
     }, [fechaInicio, fechaFin])
 
-    const ahora = new Date().toISOString().slice(0, 16)
+    const ahora = toLocalISO(new Date())
     const minFechaFin = fechaInicio
-        ? new Date(new Date(fechaInicio).getTime() + 60 * 60 * 1000).toISOString().slice(0, 16)
+        ? toLocalISO(new Date(new Date(fechaInicio).getTime() + 60 * 60 * 1000))
         : ahora
 
     const clienteRelleno = Object.values(clienteAdmin).every(v => v.trim() !== '')
@@ -96,6 +103,7 @@ export default function Carrito() {
     const handleConfirmar = () => {
         if (!usuario) { navigate('/login'); return }
         if (!fechaInicio || !fechaFin) { setError('Selecciona las fechas del evento'); return }
+        if (errorFechaInicio || errorFechaFin) { setError('Corrige las fechas antes de continuar'); return }
         if (!ubicacion) { setError('Introduce la ubicación del evento'); return }
         if (items.length === 0) { setError('El carrito está vacío'); return }
         if (usuario.rol === 'admin' && !clienteRelleno) {
@@ -467,17 +475,30 @@ export default function Carrito() {
                                     type="datetime-local"
                                     min={ahora}
                                     value={fechaInicio}
-                                    onChange={e => {
-                                        const val = e.target.value
-                                        const newInicio = val < ahora ? ahora : val
-                                        setFechaInicio(newInicio)
-                                        const newMin = new Date(new Date(newInicio).getTime() + 60 * 60 * 1000).toISOString().slice(0, 16)
-                                        if (fechaFin && fechaFin < newMin) setFechaFin(newMin)
-                                    }}
+                                    onChange={e => setFechaInicio(e.target.value)}
                                     style={resumenInputStyle}
                                     onFocus={e => e.target.style.borderColor = '#FFE600'}
-                                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                                    onBlur={e => {
+                                        e.target.style.borderColor = 'rgba(255,255,255,0.1)'
+                                        const val = e.target.value
+                                        if (!val) return
+                                        const now = new Date()
+                                        if (new Date(val) < now) {
+                                            setFechaInicio(toLocalISO(now))
+                                            setErrorFechaInicio('La fecha de inicio no puede ser en el pasado')
+                                        } else {
+                                            setErrorFechaInicio(null)
+                                            const newMin = new Date(new Date(val).getTime() + 60 * 60 * 1000)
+                                            if (fechaFin && new Date(fechaFin) < newMin) {
+                                                setFechaFin(toLocalISO(newMin))
+                                                setErrorFechaFin('La fecha de fin se ha ajustado al mínimo de 1 hora después del inicio')
+                                            } else {
+                                                setErrorFechaFin(null)
+                                            }
+                                        }
+                                    }}
                                 />
+                                {errorFechaInicio && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.3rem 0 0' }}>{errorFechaInicio}</p>}
                             </div>
                             <div>
                                 <label style={labelStyle}>Fecha de fin</label>
@@ -485,14 +506,25 @@ export default function Carrito() {
                                     type="datetime-local"
                                     min={minFechaFin}
                                     value={fechaFin}
-                                    onChange={e => {
-                                        const val = e.target.value
-                                        setFechaFin(val < minFechaFin ? minFechaFin : val)
-                                    }}
+                                    onChange={e => setFechaFin(e.target.value)}
                                     style={resumenInputStyle}
                                     onFocus={e => e.target.style.borderColor = '#FFE600'}
-                                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                                    onBlur={e => {
+                                        e.target.style.borderColor = 'rgba(255,255,255,0.1)'
+                                        const val = e.target.value
+                                        if (!val) return
+                                        const minFin = fechaInicio
+                                            ? new Date(new Date(fechaInicio).getTime() + 60 * 60 * 1000)
+                                            : new Date()
+                                        if (new Date(val) < minFin) {
+                                            setFechaFin(toLocalISO(minFin))
+                                            setErrorFechaFin('La fecha de fin debe ser al menos 1 hora después de la de inicio')
+                                        } else {
+                                            setErrorFechaFin(null)
+                                        }
+                                    }}
                                 />
+                                {errorFechaFin && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.3rem 0 0' }}>{errorFechaFin}</p>}
                             </div>
 
                             {/* Ubicación */}

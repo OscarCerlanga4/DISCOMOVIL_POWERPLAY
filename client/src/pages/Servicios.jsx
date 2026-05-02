@@ -5,6 +5,11 @@ import { useCarrito } from '../contexts/CarritoContext'
 import SubidaImagen from '../components/SubidaImagen'
 import { API_URL } from '../lib/api'
 
+const toLocalISO = (date) => {
+    const pad = n => String(n).padStart(2, '0')
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 const TIPOS_DJ = ['dj', 'orquesta', 'grupo']
 const CATEGORIAS_EQUIPO = ['sonido', 'iluminacion', 'microfonia', 'mezclas', 'efectos', 'pantallas']
 
@@ -171,6 +176,8 @@ export default function Servicios() {
     const [precioActivo, setPrecioActivo] = useState('todo')
     const [fechaInicio, setFechaInicio] = useState('')
     const [fechaFin, setFechaFin] = useState('')
+    const [errorFechaInicio, setErrorFechaInicio] = useState(null)
+    const [errorFechaFin, setErrorFechaFin] = useState(null)
     const [ocupados, setOcupados] = useState({ equipos_ocupados: [], djs_ocupados: [] })
     const [itemSeleccionado, setItemSeleccionado] = useState(null)
     const [dropdownPrecio, setDropdownPrecio] = useState(false)
@@ -211,6 +218,10 @@ export default function Servicios() {
     useEffect(() => {
         if (!fechaInicio || !fechaFin) { setOcupados({ equipos_ocupados: [], djs_ocupados: [] }); return }
         if (new Date(fechaFin) <= new Date(fechaInicio)) return
+        const now = new Date().toISOString().slice(0, 16)
+        if (fechaInicio < now) return
+        const minFin = new Date(new Date(fechaInicio).getTime() + 60 * 60 * 1000).toISOString().slice(0, 16)
+        if (fechaFin < minFin) return
         fetch(`${API_URL}/api/disponibilidad?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`)
             .then(r => r.json())
             .then(data => { if (data.ok) setOcupados({ equipos_ocupados: data.equipos_ocupados, djs_ocupados: data.djs_ocupados }) })
@@ -347,10 +358,7 @@ export default function Servicios() {
     const fechaActiva = fechaInicio && fechaFin
 
     const quitarFecha = () => { setFechaInicio(''); setFechaFin(''); setDropdownFecha(false); setOcupados({ equipos_ocupados: [], djs_ocupados: [] }) }
-    const ahora = new Date().toISOString().slice(0, 16)
-    const minFechaFin = fechaInicio
-        ? new Date(new Date(fechaInicio).getTime() + 60 * 60 * 1000).toISOString().slice(0, 16)
-        : ahora
+    const ahora = toLocalISO(new Date())
 
     const getBadgeLabel = (item) => {
         if (item.tabla === 'equipo') return item.categoria || 'Equipo'
@@ -582,11 +590,13 @@ export default function Servicios() {
                                     <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, background: '#1a1a1a', border: '1px solid rgba(255,230,0,0.15)', boxShadow: '0 8px 30px rgba(0,0,0,0.5)', padding: '1rem', minWidth: '260px', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                         <div>
                                             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 0.4rem' }}>Fecha y hora de inicio</p>
-                                            <input type="datetime-local" min={ahora} value={fechaInicio} onChange={e => { const val = e.target.value; const newInicio = val < ahora ? ahora : val; setFechaInicio(newInicio); const newMin = new Date(new Date(newInicio).getTime() + 60 * 60 * 1000).toISOString().slice(0, 16); if (fechaFin && fechaFin < newMin) setFechaFin(newMin) }} style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.5rem 0.75rem', fontSize: '0.85rem', outline: 'none', width: '100%', colorScheme: 'dark' }} onFocus={e => e.target.style.borderColor = '#FFE600'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
+                                            <input type="datetime-local" min={ahora} value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.5rem 0.75rem', fontSize: '0.85rem', outline: 'none', width: '100%', colorScheme: 'dark' }} onFocus={e => e.target.style.borderColor = '#FFE600'} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; const val = e.target.value; if (!val) return; const now = new Date(); if (new Date(val) < now) { setFechaInicio(toLocalISO(now)); setErrorFechaInicio('La fecha de inicio no puede ser en el pasado') } else { setErrorFechaInicio(null); const newMin = new Date(new Date(val).getTime() + 60 * 60 * 1000); if (fechaFin && new Date(fechaFin) < newMin) { setFechaFin(toLocalISO(newMin)); setErrorFechaFin('La fecha de fin se ha ajustado al mínimo de 1 hora después del inicio') } else { setErrorFechaFin(null) } } }} />
+                                            {errorFechaInicio && <p style={{ color: '#ff4444', fontSize: '0.75rem', margin: '0.3rem 0 0' }}>{errorFechaInicio}</p>}
                                         </div>
                                         <div>
                                             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 0.4rem' }}>Fecha y hora de fin</p>
-                                            <input type="datetime-local" value={fechaFin} min={minFechaFin} onChange={e => { const val = e.target.value; setFechaFin(val < minFechaFin ? minFechaFin : val) }} style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.5rem 0.75rem', fontSize: '0.85rem', outline: 'none', width: '100%', colorScheme: 'dark' }} onFocus={e => e.target.style.borderColor = '#FFE600'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
+                                            <input type="datetime-local" value={fechaFin} min={fechaInicio ? new Date(new Date(fechaInicio).getTime() + 60 * 60 * 1000).toISOString().slice(0, 16) : ahora} onChange={e => setFechaFin(e.target.value)} style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.5rem 0.75rem', fontSize: '0.85rem', outline: 'none', width: '100%', colorScheme: 'dark' }} onFocus={e => e.target.style.borderColor = '#FFE600'} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; const val = e.target.value; if (!val) return; const minFin = fechaInicio ? new Date(new Date(fechaInicio).getTime() + 60 * 60 * 1000) : new Date(); if (new Date(val) < minFin) { setFechaFin(toLocalISO(minFin)); setErrorFechaFin('La fecha de fin debe ser al menos 1 hora después de la de inicio') } else { setErrorFechaFin(null) } }} />
+                                            {errorFechaFin && <p style={{ color: '#ff4444', fontSize: '0.75rem', margin: '0.3rem 0 0' }}>{errorFechaFin}</p>}
                                         </div>
                                         {fechaActiva && (
                                             <button onClick={quitarFecha} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: '0.75rem', padding: 0, textAlign: 'left', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#ff4444'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}>
