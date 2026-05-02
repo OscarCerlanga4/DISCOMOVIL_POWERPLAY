@@ -37,6 +37,9 @@ export default function Carrito() {
     }, [fechaInicio, fechaFin])
 
     const ahora = new Date().toISOString().slice(0, 16)
+    const minFechaFin = fechaInicio
+        ? new Date(new Date(fechaInicio).getTime() + 60 * 60 * 1000).toISOString().slice(0, 16)
+        : ahora
 
     const clienteRelleno = Object.values(clienteAdmin).every(v => v.trim() !== '')
 
@@ -464,7 +467,13 @@ export default function Carrito() {
                                     type="datetime-local"
                                     min={ahora}
                                     value={fechaInicio}
-                                    onChange={e => setFechaInicio(e.target.value)}
+                                    onChange={e => {
+                                        const val = e.target.value
+                                        const newInicio = val < ahora ? ahora : val
+                                        setFechaInicio(newInicio)
+                                        const newMin = new Date(new Date(newInicio).getTime() + 60 * 60 * 1000).toISOString().slice(0, 16)
+                                        if (fechaFin && fechaFin < newMin) setFechaFin(newMin)
+                                    }}
                                     style={resumenInputStyle}
                                     onFocus={e => e.target.style.borderColor = '#FFE600'}
                                     onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
@@ -474,10 +483,12 @@ export default function Carrito() {
                                 <label style={labelStyle}>Fecha de fin</label>
                                 <input
                                     type="datetime-local"
-                                    min={fechaInicio || ahora}
+                                    min={minFechaFin}
                                     value={fechaFin}
-                                    min={fechaInicio}
-                                    onChange={e => setFechaFin(e.target.value)}
+                                    onChange={e => {
+                                        const val = e.target.value
+                                        setFechaFin(val < minFechaFin ? minFechaFin : val)
+                                    }}
                                     style={resumenInputStyle}
                                     onFocus={e => e.target.style.borderColor = '#FFE600'}
                                     onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
