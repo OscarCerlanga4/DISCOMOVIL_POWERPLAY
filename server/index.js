@@ -9,6 +9,11 @@ app.use(cors({
     credentials: true
 }));
 
+const maintenance = require('./middleware/maintenance')
+app.use('/api', maintenance)
+
+app.get('/api/health', (req, res) => res.status(200).json({ ok: true }))
+
 const stripeWebhookRouter = require('./routes/stripeWebhook');
 app.use('/api/stripe/webhook', stripeWebhookRouter);
 

@@ -175,7 +175,7 @@ export default function Register() {
           {/* Email */}
           <div>
             <label style={labelStyle}>Email</label>
-            <input type="email" name="email" value={form.email} onChange={handleChange} 
+            <input type="text" name="email" value={form.email} onChange={handleChange} 
               style={{ ...inputStyle, border: errors.email ? '1px solid #ff4444' : '1px solid rgba(255,255,255,0.1)' }} 
               onFocus={onFocus} onBlur={getOnBlur('email')} />
             {errors.email && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errors.email}</p>}
