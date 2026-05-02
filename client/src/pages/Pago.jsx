@@ -109,6 +109,7 @@ export default function Pago() {
 
     const handleExito = (importePagado) => {
         window.scrollTo(0, 0)
+        window.location.reload()
         const nuevoTotal = totalPagado + parseFloat(importePagado)
         setClientSecret(null)
         setImporteInput('')

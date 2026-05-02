@@ -992,7 +992,7 @@ function SeccionUsuarios() {
 
 // ── Sección Empresa ───────────────────────────────────────────────────────────
 function SeccionEmpresa() {
-    const [form, setForm] = useState({ nombre_empresa: '', cif: '', direccion: '', codigo_postal: '', localidad: '', provincia: '', telefono: '', email: '', logo_url: '' })
+    const [form, setForm] = useState({ nombre_empresa: '', cif: '', direccion: '', codigo_postal: '', localidad: '', provincia: '', telefono: '', email: '', logo_url: '', iban: '' })
     const [cargando, setCargando] = useState(true)
     const [guardando, setGuardando] = useState(false)
     const [mensaje, setMensaje] = useState(null)
@@ -1012,7 +1012,8 @@ function SeccionEmpresa() {
                         provincia: e.provincia || '',
                         telefono: e.telefono || '',
                         email: e.email || '',
-                        logo_url: e.logo_url || ''
+                        logo_url: e.logo_url || '',
+                        iban: e.iban || ''
                     })
                 }
             })
@@ -1042,7 +1043,8 @@ function SeccionEmpresa() {
         { key: 'direccion', label: 'Dirección', full: true },
         { key: 'codigo_postal', label: 'Código postal' },
         { key: 'localidad', label: 'Localidad' },
-        { key: 'provincia', label: 'Provincia' }
+        { key: 'provincia', label: 'Provincia' },
+        { key: 'iban', label: 'IBAN', full: true }
     ]
 
     if (cargando) return <p style={{ color: 'rgba(255,255,255,0.3)', fontFamily: 'Bebas Neue', letterSpacing: '0.1em' }}>Cargando...</p>
