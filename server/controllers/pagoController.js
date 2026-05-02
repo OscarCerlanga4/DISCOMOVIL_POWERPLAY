@@ -149,22 +149,54 @@ const crearIntencion = (req, res) => {
         return res.status(400).send({ ok: false, error: 'Faltan datos' });
     }
 
+    if (importe <= 0) {
+        return res.status(400).send({ ok: false, error: 'El importe debe ser mayor que cero' });
+    }
+
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-    stripe.paymentIntents.create({
-        amount: Math.round(importe * 100),
-        currency: 'eur',
-        metadata: {
-            id_factura: String(id_factura),
-            id_usuario: String(req.user.id)
-        }
-    })
-        .then(paymentIntent => {
-            res.status(200).send({ ok: true, clientSecret: paymentIntent.client_secret });
+    supabase
+        .from('factura')
+        .select('total')
+        .eq('id_factura', id_factura)
+        .then(({ data, error }) => {
+            if (error || !data.length) {
+                return res.status(404).send({ ok: false, error: 'Factura no encontrada' });
+            }
+
+            return supabase
+                .from('pago')
+                .select('importe')
+                .eq('id_factura', id_factura)
+                .then(({ data: pagos, error: pagosError }) => {
+                    if (pagosError) {
+                        return res.status(500).send({ ok: false, error: pagosError.message });
+                    }
+
+                    const totalPagado = pagos.reduce((sum, p) => sum + parseFloat(p.importe), 0);
+                    const pendiente = parseFloat(data[0].total) - totalPagado;
+
+                    if (importe > pendiente + 0.01) {
+                        return res.status(400).send({ ok: false, error: `El importe no puede superar el saldo pendiente de ${pendiente.toFixed(2)}€` });
+                    }
+
+                    stripe.paymentIntents.create({
+                        amount: Math.round(importe * 100),
+                        currency: 'eur',
+                        metadata: {
+                            id_factura: String(id_factura),
+                            id_usuario: String(req.user.id)
+                        }
+                    })
+                        .then(paymentIntent => {
+                            res.status(200).send({ ok: true, clientSecret: paymentIntent.client_secret });
+                        })
+                        .catch(err => {
+                            res.status(500).send({ ok: false, error: err.message });
+                        });
+                });
         })
-        .catch(err => {
-            res.status(500).send({ ok: false, error: err.message });
-        });
+        .catch(() => res.status(500).send({ ok: false, error: 'Error al validar la factura' }));
 };
 
 const getByFactura = (req, res) => {

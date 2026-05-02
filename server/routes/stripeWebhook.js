@@ -27,46 +27,56 @@ router.post('/', express.raw({ type: 'application/json' }), (req, res) => {
 
     supabase
         .from('pago')
-        .insert({
-            id_factura,
-            metodo_pago: 'stripe',
-            importe,
-            referencia_pago: intent.id
-        })
-        .then(({ error: pagoError }) => {
-            if (pagoError) {
-                return res.status(500).send({ ok: false, error: pagoError.message });
+        .select('id_pago')
+        .eq('referencia_pago', intent.id)
+        .then(({ data: pagoExistente }) => {
+            if (pagoExistente && pagoExistente.length > 0) {
+                return res.json({ received: true })
             }
 
             return supabase
-                .from('factura')
-                .select('total')
-                .eq('id_factura', id_factura)
-                .then(({ data: facturaData, error: facturaError }) => {
-                    if (facturaError || !facturaData.length) {
-                        return res.status(404).send({ ok: false, error: 'Factura no encontrada' });
+                .from('pago')
+                .insert({
+                    id_factura,
+                    metodo_pago: 'stripe',
+                    importe,
+                    referencia_pago: intent.id
+                })
+                .then(({ error: pagoError }) => {
+                    if (pagoError) {
+                        return res.status(500).send({ ok: false, error: pagoError.message });
                     }
 
                     return supabase
-                        .from('pago')
-                        .select('importe')
+                        .from('factura')
+                        .select('total')
                         .eq('id_factura', id_factura)
-                        .then(({ data: pagos, error: pagosError }) => {
-                            if (pagosError) {
-                                return res.status(500).send({ ok: false, error: pagosError.message });
+                        .then(({ data: facturaData, error: facturaError }) => {
+                            if (facturaError || !facturaData.length) {
+                                return res.status(404).send({ ok: false, error: 'Factura no encontrada' });
                             }
 
-                            const totalPagado = pagos.reduce((sum, p) => sum + parseFloat(p.importe), 0);
+                            return supabase
+                                .from('pago')
+                                .select('importe')
+                                .eq('id_factura', id_factura)
+                                .then(({ data: pagos, error: pagosError }) => {
+                                    if (pagosError) {
+                                        return res.status(500).send({ ok: false, error: pagosError.message });
+                                    }
 
-                            if (totalPagado >= parseFloat(facturaData[0].total)) {
-                                return supabase
-                                    .from('factura')
-                                    .update({ estado_factura: 'pagada' })
-                                    .eq('id_factura', id_factura)
-                                    .then(() => res.json({ received: true }));
-                            }
+                                    const totalPagado = pagos.reduce((sum, p) => sum + parseFloat(p.importe), 0);
 
-                            res.json({ received: true });
+                                    if (totalPagado >= parseFloat(facturaData[0].total)) {
+                                        return supabase
+                                            .from('factura')
+                                            .update({ estado_factura: 'pagada' })
+                                            .eq('id_factura', id_factura)
+                                            .then(() => res.json({ received: true }));
+                                    }
+
+                                    res.json({ received: true });
+                                });
                         });
                 });
         })

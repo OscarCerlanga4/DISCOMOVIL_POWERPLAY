@@ -94,7 +94,7 @@ const create = (req, res) => {
 
                     const solapamiento = data.some(item => {
                         const r = item.reserva;
-                        if (r.estado_reserva === 'cancelada' || r.estado_reserva === 'rechazada') return false;
+                        if (r.estado_reserva === 'cancelada') return false;
                         return new Date(fecha_inicio) < new Date(r.fecha_fin) &&
                             new Date(fecha_fin) > new Date(r.fecha_inicio);
                     });
@@ -117,7 +117,7 @@ const create = (req, res) => {
 
                             const solapamiento = data.some(item => {
                                 const r = item.reserva;
-                                if (r.estado_reserva === 'cancelada' || r.estado_reserva === 'rechazada') return false;
+                                if (r.estado_reserva === 'cancelada') return false;
                                 return new Date(fecha_inicio) < new Date(r.fecha_fin) &&
                                     new Date(fecha_fin) > new Date(r.fecha_inicio);
                             });
