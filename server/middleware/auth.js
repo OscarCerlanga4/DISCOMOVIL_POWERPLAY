@@ -12,7 +12,7 @@ const verificarToken = (req, res, next)=>{
     supabaseAuth.auth.getUser(token)
         .then(({ data, error })=>{
             if(error || !data){
-                res.status(401).send({ ok: false, error: "Token invalido o expirado" });
+                return res.status(401).send({ ok: false, error: "Token invalido o expirado" });
             }else{
                 req.user = data.user;
                 next();

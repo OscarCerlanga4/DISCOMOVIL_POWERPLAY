@@ -568,6 +568,10 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
     const [filtro, setFiltro] = useState('todos')
     const [busqueda, setBusqueda] = useState('')
     const [expandido, setExpandido] = useState(null)
+    const [pagosMap, setPagosMap] = useState({})
+    const [formPago, setFormPago] = useState({})
+    const [guardandoPago, setGuardandoPago] = useState(null)
+    const [modalPago, setModalPago] = useState(null) // { id_factura, metodo, importe, numeroFactura, cliente }
     const token = localStorage.getItem('token')
 
     const cargar = () => {
@@ -596,6 +600,32 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
         }, 2500)
         return () => { clearTimeout(timerScroll); clearTimeout(timerLimpiar) }
     }, [facturaDestacada, facturas])
+
+    const ejecutarPago = () => {
+        if (!modalPago) return
+        const { id_factura, metodo, importe } = modalPago
+        setModalPago(null)
+        setGuardandoPago(id_factura)
+        fetch('/api/pagos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ id_factura, metodo_pago: metodo, importe: parseFloat(importe) })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    setFormPago(prev => ({ ...prev, [id_factura]: { metodo: 'efectivo', importe: '' } }))
+                    return Promise.all([
+                        fetch(`/api/pagos/factura/${id_factura}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+                        fetch('/api/facturas', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json())
+                    ]).then(([pagosData, factData]) => {
+                        if (pagosData.ok) setPagosMap(prev => ({ ...prev, [id_factura]: pagosData.result }))
+                        if (factData.ok) setFacturas(factData.result)
+                    })
+                }
+            })
+            .finally(() => setGuardandoPago(null))
+    }
 
     const contar = (id) => id === 'todos' ? facturas.length : facturas.filter(f => (f.estado_factura || 'pendiente') === id).length
 
@@ -671,7 +701,17 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
                                         </div>
                                     </div>
                                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
-                                        <button onClick={() => setExpandido(abierto ? null : f.id_factura)}
+                                        <button onClick={() => {
+                                            const nuevoId = abierto ? null : f.id_factura
+                                            setExpandido(nuevoId)
+                                            if (nuevoId && !pagosMap[nuevoId]) {
+                                                fetch(`/api/pagos/factura/${nuevoId}`, { headers: { Authorization: `Bearer ${token}` } })
+                                                    .then(r => r.json())
+                                                    .then(data => {
+                                                        if (data.ok) setPagosMap(prev => ({ ...prev, [nuevoId]: data.result }))
+                                                    })
+                                            }
+                                        }}
                                             style={{ ...btnAmarillo, opacity: abierto ? 0.75 : 1 }}
                                             onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
                                             onMouseLeave={e => e.currentTarget.style.opacity = abierto ? '0.75' : '1'}>
@@ -709,6 +749,7 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
                                                 </div>
                                             </div>
                                         </div>
+
                                         <p style={{ ...LABEL, marginBottom: '0.75rem' }}>Líneas de la factura</p>
                                         {(!f.presupuesto?.detalle_presupuesto || f.presupuesto.detalle_presupuesto.length === 0) ? (
                                             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>Sin detalles registrados.</p>
@@ -738,11 +779,152 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
                                                 </div>
                                             </div>
                                         )}
+
+                                        {/* ── Pagos ── */}
+                                        {(() => {
+                                            const pagos = pagosMap[f.id_factura] || []
+                                            const totalPagado = pagos.reduce((acc, p) => acc + parseFloat(p.importe || 0), 0)
+                                            const totalFactura = parseFloat(f.total || 0)
+                                            const porcentaje = totalFactura > 0 ? Math.min(100, (totalPagado / totalFactura) * 100) : 0
+                                            const restante = totalFactura - totalPagado
+                                            return (
+                                                <div style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1.25rem' }}>
+                                                    <p style={{ ...LABEL, marginBottom: '0.75rem' }}>Pagos registrados</p>
+                                                    {pagos.length === 0 ? (
+                                                        <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>Sin pagos registrados.</p>
+                                                    ) : (
+                                                        <>
+                                                            <div style={{ background: 'rgba(255,255,255,0.07)', height: '6px', borderRadius: '3px', marginBottom: '0.5rem' }}>
+                                                                <div style={{ background: porcentaje >= 100 ? '#4CAF50' : '#FFE600', height: '6px', borderRadius: '3px', width: `${porcentaje}%`, transition: 'width 0.4s' }} />
+                                                            </div>
+                                                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', margin: '0 0 0.75rem' }}>
+                                                                Pagado <span style={{ color: '#FFE600', fontWeight: 700 }}>{totalPagado.toFixed(2)}€</span> de <span style={{ color: '#fff' }}>{totalFactura.toFixed(2)}€</span>
+                                                                {porcentaje >= 100 && <span style={{ color: '#4CAF50', marginLeft: '0.5rem', fontWeight: 700 }}>✓ Completado</span>}
+                                                            </p>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.75rem' }}>
+                                                                {pagos.map((p, i) => (
+                                                                    <div key={i} style={{ display: 'flex', gap: '1rem', fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)' }}>
+                                                                        <span style={{ color: '#fff', fontWeight: 600 }}>{parseFloat(p.importe).toFixed(2)}€</span>
+                                                                        <span style={{ textTransform: 'capitalize' }}>{p.metodo_pago}</span>
+                                                                        {p.fecha_pago && <span>{new Date(p.fecha_pago).toLocaleDateString('es-ES')}</span>}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                    {f.estado_factura !== 'pagada' && (
+                                                        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                                                            <select
+                                                                value={formPago[f.id_factura]?.metodo || 'efectivo'}
+                                                                onChange={e => setFormPago(prev => ({ ...prev, [f.id_factura]: { ...prev[f.id_factura], metodo: e.target.value } }))}
+                                                                style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '0.45rem 0.75rem', fontSize: '0.85rem', cursor: 'pointer' }}
+                                                            >
+                                                                <option value="efectivo">Efectivo</option>
+                                                                <option value="transferencia">Transferencia</option>
+                                                            </select>
+                                                            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                                                <input
+                                                                    type="number"
+                                                                    min="0.01"
+                                                                    step="0.01"
+                                                                    placeholder={`Importe`}
+                                                                    value={formPago[f.id_factura]?.importe || ''}
+                                                                    onChange={e => setFormPago(prev => ({ ...prev, [f.id_factura]: { ...prev[f.id_factura], importe: e.target.value } }))}
+                                                                    style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', padding: '0.45rem 0.75rem', fontSize: '0.85rem', width: '140px' }}
+                                                                />
+                                                                <button
+                                                                    onClick={() => setFormPago(prev => ({ ...prev, [f.id_factura]: { ...prev[f.id_factura], importe: restante.toFixed(2) } }))}
+                                                                    style={{ background: 'rgba(255,230,0,0.08)', border: '1px solid rgba(255,230,0,0.25)', color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '0.78rem', letterSpacing: '0.1em', padding: '0.45rem 0.65rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,230,0,0.15)'}
+                                                                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,230,0,0.08)'}
+                                                                >
+                                                                    Máx {restante.toFixed(2)}€
+                                                                </button>
+                                                            </div>
+                                                            <button
+                                                                disabled={guardandoPago === f.id_factura || !formPago[f.id_factura]?.importe}
+                                                                onClick={() => {
+                                                                    const { metodo = 'efectivo', importe } = formPago[f.id_factura] || {}
+                                                                    if (!importe || parseFloat(importe) <= 0) return
+                                                                    setModalPago({
+                                                                        id_factura: f.id_factura,
+                                                                        metodo,
+                                                                        importe,
+                                                                        numeroFactura: f.numero_factura,
+                                                                        cliente: f.presupuesto?.reserva?.cliente_nombre || '—'
+                                                                    })
+                                                                }}
+                                                                style={{ ...btnAmarillo, opacity: (guardandoPago === f.id_factura || !formPago[f.id_factura]?.importe) ? 0.4 : 1, cursor: (guardandoPago === f.id_factura || !formPago[f.id_factura]?.importe) ? 'not-allowed' : 'pointer' }}
+                                                            >
+                                                                {guardandoPago === f.id_factura ? 'Guardando...' : 'Registrar pago'}
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )
+                                        })()}
                                     </div>
                                 )}
                             </div>
                         )
                     })}
+                </div>
+            )}
+
+            {/* ── Modal confirmación pago ── */}
+            {modalPago && (
+                <div
+                    onClick={() => setModalPago(null)}
+                    style={{
+                        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        zIndex: 1000, backdropFilter: 'blur(4px)'
+                    }}
+                >
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                            background: '#141414', borderTop: '3px solid #FFE600',
+                            padding: '2.5rem 2.5rem 2rem', width: '100%', maxWidth: '420px',
+                            boxShadow: '0 24px 80px rgba(0,0,0,0.6)'
+                        }}
+                    >
+                        <p style={{ ...LABEL, marginBottom: '1.25rem' }}>Confirmar pago</p>
+                        <p style={{ color: '#fff', fontSize: '0.9rem', margin: '0 0 0.5rem' }}>
+                            Factura <span style={{ color: '#FFE600', fontWeight: 700 }}>{modalPago.numeroFactura}</span>
+                        </p>
+                        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', margin: '0 0 1.75rem' }}>
+                            {modalPago.cliente}
+                        </p>
+                        <div style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.06)', padding: '1.25rem 1.5rem', marginBottom: '2rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+                                <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.82rem' }}>Importe</span>
+                                <span style={{ color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '1.4rem', letterSpacing: '0.05em' }}>{parseFloat(modalPago.importe).toFixed(2)}€</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.82rem' }}>Método</span>
+                                <span style={{ color: '#fff', fontSize: '0.88rem', fontWeight: 600, textTransform: 'capitalize' }}>{modalPago.metodo}</span>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.75rem' }}>
+                            <button
+                                onClick={() => setModalPago(null)}
+                                style={{ ...btnRojo, flex: 1, textAlign: 'center' }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,68,68,0.08)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={ejecutarPago}
+                                style={{ ...btnAmarillo, flex: 1, textAlign: 'center' }}
+                                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                            >
+                                Confirmar pago
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
