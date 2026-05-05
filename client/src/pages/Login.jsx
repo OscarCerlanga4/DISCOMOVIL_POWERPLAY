@@ -5,13 +5,17 @@ import { useAuth } from '../contexts/AuthContext'
 import { API_URL } from '../lib/api'
 
 export default function Login() {
-  const { login, errorOAuth } = useAuth()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [errors, setErrors] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const errorParams = new URLSearchParams(window.location.search).get('error')
+  const [errorOAuth, setErrorOAuth] = useState(
+      errorParams === 'no-cuenta' ? 'No tienes cuenta registrada. Regístrate primero.' : null
+  )
 
   const validate = () => {
     const newErrors = { email: '', password: '' }
@@ -144,12 +148,7 @@ export default function Login() {
           )}
 
           {errorOAuth && (
-            <p style={{ color: '#ff4444', fontSize: '0.85rem', textAlign: 'center' }}>
-              {errorOAuth}{' '}
-              <Link to="/register" style={{ color: '#FFE600', fontWeight: 600 }}>
-                Regístrate aquí
-              </Link>
-            </p>
+              <p style={{ color: '#ff4444', fontSize: '0.85rem' }}>{errorOAuth}</p>
           )}
 
           <button

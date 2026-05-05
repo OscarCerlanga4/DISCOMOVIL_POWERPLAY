@@ -1,9 +1,9 @@
-const { supabase } = require('../db/supabase');
+const { supabase, supabaseAuth } = require('../db/supabase');
 
 const register = (req, res)=>{
     const { email, password, nombre, telefono, dni_nie_cif, direccion, codigo_postal, localidad, provincia } = req.body;
 
-    supabase.auth.signUp({
+    supabaseAuth.auth.signUp({
         email: email,
         password: password
     }).then(({ data, error })=>{
@@ -41,7 +41,7 @@ const register = (req, res)=>{
 const login = (req, res)=>{
     const { email, password } = req.body;
 
-    supabase.auth.signInWithPassword({
+    supabaseAuth.auth.signInWithPassword({
         email: email,
         password: password
     }).then(({ data, error })=>{

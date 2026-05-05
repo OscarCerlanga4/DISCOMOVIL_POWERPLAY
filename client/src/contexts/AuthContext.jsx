@@ -24,6 +24,9 @@ export function AuthProvider({ children }) {
         setUsuario(null)
         supabase.auth.signOut()
         setErrorOAuth('No tienes cuenta registrada. Regístrate primero.')
+        if (window.location.pathname !== '/login') {
+            window.location.replace('/login?error=no-cuenta')
+        }
       }
     } catch {
       localStorage.removeItem('token')
