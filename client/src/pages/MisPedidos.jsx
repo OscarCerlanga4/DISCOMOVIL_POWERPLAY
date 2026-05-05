@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { API_URL } from '../lib/api'
@@ -15,7 +15,9 @@ export default function MisPedidos() {
     const [accionando, setAccionando] = useState(null)
     const [filtroTipo, setFiltroTipo] = useState('presupuestos')
     const [filtroEstado, setFiltroEstado] = useState('todos')
+    const [presupuestoDestacado, setPresupuestoDestacado] = useState(null)
     const [facturaDestacada, setFacturaDestacada] = useState(null)
+    const [searchParams] = useSearchParams()
 
     useEffect(() => {
         if (!usuario) { navigate('/login'); return }
@@ -32,7 +34,19 @@ export default function MisPedidos() {
             })
             .catch(() => setError('Error al cargar los datos'))
             .finally(() => setCargando(false))
+            const idParam = searchParams.get('presupuesto')
+            if (idParam) setPresupuestoDestacado(parseInt(idParam))
     }, [usuario])
+
+    useEffect(() => {
+        if (!presupuestoDestacado) return
+        const timerScroll = setTimeout(() => {
+            const el = document.getElementById(`presupuesto-${presupuestoDestacado}`)
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 100)
+        const timerLimpiar = setTimeout(() => setPresupuestoDestacado(null), 2500)
+        return () => { clearTimeout(timerScroll); clearTimeout(timerLimpiar) }
+    }, [presupuestoDestacado])
 
     useEffect(() => {
         if (!facturaDestacada) return
@@ -625,11 +639,12 @@ export default function MisPedidos() {
                             {presupuestosFiltrados.map(p => {
                                 const dias = p.estado === 'pendiente' ? diasRestantes(p.fecha_limite) : null
                                 return (
-                                    <div key={p.id_presupuesto} style={{
-                                        background: '#1a1a1a',
-                                        border: '1px solid rgba(255,230,0,0.12)',
-                                        boxShadow: '0 0 30px rgba(255,230,0,0.06), 0 4px 24px rgba(0,0,0,0.4)',
-                                    }}>
+                                    <div key={p.id_presupuesto} id={`presupuesto-${p.id_presupuesto}`} style={{
+                                            background: '#1a1a1a',
+                                            border: presupuestoDestacado === p.id_presupuesto ? '1px solid rgba(255,230,0,0.7)' : '1px solid rgba(255,230,0,0.12)',
+                                            boxShadow: presupuestoDestacado === p.id_presupuesto ? '0 0 40px rgba(255,230,0,0.2), 0 4px 24px rgba(0,0,0,0.4)' : '0 0 30px rgba(255,230,0,0.06), 0 4px 24px rgba(0,0,0,0.4)',
+                                            transition: 'border 0.4s, box-shadow 0.4s',
+                                        }}>
                                         <div style={{
                                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                                             padding: '1rem 1.5rem',

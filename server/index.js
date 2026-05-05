@@ -69,6 +69,9 @@ app.use('/api/eventos', eventosRouter);
 const uploadRouter = require('./routes/uploads');
 app.use('/api/upload', uploadRouter);
 
+const tokensRouter = require('./routes/tokens');
+app.use('/api/tokens', tokensRouter);
+
 app.listen(PORT, ()=>{
     console.log(`Servidor escuchando en el puerto ${PORT}`);
 });

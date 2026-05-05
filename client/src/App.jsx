@@ -18,6 +18,7 @@ import MisDatos from './pages/MisDatos'
 import ActualizarPassword from './pages/ActualizarPassword'
 import Admin from './pages/Admin'
 import Mantenimiento from './pages/Mantenimiento'
+import PresupuestoConfirmado from './pages/PresupuestoConfirmado'
 import { useAuth } from './contexts/AuthContext'
 
 function ScrollToTop() {
@@ -52,7 +53,7 @@ function RutaMantenimiento() {
 function AppContent() {
     const location = useLocation()
     const navigate = useNavigate()
-    const sinLayout = ['/login', '/register', '/actualizar-password', '/mantenimiento'].includes(location.pathname)
+    const sinLayout = ['/login', '/register', '/actualizar-password', '/mantenimiento', '/presupuesto-confirmado'].includes(location.pathname)
 
     useEffect(() => {
         fetch(`${API_URL}/api/health`)
@@ -77,6 +78,7 @@ function AppContent() {
                 <Route path="/mis-datos" element={<MisDatos />} />
                 <Route path="/actualizar-password" element={<ActualizarPassword />} />
                 <Route path="/admin" element={<RutaAdmin><Admin /></RutaAdmin>} />
+                <Route path="/presupuesto-confirmado" element={<PresupuestoConfirmado />} />
                 <Route path="/mantenimiento" element={<RutaMantenimiento />} />
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>

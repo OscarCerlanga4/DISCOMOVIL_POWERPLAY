@@ -1,4 +1,6 @@
 const { supabase } = require('../db/supabase');
+const { llamarN8N } = require('../utils/n8n');
+const { generarPdfPresupuesto } = require('../utils/generarPdf');
 
 const getAll = (req, res) => {
     supabase
@@ -256,7 +258,7 @@ const create = (req, res) => {
                                                                             return res.status(500).send({ ok: false, error: detalleError.message });
                                                                         }
 
-                                                                        return res.status(200).send({
+                                                                        res.status(200).send({
                                                                             ok: true,
                                                                             result: {
                                                                                 reserva,
@@ -264,6 +266,47 @@ const create = (req, res) => {
                                                                                 detalle: detalleData
                                                                             }
                                                                         });
+
+                                                                        const presupuestoCompleto = {
+                                                                            ...presupuesto,
+                                                                            reserva,
+                                                                            detalle_presupuesto: detalleData
+                                                                        };
+
+                                                                        supabase
+                                                                            .from('datos_empresa')
+                                                                            .select('*')
+                                                                            .single()
+                                                                            .then(({ data: empresa }) => {
+                                                                                return Promise.all([
+                                                                                    generarPdfPresupuesto(presupuestoCompleto, empresa),
+                                                                                    supabase
+                                                                                        .from('token_accion')
+                                                                                        .insert([
+                                                                                            { tipo: 'aceptar_presupuesto', id_referencia: presupuesto.id_presupuesto },
+                                                                                            { tipo: 'rechazar_presupuesto', id_referencia: presupuesto.id_presupuesto }
+                                                                                        ])
+                                                                                        .select()
+                                                                                ])
+                                                                                .then(([pdfBase64, { data: tokenData }]) => {
+                                                                                    const tokenAceptar = tokenData?.[0]?.token;
+                                                                                    const tokenRechazar = tokenData?.[1]?.token;
+                                                                                    const baseUrl = process.env.BACKEND_URL || 'http://localhost:3005';
+
+                                                                                    return llamarN8N(process.env.N8N_WEBHOOK_PRESUPUESTO_CREADO, {
+                                                                                        cliente_email: reserva.cliente_email,
+                                                                                        cliente_nombre: reserva.cliente_nombre,
+                                                                                        fecha_evento: reserva.fecha_inicio,
+                                                                                        total: presupuesto.total,
+                                                                                        fecha_limite: presupuesto.fecha_limite,
+                                                                                        url_aceptar: `${baseUrl}/api/tokens/${tokenAceptar}/usar`,
+                                                                                        url_rechazar: `${baseUrl}/api/tokens/${tokenRechazar}/usar`,
+                                                                                        pdf_base64: pdfBase64,
+                                                                                        nombre_empresa: empresa?.nombre_empresa || 'Power Play'
+                                                                                    });
+                                                                                });
+                                                                            })
+                                                                            .catch(err => console.error('Error llamando a N8N (presupuesto creado):', err.message));
                                                                     });
                                                             });
 

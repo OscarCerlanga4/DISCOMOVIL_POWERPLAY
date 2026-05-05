@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { supabase } = require('../db/supabase');
+const { llamarN8N } = require('../utils/n8n');
 
 router.post('/', express.raw({ type: 'application/json' }), (req, res) => {
     const sig = req.headers['stripe-signature'];
@@ -31,7 +32,7 @@ router.post('/', express.raw({ type: 'application/json' }), (req, res) => {
         .eq('referencia_pago', intent.id)
         .then(({ data: pagoExistente }) => {
             if (pagoExistente && pagoExistente.length > 0) {
-                return res.json({ received: true })
+                return res.json({ received: true });
             }
 
             return supabase
@@ -72,10 +73,62 @@ router.post('/', express.raw({ type: 'application/json' }), (req, res) => {
                                             .from('factura')
                                             .update({ estado_factura: 'pagada' })
                                             .eq('id_factura', id_factura)
-                                            .then(() => res.json({ received: true }));
+                                            .then(() => {
+                                                res.json({ received: true });
+
+                                                supabase
+                                                    .from('factura')
+                                                    .select('*, presupuesto(*, reserva(cliente_nombre, cliente_email, fecha_inicio, fecha_fin, ubicacion, cliente_dni_nie_cif, cliente_direccion, cliente_codigo_postal, cliente_localidad, cliente_provincia), detalle_presupuesto(*))')
+                                                    .eq('id_factura', id_factura)
+                                                    .single()
+                                                    .then(({ data: facturaCompleta }) => {
+                                                        if (!facturaCompleta) return;
+                                                        return supabase
+                                                            .from('datos_empresa')
+                                                            .select('*')
+                                                            .single()
+                                                            .then(({ data: empresa }) => {
+                                                                return llamarN8N(process.env.N8N_WEBHOOK_FACTURA_PAGADA, {
+                                                                    cliente_email: facturaCompleta.presupuesto?.reserva?.cliente_email,
+                                                                    cliente_nombre: facturaCompleta.presupuesto?.reserva?.cliente_nombre,
+                                                                    numero_factura: facturaCompleta.numero_factura,
+                                                                    total: facturaCompleta.total,
+                                                                    importe_pagado: importe,
+                                                                    nombre_empresa: empresa?.nombre_empresa || 'Power Play',
+                                                                    admin_email: empresa?.email
+                                                                });
+                                                            });
+                                                    })
+                                                    .catch(err => console.error('Error llamando a N8N (factura pagada):', err.message));
+                                            });
                                     }
 
                                     res.json({ received: true });
+
+                                    supabase
+                                        .from('factura')
+                                        .select('*, presupuesto(*, reserva(cliente_nombre, cliente_email, fecha_inicio))')
+                                        .eq('id_factura', id_factura)
+                                        .single()
+                                        .then(({ data: facturaCompleta }) => {
+                                            if (!facturaCompleta) return;
+                                            return supabase
+                                                .from('datos_empresa')
+                                                .select('*')
+                                                .single()
+                                                .then(({ data: empresa }) => {
+                                                    return llamarN8N(process.env.N8N_WEBHOOK_PAGO_REGISTRADO, {
+                                                        cliente_email: facturaCompleta.presupuesto?.reserva?.cliente_email,
+                                                        cliente_nombre: facturaCompleta.presupuesto?.reserva?.cliente_nombre,
+                                                        numero_factura: facturaCompleta.numero_factura,
+                                                        importe_pagado: importe,
+                                                        total: facturaCompleta.total,
+                                                        nombre_empresa: empresa?.nombre_empresa || 'Power Play',
+                                                        admin_email: empresa?.email
+                                                    });
+                                                });
+                                        })
+                                        .catch(err => console.error('Error llamando a N8N (pago registrado):', err.message));
                                 });
                         });
                 });

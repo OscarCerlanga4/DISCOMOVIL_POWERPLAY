@@ -1,4 +1,6 @@
 const { supabase } = require('../db/supabase');
+const { llamarN8N } = require('../utils/n8n');
+const { generarPdfPresupuesto, generarPdfFactura } = require('../utils/generarPdf');
 
 const getAll = (req, res) => {
     supabase
@@ -103,8 +105,56 @@ const update = (req, res) => {
                                     .from('reserva')
                                     .update({ estado_reserva: 'cancelada' })
                                     .eq('id_reserva', presupuestoActualizado.id_reserva)
-                                    .then(() => res.status(200).send({ ok: true, result: presupuestoActualizado }))
-}
+                                    .then(() => {
+                                        res.status(200).send({ ok: true, result: presupuestoActualizado });
+
+                                        supabase
+                                            .from('presupuesto')
+                                            .select('*, reserva(id_usuario, fecha_inicio, fecha_fin, ubicacion, cliente_nombre, cliente_email, cliente_telefono, cliente_dni_nie_cif, cliente_direccion, cliente_codigo_postal, cliente_localidad, cliente_provincia), detalle_presupuesto(*)')
+                                            .eq('id_presupuesto', presupuestoActualizado.id_presupuesto)
+                                            .single()
+                                            .then(({ data: presupuestoCompleto }) => {
+                                                if (!presupuestoCompleto) return;
+                                                return llamarN8N(process.env.N8N_WEBHOOK_RECHAZADO, {
+                                                    cliente_email: presupuestoCompleto.reserva?.cliente_email,
+                                                    cliente_nombre: presupuestoCompleto.reserva?.cliente_nombre,
+                                                    fecha_evento: presupuestoCompleto.reserva?.fecha_inicio
+                                                });
+                                            })
+                                            .catch(err => console.error('Error llamando a N8N (rechazado):', err.message));
+                                    });
+                            }
+                            // ── Cliente acepta presupuesto ─────────────────────────────
+                            if (req.body.estado === 'aceptado_cliente') {
+                                supabase
+                                    .from('presupuesto')
+                                    .select('*, reserva(id_usuario, fecha_inicio, fecha_fin, ubicacion, cliente_nombre, cliente_email, cliente_telefono, cliente_dni_nie_cif, cliente_direccion, cliente_codigo_postal, cliente_localidad, cliente_provincia), detalle_presupuesto(*)')
+                                    .eq('id_presupuesto', presupuestoActualizado.id_presupuesto)
+                                    .single()
+                                    .then(({ data: presupuestoCompleto }) => {
+                                        if (!presupuestoCompleto) return;
+                                        return supabase
+                                            .from('datos_empresa')
+                                            .select('*')
+                                            .single()
+                                            .then(({ data: empresa }) => {
+                                                return generarPdfPresupuesto(presupuestoCompleto, empresa)
+                                                    .then(pdfBase64 => {
+                                                        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                                                        return llamarN8N(process.env.N8N_WEBHOOK_CLIENTE_ACEPTA, {
+                                                            cliente_nombre: presupuestoCompleto.reserva?.cliente_nombre,
+                                                            fecha_evento: presupuestoCompleto.reserva?.fecha_inicio,
+                                                            total: presupuestoCompleto.total,
+                                                            admin_email: empresa?.email,
+                                                            nombre_empresa: empresa?.nombre_empresa || 'Power Play',
+                                                            pdf_base64: pdfBase64,
+                                                            url_presupuesto: `${frontendUrl}/admin?presupuesto=${presupuestoCompleto.id_presupuesto}`
+                                                        });
+                                                    });
+                                            });
+                                    })
+                                    .catch(err => console.error('Error llamando a N8N (cliente acepta):', err.message));
+                            }
                             // ── Admin confirma presupuesto ──────────────────────────────
                             if (rol === 'admin' && req.body.estado === 'aceptado') {
 
@@ -146,7 +196,35 @@ const update = (req, res) => {
                                             if (facturaError) {
                                                 return res.status(500).send({ ok: false, error: facturaError.message });
                                             }
-                                            return res.status(200).send({ ok: true, result: presupuestoActualizado });
+                                            res.status(200).send({ ok: true, result: presupuestoActualizado });
+
+                                            supabase
+                                                .from('presupuesto')
+                                                .select('*, reserva(id_usuario, fecha_inicio, fecha_fin, ubicacion, cliente_nombre, cliente_email, cliente_telefono, cliente_dni_nie_cif, cliente_direccion, cliente_codigo_postal, cliente_localidad, cliente_provincia), detalle_presupuesto(*), factura(*)')
+                                                .eq('id_presupuesto', presupuestoActualizado.id_presupuesto)
+                                                .single()
+                                                .then(({ data: presupuestoCompleto }) => {
+                                                    if (!presupuestoCompleto) return;
+                                                    return supabase
+                                                        .from('datos_empresa')
+                                                        .select('*')
+                                                        .single()
+                                                        .then(({ data: empresa }) => {
+                                                            return generarPdfFactura(presupuestoCompleto, empresa)
+                                                                .then(pdfBase64 => {
+                                                                    return llamarN8N(process.env.N8N_WEBHOOK_ADMIN_ACEPTA, {
+                                                                        cliente_email: presupuestoCompleto.reserva?.cliente_email,
+                                                                        cliente_nombre: presupuestoCompleto.reserva?.cliente_nombre,
+                                                                        fecha_evento: presupuestoCompleto.reserva?.fecha_inicio,
+                                                                        numero_factura: presupuestoCompleto.factura?.numero_factura,
+                                                                        total: presupuestoCompleto.factura?.total,
+                                                                        pdf_base64: pdfBase64,
+                                                                        nombre_empresa: empresa?.nombre_empresa || 'Power Play'
+                                                                    });
+                                                                });
+                                                        });
+                                                })
+                                                .catch(err => console.error('Error llamando a N8N (admin acepta):', err.message));
                                         });
                                 });
                             }

@@ -357,7 +357,7 @@ function FiltroTabs({ filtros, activo, onChange, contar }) {
 }
 
 // ── Sección Presupuestos ──────────────────────────────────────────────────────
-function SeccionPresupuestos({ onVerFactura }) {
+function SeccionPresupuestos({ onVerFactura, presupuestoDestacado, onLimpiarDestacado }) {
     const [presupuestos, setPresupuestos] = useState([])
     const [empresa, setEmpresa] = useState(null)
     const [cargando, setCargando] = useState(true)
@@ -381,6 +381,18 @@ function SeccionPresupuestos({ onVerFactura }) {
     }
 
     useEffect(() => { cargar() }, [])
+
+    useEffect(() => {
+        if (!presupuestoDestacado || presupuestos.length === 0) return
+        const timerScroll = setTimeout(() => {
+            const el = document.getElementById(`presupuesto-admin-${presupuestoDestacado}`)
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 100)
+        const timerLimpiar = setTimeout(() => {
+            if (onLimpiarDestacado) onLimpiarDestacado()
+        }, 2500)
+        return () => { clearTimeout(timerScroll); clearTimeout(timerLimpiar) }
+    }, [presupuestoDestacado, presupuestos])
 
     const cambiarEstado = (p, estado) => {
         setCambiando(p.id_presupuesto)
@@ -428,7 +440,13 @@ function SeccionPresupuestos({ onVerFactura }) {
                         const procesando = cambiando === p.id_presupuesto
                         const puedeActuar = p.estado === 'pendiente' || p.estado === 'aceptado_cliente'
                         return (
-                            <div key={p.id_presupuesto} style={{ background: '#141414', borderLeft: `3px solid ${ACCENT_PRES[p.estado] || 'rgba(255,255,255,0.1)'}` }}>
+                            <div key={p.id_presupuesto} id={`presupuesto-admin-${p.id_presupuesto}`} style={{ 
+                                background: '#141414', 
+                                borderLeft: `3px solid ${ACCENT_PRES[p.estado] || 'rgba(255,255,255,0.1)'}`,
+                                outline: presupuestoDestacado === p.id_presupuesto ? '1px solid rgba(255,230,0,0.7)' : 'none',
+                                boxShadow: presupuestoDestacado === p.id_presupuesto ? '0 0 40px rgba(255,230,0,0.2)' : 'none',
+                                transition: 'outline 0.4s, box-shadow 0.4s'
+                            }}>
                                 <div style={{ padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
                                     <div style={{ flex: 1, display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'flex-start', minWidth: 0 }}>
                                         <div>
@@ -1088,7 +1106,13 @@ export default function Admin() {
     const { usuario } = useAuth()
     const navigate = useNavigate()
     const [seccionActiva, setSeccionActiva] = useState('presupuestos')
+    const [presupuestoDestacado, setPresupuestoDestacado] = useState(null)
     const [facturaDestacada, setFacturaDestacada] = useState(null)
+
+    const irAPresupuesto = (idPresupuesto) => {
+        setPresupuestoDestacado(idPresupuesto)
+        setSeccionActiva('presupuestos')
+    }
 
     const irAFactura = (idFactura) => {
         setFacturaDestacada(idFactura)
@@ -1098,6 +1122,12 @@ export default function Admin() {
     useEffect(() => {
         if (usuario && usuario.rol !== 'admin') navigate('/')
     }, [usuario])
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        const idPres = params.get('presupuesto')
+        if (idPres) irAPresupuesto(parseInt(idPres))
+    }, [])
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -1140,7 +1170,7 @@ export default function Admin() {
                     <h1 style={{ fontFamily: 'Bebas Neue', fontSize: '2.8rem', letterSpacing: '0.08em', color: '#fff', margin: 0, lineHeight: 1 }}>{seccionLabel}</h1>
                 </div>
                 <div style={{ flex: 1, padding: '2.5rem 3.5rem' }}>
-                    {seccionActiva === 'presupuestos' && <SeccionPresupuestos onVerFactura={irAFactura} />}
+                    {seccionActiva === 'presupuestos' && <SeccionPresupuestos onVerFactura={irAFactura} presupuestoDestacado={presupuestoDestacado} onLimpiarDestacado={() => setPresupuestoDestacado(null)} />}
                     {seccionActiva === 'facturas' && <SeccionFacturas facturaDestacada={facturaDestacada} onLimpiarDestacada={() => setFacturaDestacada(null)} />}
                     {seccionActiva === 'usuarios' && <SeccionUsuarios />}
                     {seccionActiva === 'empresa' && <SeccionEmpresa />}

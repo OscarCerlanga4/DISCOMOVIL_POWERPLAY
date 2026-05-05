@@ -1,4 +1,5 @@
 const { supabase } = require('../db/supabase');
+const { llamarN8N } = require('../utils/n8n');
 
 const getAll = (req, res) => {
     supabase
@@ -51,7 +52,7 @@ const create = (req, res) => {
 
             return supabase
                 .from('factura')
-                .select('*, presupuesto(id_reserva, reserva(id_usuario))')
+                .select('*, presupuesto(id_reserva, base_imponible, total, detalle_presupuesto(*), reserva(id_usuario, cliente_nombre, cliente_email, fecha_inicio, fecha_fin, ubicacion, cliente_dni_nie_cif, cliente_direccion, cliente_codigo_postal, cliente_localidad, cliente_provincia))')
                 .eq('id_factura', id_factura)
                 .then(({ data, error }) => {
                     if (error || !data.length) {
@@ -95,10 +96,44 @@ const create = (req, res) => {
                                             .eq('id_factura', id_factura)
                                             .then(() => {
                                                 res.status(200).send({ ok: true, result: { pago: pagoData[0], factura_pagada: true } });
+
+                                                supabase
+                                                    .from('datos_empresa')
+                                                    .select('*')
+                                                    .single()
+                                                    .then(({ data: empresa }) => {
+                                                        return llamarN8N(process.env.N8N_WEBHOOK_FACTURA_PAGADA, {
+                                                            cliente_email: factura.presupuesto?.reserva?.cliente_email,
+                                                            cliente_nombre: factura.presupuesto?.reserva?.cliente_nombre,
+                                                            numero_factura: factura.numero_factura,
+                                                            total: factura.total,
+                                                            importe_pagado: importe,
+                                                            nombre_empresa: empresa?.nombre_empresa || 'Power Play',
+                                                            admin_email: empresa?.email
+                                                        });
+                                                    })
+                                                    .catch(err => console.error('Error llamando a N8N (factura pagada - manual):', err.message));
                                             });
                                     }
 
                                     res.status(200).send({ ok: true, result: { pago: pagoData[0], factura_pagada: false, total_pagado: totalPagado } });
+
+                                    supabase
+                                        .from('datos_empresa')
+                                        .select('*')
+                                        .single()
+                                        .then(({ data: empresa }) => {
+                                            return llamarN8N(process.env.N8N_WEBHOOK_PAGO_REGISTRADO, {
+                                                cliente_email: factura.presupuesto?.reserva?.cliente_email,
+                                                cliente_nombre: factura.presupuesto?.reserva?.cliente_nombre,
+                                                numero_factura: factura.numero_factura,
+                                                importe_pagado: importe,
+                                                total: factura.total,
+                                                nombre_empresa: empresa?.nombre_empresa || 'Power Play',
+                                                admin_email: empresa?.email
+                                            });
+                                        })
+                                        .catch(err => console.error('Error llamando a N8N (pago registrado - manual):', err.message));
                                 });
                         });
                 });
