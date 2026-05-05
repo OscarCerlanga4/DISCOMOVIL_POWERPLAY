@@ -1,4 +1,5 @@
 const { supabase } = require('../db/supabase');
+const { calcularTiempoViaje } = require('../services/mapsService')
 const { llamarN8N } = require('../utils/n8n');
 const { generarPdfPresupuesto } = require('../utils/generarPdf');
 
@@ -87,22 +88,58 @@ const create = (req, res) => {
 
             return supabase
                 .from('incluye')
-                .select('id_equipo, reserva(fecha_inicio, fecha_fin, estado_reserva)')
+                .select('id_equipo, reserva(fecha_inicio, fecha_fin, estado_reserva, ubicacion)')
                 .in('id_equipo', idsEquipos)
-                .then(({ data, error }) => {
+                .then(async ({ data, error }) => {
                     if (error) {
                         return res.status(500).send({ ok: false, error: error.message });
                     }
 
-                    const solapamiento = data.some(item => {
+                    // Solapamiento exacto de fechas → rechazo inmediato sin llamar a la API
+                    const solapamientoExacto = data.some(item => {
                         const r = item.reserva;
                         if (r.estado_reserva === 'cancelada') return false;
                         return new Date(fecha_inicio) < new Date(r.fecha_fin) &&
                             new Date(fecha_fin) > new Date(r.fecha_inicio);
                     });
 
-                    if (solapamiento) {
+                    if (solapamientoExacto) {
                         return res.status(400).send({ ok: false, error: 'Uno o más equipos no están disponibles en esas fechas' });
+                    }
+
+                    // Reservas sin solapamiento pero con un margen inferior a 8 horas → comprobar tiempo de viaje
+                    const reservasVecinas = data.filter(item => {
+                        const r = item.reserva;
+                        if (r.estado_reserva === 'cancelada' || !r.ubicacion) return false;
+                        const gapAntes = new Date(fecha_inicio) - new Date(r.fecha_fin);
+                        const gapDespues = new Date(r.fecha_inicio) - new Date(fecha_fin);
+                        const ocho_horas = 8 * 60 * 60 * 1000;
+                        return (gapAntes >= 0 && gapAntes < ocho_horas) ||
+                            (gapDespues >= 0 && gapDespues < ocho_horas);
+                    });
+
+                    for (const item of reservasVecinas) {
+                        const r = item.reserva;
+                        if (r.ubicacion === ubicacion) continue;
+
+                        const gapAntes = new Date(fecha_inicio) - new Date(r.fecha_fin);
+                        const gapDespues = new Date(r.fecha_inicio) - new Date(fecha_fin);
+                        const gap = gapAntes >= 0 ? gapAntes : gapDespues;
+                        const origen = gapAntes >= 0 ? r.ubicacion : ubicacion;
+                        const destino = gapAntes >= 0 ? ubicacion : r.ubicacion;
+
+                        try {
+                            const minutosViaje = await calcularTiempoViaje(origen, destino)
+                            if (minutosViaje !== null && minutosViaje * 60 * 1000 > gap) {
+                                const gapMin = Math.floor(gap / 60000)
+                                return res.status(400).send({
+                                    ok: false,
+                                    error: `Un equipo no tiene tiempo suficiente para desplazarse entre ubicaciones (necesita ${minutosViaje} min, disponibles ${gapMin} min)`
+                                });
+                            }
+                        } catch (_) {
+                            // Si la API de rutas falla, no bloqueamos la reserva
+                        }
                     }
 
                     // Paso 3: comprobar solapamiento de DJs
@@ -110,22 +147,63 @@ const create = (req, res) => {
 
                     return supabase
                         .from('contrata')
-                        .select('id_dj, reserva(fecha_inicio, fecha_fin, estado_reserva)')
+                        .select('id_dj, reserva(fecha_inicio, fecha_fin, estado_reserva, ubicacion)')
                         .in('id_dj', idsDjs)
-                        .then(({ data, error }) => {
+                        .then(async ({ data, error }) => {
                             if (error) {
                                 return res.status(500).send({ ok: false, error: error.message });
                             }
 
-                            const solapamiento = data.some(item => {
+                            const solapamientoExacto = data.some(item => {
                                 const r = item.reserva;
-                                if (r.estado_reserva === 'cancelada') return false;
+                                if (!['pendiente', 'confirmada'].includes(r.estado_reserva)) return false;
                                 return new Date(fecha_inicio) < new Date(r.fecha_fin) &&
                                     new Date(fecha_fin) > new Date(r.fecha_inicio);
                             });
 
-                            if (solapamiento) {
+                            if (solapamientoExacto) {
                                 return res.status(400).send({ ok: false, error: 'Uno o más DJs no están disponibles en esas fechas' });
+                            }
+
+                            const ocho_horas = 8 * 60 * 60 * 1000
+
+                            const reservasVecinas = data.filter(item => {
+                                const r = item.reserva
+                                if (!['pendiente', 'confirmada'].includes(r.estado_reserva) || !r.ubicacion) return false
+                                const gapAntes = new Date(fecha_inicio) - new Date(r.fecha_fin)
+                                const gapDespues = new Date(r.fecha_inicio) - new Date(fecha_fin)
+                                return (gapAntes >= 0 && gapAntes < ocho_horas) ||
+                                    (gapDespues >= 0 && gapDespues < ocho_horas)
+                            })
+
+                            for (const item of reservasVecinas) {
+                                const r = item.reserva
+                                if (r.ubicacion === ubicacion) continue
+
+                                const gapAntes = new Date(fecha_inicio) - new Date(r.fecha_fin)
+                                const gapDespues = new Date(r.fecha_inicio) - new Date(fecha_fin)
+
+                                // Caso A: la nueva reserva empieza poco después de que termine la existente
+                                if (gapAntes >= 0 && gapAntes < ocho_horas) {
+                                    try {
+                                        const minutosViaje = await calcularTiempoViaje(r.ubicacion, ubicacion)
+                                        if (minutosViaje !== null && minutosViaje * 60 * 1000 > gapAntes) {
+                                            const gapMin = Math.floor(gapAntes / 60000)
+                                            return res.status(400).send({ ok: false, error: `Un equipo no tiene tiempo para desplazarse entre ubicaciones (necesita ${minutosViaje} min, disponibles ${gapMin} min (Aproximadamente))` })
+                                        }
+                                    } catch (_) {}
+                                }
+
+                                // Caso B: la reserva existente empieza poco después de que termine la nueva
+                                if (gapDespues >= 0 && gapDespues < ocho_horas) {
+                                    try {
+                                        const minutosViaje = await calcularTiempoViaje(ubicacion, r.ubicacion)
+                                        if (minutosViaje !== null && minutosViaje * 60 * 1000 > gapDespues) {
+                                            const gapMin = Math.floor(gapDespues / 60000)
+                                            return res.status(400).send({ ok: false, error: `Un equipo no tiene tiempo para desplazarse entre ubicaciones (necesita ${minutosViaje} min, disponibles ${gapMin} min (Aproximadamente))` })
+                                        }
+                                    } catch (_) {}
+                                }
                             }
 
                             // Paso 4: insertar la reserva

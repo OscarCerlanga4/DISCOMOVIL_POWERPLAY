@@ -3,6 +3,7 @@ import { useCarrito } from '../contexts/CarritoContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { API_URL } from '../lib/api'
+import GoogleMapsPicker from '../components/GoogleMapsPicker'
 
 const toLocalISO = (date) => {
     const pad = n => String(n).padStart(2, '0')
@@ -27,12 +28,9 @@ export default function Carrito() {
         localidad: '', 
         provincia: ''
     })
-    const [sugerencias, setSugerencias] = useState([])
-    const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
     const [disponibilidadEquipos, setDisponibilidadEquipos] = useState({})
     const [errorFechaInicio, setErrorFechaInicio] = useState(null)
     const [errorFechaFin, setErrorFechaFin] = useState(null)
-    const debounceRef = useRef(null)
 
     useEffect(() => {
         if (!fechaInicio || !fechaFin) { setDisponibilidadEquipos({}); return }
@@ -49,20 +47,6 @@ export default function Carrito() {
         : ahora
 
     const clienteRelleno = Object.values(clienteAdmin).every(v => v.trim() !== '')
-
-    const buscarDirecciones = (valor) => {
-        setUbicacion(valor)
-        if (debounceRef.current) clearTimeout(debounceRef.current)
-        if (valor.length < 3) { setSugerencias([]); return }
-        debounceRef.current = setTimeout(() => {
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(valor)}&countrycodes=es&limit=5&addressdetails=1`, {
-                headers: { 'Accept-Language': 'es' }
-            })
-                .then(r => r.json())
-                .then(data => { setSugerencias(data); setMostrarSugerencias(true) })
-                .catch(() => setSugerencias([]))
-        }, 350)
-    }
 
     const validateModal = () => {
         const e = {}
@@ -92,12 +76,6 @@ export default function Carrito() {
 
         setErrorsModal(prev => ({ ...prev, ...e }))
         return Object.keys(e).length === 0
-    }
-
-    const seleccionarDireccion = (lugar) => {
-        setUbicacion(lugar.display_name)
-        setSugerencias([])
-        setMostrarSugerencias(false)
     }
 
     const handleConfirmar = () => {
@@ -527,46 +505,13 @@ export default function Carrito() {
                                 {errorFechaFin && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.3rem 0 0' }}>{errorFechaFin}</p>}
                             </div>
 
-                            {/* Ubicación */}
-                            <div style={{ position: 'relative' }}>
+                           {/* Ubicación */}
+                            <div>
                                 <label style={labelStyle}>Ubicación del evento</label>
-                                <input
-                                    type="text"
-                                    placeholder="Busca una dirección..."
+                                <GoogleMapsPicker
                                     value={ubicacion}
-                                    onChange={e => buscarDirecciones(e.target.value)}
-                                    onBlur={() => setTimeout(() => setMostrarSugerencias(false), 200)}
-                                    onFocus={e => {
-                                        e.target.style.borderColor = '#FFE600'
-                                        if (sugerencias.length > 0) setMostrarSugerencias(true)
-                                    }}
-                                    style={resumenInputStyle}
+                                    onUbicacionSelect={(texto) => setUbicacion(texto)}
                                 />
-                                {mostrarSugerencias && sugerencias.length > 0 && (
-                                    <div style={{
-                                        position: 'absolute', top: '100%', left: 0, right: 0,
-                                        background: '#141414', border: '1px solid rgba(255,230,0,0.2)',
-                                        borderTop: 'none', boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
-                                        zIndex: 100, maxHeight: '220px', overflowY: 'auto',
-                                    }}>
-                                        {sugerencias.map((lugar, i) => (
-                                            <div
-                                                key={i}
-                                                onMouseDown={() => seleccionarDireccion(lugar)}
-                                                style={{
-                                                    padding: '0.65rem 1rem', fontSize: '0.82rem',
-                                                    color: 'rgba(255,255,255,0.75)',
-                                                    borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                                    cursor: 'pointer', transition: 'background 0.15s',
-                                                }}
-                                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,230,0,0.08)'}
-                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                            >
-                                                {lugar.display_name}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
 
                             {/* Botón datos cliente — solo admin */}
@@ -668,3 +613,4 @@ export default function Carrito() {
         </div>
     )
 }
+
