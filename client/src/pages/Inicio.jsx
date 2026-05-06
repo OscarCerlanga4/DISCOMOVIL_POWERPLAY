@@ -174,13 +174,8 @@ export default function Inicio() {
               ¿Cómo funciona?
             </h2>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "2rem",
-              }}
-            >
+            <div className="inicio-steps-grid">
+
               {[
                 {
                   num: "01",
@@ -347,7 +342,7 @@ export default function Inicio() {
               ninguna.
             </p>
           </div>
-          <div>
+          <div className="inicio-eventos-btn">
             <Link
               to="/eventos"
               style={{

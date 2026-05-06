@@ -538,7 +538,7 @@ export default function MisPedidos() {
     return (
         <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
 
-            <div style={{ padding: '3rem 4rem 2rem' }}>
+            <div className="pedidos-cabecera">
                 <h1 style={{ fontFamily: 'Bebas Neue', fontSize: '3.5rem', letterSpacing: '0.1em', color: '#fff', marginBottom: '0.25rem' }}>
                     Mis <span style={{ color: '#FFE600' }}>pedidos</span>
                 </h1>
@@ -547,7 +547,7 @@ export default function MisPedidos() {
                 </p>
             </div>
 
-            <div style={{ padding: '0 4rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="pedidos-tabs">
                 <div style={{ display: 'flex' }}>
                     {[
                         { valor: 'presupuestos', label: 'Presupuestos', count: presupuestos.length },
@@ -612,7 +612,7 @@ export default function MisPedidos() {
                 )}
             </div>
 
-            <div style={{ background: '#111', padding: '2.5rem 4rem 6rem' }}>
+            <div className="pedidos-content" style={{ background: '#111' }}>
 
                 {cargando && <p style={{ color: 'rgba(255,255,255,0.3)' }}>Cargando...</p>}
                 {error && <p style={{ color: '#ff4444' }}>{error}</p>}
@@ -664,7 +664,7 @@ export default function MisPedidos() {
                                         </div>
 
                                         <div style={{ padding: '1.25rem 1.5rem' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', gap: '1rem' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', gap: '1rem', flexWrap: 'wrap' }}>
                                                 <div>
                                                     <p style={labelStyle}>Ubicación</p>
                                                     <p style={{ color: '#fff', fontSize: '0.88rem', margin: '0.3rem 0 0', fontWeight: 600 }}>
@@ -701,7 +701,7 @@ export default function MisPedidos() {
                                                 </div>
                                             )}
 
-                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '2rem', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '2rem', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
                                                 <div style={{ textAlign: 'right' }}>
                                                     <p style={labelStyle}>Base imponible</p>
                                                     <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.88rem', margin: '0.25rem 0 0' }}>{parseFloat(p.base_imponible).toFixed(2)} €</p>

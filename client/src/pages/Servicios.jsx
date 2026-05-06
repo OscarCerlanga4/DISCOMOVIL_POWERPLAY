@@ -67,7 +67,7 @@ function FormDJ({ inicial, onGuardar, onCancelar, guardando, error, titulo }) {
         <div style={{ background: '#141414', border: '1px solid rgba(255,230,0,0.2)', padding: '2rem', marginBottom: '1.5rem', maxWidth: '900px' }}>
             <p style={{ fontFamily: 'Bebas Neue', fontSize: '1.3rem', letterSpacing: '0.1em', color: '#FFE600', margin: '0 0 1.5rem' }}>{titulo}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div className="form-row">
                     <div style={{ flex: 2 }}>
                         <label style={labelForm}>Nombre *</label>
                         <input type="text" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} style={inputStyle}
@@ -87,8 +87,8 @@ function FormDJ({ inicial, onGuardar, onCancelar, guardando, error, titulo }) {
                             onFocus={e => e.target.style.borderColor = '#FFE600'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'stretch' }}>
-                    <div style={{ width: '220px', flexShrink: 0 }}>
+                <div className="form-row-imagen">
+                    <div className="form-imagen-container">
                         <SubidaImagen label="Imagen" value={form.imagen_url} onChange={url => setForm(p => ({ ...p, imagen_url: url }))} />
                     </div>
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -100,7 +100,7 @@ function FormDJ({ inicial, onGuardar, onCancelar, guardando, error, titulo }) {
                 </div>
             </div>
             {error && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '1rem 0 0' }}>{error}</p>}
-            <div style={{ display: 'flex', gap: '12px', marginTop: '1.5rem' }}>
+            <div className="form-botones" style={{ marginTop: '1.5rem' }}>
                 <button onClick={() => onGuardar(form)} disabled={guardando} style={{ ...btnAmarillo, opacity: guardando ? 0.6 : 1, cursor: guardando ? 'not-allowed' : 'pointer' }}>
                     {guardando ? 'Guardando...' : 'Guardar'}
                 </button>
@@ -118,7 +118,7 @@ function FormEquipo({ inicial, onGuardar, onCancelar, guardando, error, titulo }
         <div style={{ background: '#141414', border: '1px solid rgba(255,230,0,0.2)', padding: '2rem', marginBottom: '1.5rem', maxWidth: '900px' }}>
             <p style={{ fontFamily: 'Bebas Neue', fontSize: '1.3rem', letterSpacing: '0.1em', color: '#FFE600', margin: '0 0 1.5rem' }}>{titulo}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div className="form-row">
                     <div style={{ flex: 2 }}>
                         <label style={labelForm}>Nombre *</label>
                         <input type="text" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} style={inputStyle}
@@ -143,8 +143,8 @@ function FormEquipo({ inicial, onGuardar, onCancelar, guardando, error, titulo }
                             onFocus={e => e.target.style.borderColor = '#FFE600'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'} />
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'stretch' }}>
-                    <div style={{ width: '220px', flexShrink: 0 }}>
+                <div className="form-row-imagen">
+                    <div className="form-imagen-container">
                         <SubidaImagen label="Imagen" value={form.imagen_url} onChange={url => setForm(p => ({ ...p, imagen_url: url }))} />
                     </div>
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -156,7 +156,7 @@ function FormEquipo({ inicial, onGuardar, onCancelar, guardando, error, titulo }
                 </div>
             </div>
             {error && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '1rem 0 0' }}>{error}</p>}
-            <div style={{ display: 'flex', gap: '12px', marginTop: '1.5rem' }}>
+            <div className="form-botones" style={{ marginTop: '1.5rem' }}>
                 <button onClick={() => onGuardar(form)} disabled={guardando} style={{ ...btnAmarillo, opacity: guardando ? 0.6 : 1, cursor: guardando ? 'not-allowed' : 'pointer' }}>
                     {guardando ? 'Guardando...' : 'Guardar'}
                 </button>
@@ -182,6 +182,7 @@ export default function Servicios() {
     const [itemSeleccionado, setItemSeleccionado] = useState(null)
     const [dropdownPrecio, setDropdownPrecio] = useState(false)
     const [dropdownFecha, setDropdownFecha] = useState(false)
+    const [catAbierto, setCatAbierto] = useState(false)
     const [notificacion, setNotificacion] = useState(null)
 
     const [mostrarFormDJ, setMostrarFormDJ] = useState(false)
@@ -451,7 +452,7 @@ export default function Servicios() {
             )}
 
             {/* Cabecera */}
-            <div style={{ padding: '3rem 4rem 2.5rem', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+            <div className="servicios-cabecera">
                 <div>
                     <h1 style={{ fontFamily: 'Bebas Neue', fontSize: '3.5rem', letterSpacing: '0.1em', color: '#fff', marginBottom: '0.25rem' }}>
                         Nuestros <span style={{ color: '#FFE600' }}>Servicios</span>
@@ -480,7 +481,7 @@ export default function Servicios() {
 
             {/* Contenido */}
             <div style={{ background: '#111', borderTop: '1px solid rgba(255,230,0,0.15)' }}>
-                <div style={{ padding: '2rem 4rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div className="servicios-filtros-wrap">
 
                     {/* Formulario añadir DJ */}
                     {mostrarFormDJ && (
@@ -553,7 +554,7 @@ export default function Servicios() {
                     )}
 
                     {/* Filtros */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '2rem' }}>
+                    <div className="servicios-filtros-row">
                         <input
                             type="text"
                             placeholder="Buscar equipos, DJs, altavoces..."
@@ -609,7 +610,8 @@ export default function Servicios() {
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {/* Desktop */}
+                    <div className="filtro-desktop" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
                         {categorias.map(cat => (
                             <button key={cat.id} onClick={() => setCategoriaActiva(cat.id)}
                                 style={{ background: categoriaActiva === cat.id ? '#FFE600' : 'transparent', color: categoriaActiva === cat.id ? '#000' : 'rgba(255,255,255,0.5)', border: `1px solid ${categoriaActiva === cat.id ? '#FFE600' : 'rgba(255,255,255,0.15)'}`, padding: '0.4rem 1rem', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s' }}
@@ -618,16 +620,42 @@ export default function Servicios() {
                             >{cat.label}</button>
                         ))}
                     </div>
+                    {/* Móvil */}
+                    <div className="filtro-movil" style={{ position: 'relative' }}>
+                        <button className="filtro-trigger" onClick={() => setCatAbierto(!catAbierto)}>
+                            {categorias.find(c => c.id === categoriaActiva)?.label || 'Todo'}
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        {catAbierto && (
+                            <>
+                                <div style={{ position: 'fixed', inset: 0, zIndex: 49 }} onClick={() => setCatAbierto(false)} />
+                                <div className="filtro-dropdown-menu">
+                                    {categorias.map(cat => (
+                                        <button key={cat.id}
+                                            onClick={() => { setCategoriaActiva(cat.id); setCatAbierto(false) }}
+                                            style={{ color: categoriaActiva === cat.id ? '#FFE600' : 'rgba(255,255,255,0.6)', background: categoriaActiva === cat.id ? 'rgba(255,230,0,0.08)' : 'transparent' }}
+                                            onMouseEnter={e => { e.currentTarget.style.color = '#FFE600'; e.currentTarget.style.background = 'rgba(255,230,0,0.04)' }}
+                                            onMouseLeave={e => { e.currentTarget.style.color = categoriaActiva === cat.id ? '#FFE600' : 'rgba(255,255,255,0.6)'; e.currentTarget.style.background = categoriaActiva === cat.id ? 'rgba(255,230,0,0.08)' : 'transparent' }}
+                                        >
+                                            {cat.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
 
-                <div style={{ padding: '0 4rem', marginBottom: '1.5rem' }}>
+                <div className="servicios-count">
                     <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>
                         {filtrados.length} {filtrados.length === 1 ? 'servicio' : 'servicios'} disponibles
                         {fechaActiva && <span style={{ color: 'rgba(255,230,0,0.5)', marginLeft: '0.5rem' }}>— filtrando por disponibilidad</span>}
                     </p>
                 </div>
 
-                <div style={{ padding: '0 4rem 6rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
+                <div className="servicios-grid">
                     {filtrados.map(item => {
                         const key = getKey(item)
                         const estaEditando = editandoKey === key

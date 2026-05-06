@@ -134,7 +134,7 @@ export default function Pago() {
     const inputStyle = {
         background: '#141414', border: '1px solid rgba(255,255,255,0.1)',
         color: '#fff', padding: '0.75rem 1rem', fontSize: '0.9rem',
-        outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box', width: '200px'
+        outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box', width: '100%'
     }
 
     if (cargando) return (
@@ -154,7 +154,7 @@ export default function Pago() {
         <style>{`.p-BrandingBar { display: none !important; } .p-BrandingLogo { display: none !important; }`}</style>
 
             {/* Cabecera */}
-            <div style={{ padding: '3rem 4rem 2.5rem' }}>
+            <div className="pago-cabecera">
                 <h1 style={{
                     fontFamily: 'Bebas Neue', fontSize: '3.5rem', letterSpacing: '0.1em',
                     color: '#fff', margin: '0 0 0.25rem', lineHeight: 1
@@ -166,7 +166,7 @@ export default function Pago() {
                 </p>
             </div>
 
-            <div style={{ background: '#111', borderTop: '1px solid rgba(255,230,0,0.15)', padding: '3rem 4rem 6rem' }}>
+            <div className="pago-content">
                 <div style={{ maxWidth: '640px' }}>
 
                     {/* Botón volver — siempre visible */}
@@ -227,7 +227,7 @@ export default function Pago() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                             <p style={labelMeta}>Importe a pagar</p>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                     <input
                                         type="number"
                                         min="0.01"

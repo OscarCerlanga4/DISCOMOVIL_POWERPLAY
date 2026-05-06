@@ -11,14 +11,7 @@ export default function Footer() {
     >
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         {/* Fila superior */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1fr 1fr",
-            gap: "3rem",
-            marginBottom: "3rem",
-          }}
-        >
+        <div className="footer-grid">
           {/* Marca */}
           <div>
             <span

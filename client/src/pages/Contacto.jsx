@@ -97,7 +97,7 @@ export default function Contacto() {
     <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
 
       {/* Cabecera */}
-      <div style={{ padding: '3rem 4rem 2.5rem' }}>
+      <div className="contacto-cabecera">
         <h1 style={{
           fontFamily: 'Bebas Neue',
           fontSize: '3.5rem',
@@ -113,7 +113,7 @@ export default function Contacto() {
       </div>
 
       {/* Formulario */}
-      <div style={{ background: '#111', borderTop: '1px solid rgba(255,230,0,0.15)', padding: '3rem 4rem 6rem' }}>
+      <div className="contacto-content" style={{ background: '#111', borderTop: '1px solid rgba(255,230,0,0.15)' }}>
         <div style={{ maxWidth: '640px' }}>
 
           {exito ? (
@@ -144,7 +144,7 @@ export default function Contacto() {
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
               {/* Nombre + Email */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="contacto-grid-2">
                 <div>
                   <label style={labelStyle}>Nombre</label>
                   <input
@@ -172,7 +172,7 @@ export default function Contacto() {
               </div>
 
               {/* Título + Tipo */}
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+              <div className="contacto-grid-titulo">
                 <div>
                   <label style={labelStyle}>Título</label>
                   <input

@@ -129,25 +129,23 @@ export default function Register() {
   const formularioRelleno = Object.values(form).every(v => v.trim() !== '')
 
   return (
-    <div style={{
+    <div className="auth-outer" style={{
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '3rem 2rem 2rem',
       background: '#0d0d0d'
     }}>
-      <div style={{
+      <div className="auth-card" style={{
         width: '100%',
         maxWidth: '640px',
         background: '#111',
         border: '1px solid rgba(255,230,0,0.15)',
-        boxShadow: '0 0 30px rgba(255,230,0,0.05), 0 0 80px rgba(255,230,0,0.03)',
-        padding: '2.5rem',
+        boxShadow: '0 0 30px rgba(255,230,0,0.05), 0 0 80px rgba(255,230,0,0.03)'
       }}>
 
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+        <div className="auth-logo" style={{ textAlign: 'center' }}>
           <Link to="/" style={{ textDecoration: 'none' }}>
             <span style={{
               fontFamily: 'Bebas Neue',
@@ -192,7 +190,7 @@ export default function Register() {
           </div>
 
           {/* Teléfono + DNI en la misma fila */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="contacto-grid-2">
             <div>
               <label style={labelStyle}>Teléfono</label>
               <input type="tel" name="telefono" value={form.telefono} onChange={handleChange} 
@@ -210,7 +208,7 @@ export default function Register() {
           </div>
 
           {/* Dirección + Código postal */}
-          <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '1rem' }}>
+          <div className="register-grid-dir">
             <div>
               <label style={labelStyle}>Dirección</label>
               <input type="text" name="direccion" value={form.direccion} onChange={handleChange} 
@@ -228,7 +226,7 @@ export default function Register() {
           </div>
 
           {/* Localidad + Provincia */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="contacto-grid-2">
             <div>
               <label style={labelStyle}>Localidad</label>
               <input type="text" name="localidad" value={form.localidad} onChange={handleChange} 

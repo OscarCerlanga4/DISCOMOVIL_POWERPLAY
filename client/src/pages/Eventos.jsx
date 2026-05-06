@@ -20,6 +20,7 @@ export default function Eventos() {
     const [errorEdicion, setErrorEdicion] = useState('')
     const [errorsForm, setErrorsForm] = useState({ titulo: '', fecha: '', lugar: '' })
     const [errorsEdicion, setErrorsEdicion] = useState({ titulo: '', fecha: '', lugar: '' })
+    const [filtroAbierto, setFiltroAbierto] = useState(false)
 
     const cargarEventos = () => {
         fetch(`${API_URL}/api/eventos`)
@@ -178,7 +179,7 @@ export default function Eventos() {
 
     const formLayout = (f, setF, errs, setErrs) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className="form-row">
             <div style={{ flex: 2 }}>
                 <label style={labelForm}>Título *</label>
                 <input
@@ -204,7 +205,7 @@ export default function Eventos() {
                 {errs.fecha && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: '0.2rem 0 0' }}>{errs.fecha}</p>}
             </div>
             </div>
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className="form-row">
             <div style={{ flex: 1 }}>
                 <label style={labelForm}>Lugar *</label>
                 <input
@@ -230,8 +231,8 @@ export default function Eventos() {
                 />
             </div>
             </div>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'stretch' }}>
-            <div style={{ width: '220px', flexShrink: 0 }}>
+            <div className="form-row-imagen">
+            <div className="form-imagen-container">
                 <SubidaImagen
                 label="Imagen"
                 value={f.imagen_url}
@@ -256,7 +257,7 @@ export default function Eventos() {
         <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
 
             {/* Cabecera */}
-            <div style={{ padding: '3rem 4rem 2.5rem', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+            <div className="eventos-cabecera">
                 <div>
                     <h1 style={{
                         fontFamily: 'Bebas Neue', fontSize: '3.5rem', letterSpacing: '0.1em',
@@ -291,7 +292,7 @@ export default function Eventos() {
             </div>
 
             {/* Contenido */}
-            <div style={{ background: '#111', borderTop: '1px solid rgba(255,230,0,0.15)', padding: '3rem 4rem 6rem' }}>
+            <div className="eventos-content" style={{ background: '#111', borderTop: '1px solid rgba(255,230,0,0.15)' }}>
 
                 {/* Formulario añadir */}
                 {mostrarForm && (
@@ -303,7 +304,7 @@ export default function Eventos() {
                             <p style={{ fontFamily: 'Bebas Neue', fontSize: '1.3rem', letterSpacing: '0.1em', color: '#FFE600', margin: 0 }}>Nuevo evento</p>
                             {formLayout(form, setForm, errorsForm, setErrorsForm)}
                             {error && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: 0 }}>{error}</p>}
-                            <div style={{ display: 'flex', gap: '12px' }}>
+                            <div className="form-botones">
                                 <button onClick={handleGuardar} disabled={guardando || !form.titulo.trim() || !form.fecha || !form.lugar.trim()} style={{ background: '#FFE600', color: '#000', border: 'none', padding: '0.75rem 2.5rem', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: (guardando || !form.titulo.trim() || !form.fecha || !form.lugar.trim()) ? 'not-allowed' : 'pointer', opacity: (guardando || !form.titulo.trim() || !form.fecha || !form.lugar.trim()) ? 0.5 : 1 }}>
                                     {guardando ? 'Guardando...' : 'Guardar evento'}
                                 </button>
@@ -324,7 +325,7 @@ export default function Eventos() {
                             <p style={{ fontFamily: 'Bebas Neue', fontSize: '1.3rem', letterSpacing: '0.1em', color: '#FFE600', margin: 0 }}>Editar evento</p>
                             {formLayout(formEditar, setFormEditar, errorsEdicion, setErrorsEdicion)}
                             {errorEdicion && <p style={{ color: '#ff4444', fontSize: '0.8rem', margin: 0 }}>{errorEdicion}</p>}
-                            <div style={{ display: 'flex', gap: '12px' }}>
+                            <div className="form-botones">
                                 <button onClick={() => handleGuardarEdicion(editandoId)} disabled={guardandoEdicion || !formEditar.titulo?.trim() || !formEditar.fecha || !formEditar.lugar?.trim()} style={{ background: '#FFE600', color: '#000', border: 'none', padding: '0.75rem 2.5rem', fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: (guardandoEdicion || !formEditar.titulo?.trim() || !formEditar.fecha || !formEditar.lugar?.trim()) ? 'not-allowed' : 'pointer', opacity: (guardandoEdicion || !formEditar.titulo?.trim() || !formEditar.fecha || !formEditar.lugar?.trim()) ? 0.5 : 1 }}>
                                     {guardandoEdicion ? 'Guardando...' : 'Guardar cambios'}
                                 </button>
@@ -343,11 +344,12 @@ export default function Eventos() {
                         placeholder="Buscar por título, lugar o artista..."
                         value={busqueda}
                         onChange={e => setBusqueda(e.target.value)}
-                        style={{ ...inputStyle, width: '360px' }}
+                        style={{ ...inputStyle, width: '100%', maxWidth: '360px' }}
                         onFocus={e => e.target.style.borderColor = '#FFE600'}
                         onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
                     />
-                    <div style={{ display: 'flex', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    {/* Desktop */}
+                    <div className="filtro-desktop" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
                         {[{ label: 'Próximos', value: true }, { label: 'Todos', value: false }].map(op => (
                             <button
                                 key={op.label}
@@ -356,18 +358,41 @@ export default function Eventos() {
                                     padding: '0.75rem 1.5rem',
                                     background: soloProximos === op.value ? '#FFE600' : 'transparent',
                                     color: soloProximos === op.value ? '#000' : 'rgba(255,255,255,0.5)',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    fontWeight: 700,
-                                    fontSize: '0.8rem',
-                                    letterSpacing: '0.08em',
-                                    textTransform: 'uppercase',
-                                    transition: 'all 0.2s'
+                                    border: 'none', cursor: 'pointer', fontWeight: 700,
+                                    fontSize: '0.8rem', letterSpacing: '0.08em',
+                                    textTransform: 'uppercase', transition: 'all 0.2s'
                                 }}
                             >
                                 {op.label}
                             </button>
                         ))}
+                    </div>
+                    {/* Móvil */}
+                    <div className="filtro-movil" style={{ position: 'relative' }}>
+                        <button className="filtro-trigger" onClick={() => setFiltroAbierto(!filtroAbierto)}>
+                            {soloProximos ? 'Próximos' : 'Todos'}
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        {filtroAbierto && (
+                            <>
+                                <div style={{ position: 'fixed', inset: 0, zIndex: 49 }} onClick={() => setFiltroAbierto(false)} />
+                                <div className="filtro-dropdown-menu">
+                                    {[{ label: 'Próximos', value: true }, { label: 'Todos', value: false }].map(op => (
+                                        <button
+                                            key={op.label}
+                                            onClick={() => { setSoloProximos(op.value); setFiltroAbierto(false) }}
+                                            style={{ color: soloProximos === op.value ? '#FFE600' : 'rgba(255,255,255,0.6)', background: soloProximos === op.value ? 'rgba(255,230,0,0.08)' : 'transparent' }}
+                                            onMouseEnter={e => { e.currentTarget.style.color = '#FFE600'; e.currentTarget.style.background = 'rgba(255,230,0,0.04)' }}
+                                            onMouseLeave={e => { e.currentTarget.style.color = soloProximos === op.value ? '#FFE600' : 'rgba(255,255,255,0.6)'; e.currentTarget.style.background = soloProximos === op.value ? 'rgba(255,230,0,0.08)' : 'transparent' }}
+                                        >
+                                            {op.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -396,18 +421,16 @@ export default function Eventos() {
                                 <div
                                     onMouseEnter={() => setHoverId(evento.id_evento)}
                                     onMouseLeave={() => setHoverId(null)}
+                                    className="eventos-card"
                                     style={{
-                                        display: 'flex',
-                                        background: '#141414',
-                                        border: `1px solid ${estaEditando ? 'rgba(255,230,0,0.3)' : isHover ? 'rgba(255,230,0,0.2)' : 'rgba(255,255,255,0.06)'}`,
-                                        overflow: 'hidden',
-                                        opacity: pasado ? 0.6 : 1,
-                                        transform: isHover && !estaEditando ? 'translateY(-2px)' : 'translateY(0)',
-                                        transition: 'all 0.25s'
+                                    border: `1px solid ${estaEditando ? 'rgba(255,230,0,0.3)' : isHover ? 'rgba(255,230,0,0.2)' : 'rgba(255,255,255,0.06)'}`,
+                                    opacity: pasado ? 0.6 : 1,
+                                    transform: isHover && !estaEditando ? 'translateY(-2px)' : 'translateY(0)',
+                                    transition: 'all 0.25s'
                                     }}
                                 >
                                     {/* Cartel */}
-                                    <div style={{ width: '240px', minWidth: '240px', flexShrink: 0, position: 'relative' }}>
+                                    <div className="eventos-card-imagen">
                                         {evento.imagen_url ? (
                                             <img
                                                 src={evento.imagen_url}

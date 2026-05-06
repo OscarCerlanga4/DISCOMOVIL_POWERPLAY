@@ -62,24 +62,22 @@ export default function Login() {
   const puedeEnviar = email.trim() !== '' && password !== ''
 
   return (
-    <div style={{
+    <div className="auth-outer" style={{
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '3rem 2rem 2rem',
       background: '#0d0d0d'
     }}>
-      <div style={{
+      <div className="auth-card" style={{
         width: '100%',
         maxWidth: '420px',
         background: '#111',
-        boxShadow: '0 0 30px rgba(255,230,0,0.05), 0 0 80px rgba(255,230,0,0.03)',
-        padding: '2.5rem',
+        boxShadow: '0 0 30px rgba(255,230,0,0.05), 0 0 80px rgba(255,230,0,0.03)'
       }}>
 
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+        <div className="auth-logo" style={{ textAlign: 'center' }}>
           <Link to="/" style={{ textDecoration: 'none' }}>
             <span style={{
               fontFamily: 'Bebas Neue',

@@ -189,10 +189,11 @@ export default function Carrito() {
         outline: 'none',
         width: '100%',
         transition: 'border-color 0.2s',
+        boxSizing: 'border-box',
     }
 
     return (
-        <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
+        <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px', overflowX: 'hidden' }}>
 
             {/* Modal datos cliente */}
             {mostrarModal && (
@@ -253,13 +254,13 @@ export default function Carrito() {
                         </div>
 
                         {/* Fila 1 */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        <div className="carrito-modal-grid-2">
                             {campoModal('nombre', 'Nombre completo')}
                             {campoModal('dni', 'DNI / NIE / CIF')}
                         </div>
 
                         {/* Fila 2 */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        <div className="carrito-modal-grid-2">
                             {campoModal('email', 'Email', 'email')}
                             {campoModal('telefono', 'Teléfono', 'tel')}
                         </div>
@@ -268,7 +269,7 @@ export default function Carrito() {
                         {campoModal('direccion', 'Dirección')}
 
                         {/* Fila 4 */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr', gap: '0.75rem' }}>
+                        <div className="carrito-modal-grid-cp">
                             {campoModal('cp', 'C. Postal')}
                             {campoModal('localidad', 'Localidad')}
                             {campoModal('provincia', 'Provincia')}
@@ -300,7 +301,7 @@ export default function Carrito() {
             )}
 
             {/* Cabecera */}
-            <div style={{ padding: '3rem 4rem 2.5rem' }}>
+            <div className="carrito-cabecera">
                 <h1 style={{
                     fontFamily: 'Bebas Neue', fontSize: '3.5rem',
                     letterSpacing: '0.1em', color: '#fff', marginBottom: '0.25rem'
@@ -312,7 +313,7 @@ export default function Carrito() {
                 </p>
             </div>
 
-            <div style={{ background: '#111', borderTop: '1px solid rgba(255,230,0,0.15)', padding: '3rem 4rem 6rem' }}>
+            <div className="carrito-content" style={{ background: '#111', borderTop: '1px solid rgba(255,230,0,0.15)' }}>
 
                 {items.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '4rem 0' }}>
@@ -333,25 +334,22 @@ export default function Carrito() {
                         </button>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '3rem', alignItems: 'start' }}>
+                    <div className="carrito-grid">
 
                         {/* Columna izquierda — items */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             {items.map(item => (
                                 <div
                                     key={`${item.tabla}-${item._id}`}
+                                    className="carrito-item-card"
                                     style={{
                                         background: '#1c1c1c',
                                         border: '1px solid rgba(255,230,0,0.15)',
                                         boxShadow: '0 4px 20px rgba(255,230,0,0.05)',
-                                        display: 'flex',
-                                        gap: '1.5rem',
-                                        padding: '1.25rem',
-                                        alignItems: 'center',
                                     }}
-                                >
+                                    >
                                     {/* Imagen */}
-                                    <div style={{ width: '120px', height: '80px', flexShrink: 0, background: '#242424', overflow: 'hidden' }}>
+                                    <div className="carrito-item-imagen" style={{ background: '#242424', overflow: 'hidden' }}>
                                         {item.imagen_url ? (
                                             <img src={item.imagen_url} alt={item.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                         ) : (
@@ -430,16 +428,7 @@ export default function Carrito() {
                         </div>
 
                         {/* Columna derecha — resumen */}
-                        <div style={{
-                            background: '#1c1c1c',
-                            border: '1px solid rgba(255,230,0,0.15)',
-                            padding: '1.5rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '1.25rem',
-                            position: 'sticky',
-                            top: '100px',
-                        }}>
+                        <div className="carrito-resumen">
                             <h2 style={{
                                 fontFamily: 'Bebas Neue', fontSize: '1.5rem',
                                 letterSpacing: '0.1em', color: '#fff', margin: 0

@@ -333,26 +333,60 @@ function Buscador({ value, onChange, placeholder }) {
 
 // ── FiltroTabs ────────────────────────────────────────────────────────────────
 function FiltroTabs({ filtros, activo, onChange, contar }) {
+    const [abierto, setAbierto] = useState(false)
+
     return (
-        <div style={{ display: 'flex', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.07)', flexWrap: 'wrap' }}>
-            {filtros.map(f => {
-                const isActivo = activo === f.id
-                return (
-                    <button key={f.id} onClick={() => onChange(f.id)} style={{
-                        background: 'transparent', border: 'none',
-                        borderBottom: isActivo ? '2px solid #FFE600' : '2px solid transparent',
-                        color: isActivo ? '#FFE600' : 'rgba(255,255,255,0.35)',
-                        fontFamily: 'Bebas Neue', fontSize: '0.88rem', letterSpacing: '0.12em',
-                        padding: '0.65rem 1rem', cursor: 'pointer', transition: 'all 0.2s', marginBottom: '-1px'
-                    }}
-                        onMouseEnter={e => { if (!isActivo) e.currentTarget.style.color = 'rgba(255,255,255,0.65)' }}
-                        onMouseLeave={e => { if (!isActivo) e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}
-                    >
-                        {f.label}<span style={{ marginLeft: '0.3rem', fontSize: '0.65rem', opacity: 0.5 }}>({contar(f.id)})</span>
-                    </button>
-                )
-            })}
-        </div>
+        <>
+            {/* Desktop */}
+            <div className="filtro-desktop" style={{ marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.07)', flexWrap: 'wrap' }}>
+                {filtros.map(f => {
+                    const isActivo = activo === f.id
+                    return (
+                        <button key={f.id} onClick={() => onChange(f.id)} style={{
+                            background: 'transparent', border: 'none',
+                            borderBottom: isActivo ? '2px solid #FFE600' : '2px solid transparent',
+                            color: isActivo ? '#FFE600' : 'rgba(255,255,255,0.35)',
+                            fontFamily: 'Bebas Neue', fontSize: '0.88rem', letterSpacing: '0.12em',
+                            padding: '0.65rem 1rem', cursor: 'pointer', transition: 'all 0.2s', marginBottom: '-1px'
+                        }}
+                            onMouseEnter={e => { if (!isActivo) e.currentTarget.style.color = 'rgba(255,255,255,0.65)' }}
+                            onMouseLeave={e => { if (!isActivo) e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}
+                        >
+                            {f.label}<span style={{ marginLeft: '0.3rem', fontSize: '0.65rem', opacity: 0.5 }}>({contar(f.id)})</span>
+                        </button>
+                    )
+                })}
+            </div>
+
+            {/* Móvil */}
+            <div className="filtro-movil" style={{ position: 'relative', marginBottom: '2rem' }}>
+                <button className="filtro-trigger" onClick={() => setAbierto(!abierto)}>
+                    {filtros.find(f => f.id === activo)?.label || 'Filtrar'}
+                    <span style={{ fontSize: '0.75rem', opacity: 0.6, marginLeft: '0.25rem' }}>({contar(activo)})</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ marginLeft: 'auto' }}>
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                </button>
+                {abierto && (
+                    <>
+                        <div style={{ position: 'fixed', inset: 0, zIndex: 49 }} onClick={() => setAbierto(false)} />
+                        <div className="filtro-dropdown-menu">
+                            {filtros.map(f => (
+                                <button key={f.id}
+                                    onClick={() => { onChange(f.id); setAbierto(false) }}
+                                    style={{ color: activo === f.id ? '#FFE600' : 'rgba(255,255,255,0.6)', background: activo === f.id ? 'rgba(255,230,0,0.08)' : 'transparent' }}
+                                    onMouseEnter={e => { e.currentTarget.style.color = '#FFE600'; e.currentTarget.style.background = 'rgba(255,230,0,0.04)' }}
+                                    onMouseLeave={e => { e.currentTarget.style.color = activo === f.id ? '#FFE600' : 'rgba(255,255,255,0.6)'; e.currentTarget.style.background = activo === f.id ? 'rgba(255,230,0,0.08)' : 'transparent' }}
+                                >
+                                    {f.label}
+                                    <span style={{ opacity: 0.45, fontSize: '0.75rem', marginLeft: '0.4rem' }}>({contar(f.id)})</span>
+                                </button>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
+        </>
     )
 }
 
@@ -447,7 +481,7 @@ function SeccionPresupuestos({ onVerFactura, presupuestoDestacado, onLimpiarDest
                                 boxShadow: presupuestoDestacado === p.id_presupuesto ? '0 0 40px rgba(255,230,0,0.2)' : 'none',
                                 transition: 'outline 0.4s, box-shadow 0.4s'
                             }}>
-                                <div style={{ padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                                <div className="admin-card-row">
                                     <div style={{ flex: 1, display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'flex-start', minWidth: 0 }}>
                                         <div>
                                             <p style={LABEL}>Nº</p>
@@ -471,7 +505,7 @@ function SeccionPresupuestos({ onVerFactura, presupuestoDestacado, onLimpiarDest
                                             <div style={{ marginTop: '0.2rem' }}><Badge estado={p.estado} mapa={BADGE_PRES} /></div>
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
+                                    <div className="admin-card-buttons">
                                         <button onClick={() => setExpandido(abierto ? null : p.id_presupuesto)}
                                             style={{ ...btnAmarillo, opacity: abierto ? 0.75 : 1 }}
                                             onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
@@ -543,12 +577,12 @@ function SeccionPresupuestos({ onVerFactura, presupuestoDestacado, onLimpiarDest
                                         {(!p.detalle_presupuesto || p.detalle_presupuesto.length === 0) ? (
                                             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>Sin detalles registrados.</p>
                                         ) : (
-                                            <div>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.4rem 0.75rem', marginBottom: '0.25rem' }}>
+                                            <div style={{ overflowX: 'auto' }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.4rem 0.75rem', marginBottom: '0.25rem', minWidth: '400px' }}>
                                                     {['Concepto', 'Cantidad', 'Precio/hora', 'Subtotal'].map(h => <p key={h} style={{ ...LABEL, margin: 0 }}>{h}</p>)}
                                                 </div>
                                                 {p.detalle_presupuesto.map((d, i) => (
-                                                    <div key={d.id_detalle || i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.65rem 0.75rem', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
+                                                    <div key={d.id_detalle || i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.65rem 0.75rem', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', minWidth: '400px' }}>
                                                         <p style={{ color: '#fff', margin: 0, fontSize: '0.88rem' }}>{d.concepto || '—'}</p>
                                                         <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.88rem' }}>{d.cantidad ?? '—'}</p>
                                                         <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.88rem' }}>{parseFloat(d.precio_unitario || 0).toFixed(2)}€</p>
@@ -689,7 +723,7 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
                                 boxShadow: destacada ? '0 0 40px rgba(255,230,0,0.2), 0 4px 24px rgba(0,0,0,0.4)' : 'none',
                                 transition: 'outline 0.4s, box-shadow 0.4s',
                             }}>
-                                <div style={{ padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                                <div className="admin-card-row">
                                     <div style={{ flex: 1, display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'flex-start', minWidth: 0 }}>
                                         <div>
                                             <p style={LABEL}>Número</p>
@@ -719,7 +753,7 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
                                             <div style={{ marginTop: '0.2rem' }}><Badge estado={estado} mapa={BADGE_FACT} /></div>
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
+                                    <div className="admin-card-buttons">
                                         <button onClick={() => {
                                             const nuevoId = abierto ? null : f.id_factura
                                             setExpandido(nuevoId)
@@ -773,12 +807,12 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
                                         {(!f.presupuesto?.detalle_presupuesto || f.presupuesto.detalle_presupuesto.length === 0) ? (
                                             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>Sin detalles registrados.</p>
                                         ) : (
-                                            <div>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.4rem 0.75rem', marginBottom: '0.25rem' }}>
+                                            <div style={{ overflowX: 'auto' }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.4rem 0.75rem', marginBottom: '0.25rem', minWidth: '400px' }}>
                                                     {['Concepto', 'Cantidad', 'Precio/hora', 'Subtotal'].map(h => <p key={h} style={{ ...LABEL, margin: 0 }}>{h}</p>)}
                                                 </div>
                                                 {f.presupuesto.detalle_presupuesto.map((d, i) => (
-                                                    <div key={d.id_detalle || i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.65rem 0.75rem', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
+                                                    <div key={d.id_detalle || i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.65rem 0.75rem', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', minWidth: '400px' }}>
                                                         <p style={{ color: '#fff', margin: 0, fontSize: '0.88rem' }}>{d.concepto || '—'}</p>
                                                         <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.88rem' }}>{d.cantidad ?? '—'}</p>
                                                         <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.88rem' }}>{parseFloat(d.precio_unitario || 0).toFixed(2)}€</p>
@@ -1145,13 +1179,13 @@ export default function Admin() {
     const seccionLabel = secciones.find(s => s.id === seccionActiva)?.label
 
     return (
-        <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px', display: 'flex' }}>
-            <div style={{ width: '220px', background: '#080808', borderRight: '1px solid rgba(255,230,0,0.1)', flexShrink: 0, position: 'sticky', top: '80px', height: 'calc(100vh - 80px)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '2rem 1.5rem 1.25rem' }}>
+        <div className="admin-layout" style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
+            <div className="admin-sidebar">
+                <div className="admin-sidebar-header">
                     <p style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,230,0,0.5)', margin: '0 0 0.5rem' }}>Panel de administración</p>
                     <div style={{ width: '28px', height: '2px', background: '#FFE600' }} />
                 </div>
-                <nav style={{ flex: 1, paddingBottom: '2rem' }}>
+                <nav className="admin-sidebar-nav">
                     {secciones.map(s => (
                         <button key={s.id} onClick={() => setSeccionActiva(s.id)}
                             style={{ display: 'block', width: '100%', textAlign: 'left', background: seccionActiva === s.id ? 'rgba(255,230,0,0.05)' : 'transparent', border: 'none', borderLeft: seccionActiva === s.id ? '3px solid #FFE600' : '3px solid transparent', padding: '0.9rem 1.5rem', fontFamily: 'Bebas Neue', fontSize: '1.05rem', letterSpacing: '0.15em', color: seccionActiva === s.id ? '#FFE600' : 'rgba(255,255,255,0.35)', cursor: 'pointer', transition: 'all 0.15s' }}
@@ -1164,12 +1198,12 @@ export default function Admin() {
                 </nav>
             </div>
 
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 80px)' }}>
-                <div style={{ borderBottom: '1px solid rgba(255,230,0,0.1)', padding: '2rem 3.5rem', background: '#0a0a0a' }}>
+            <div className="admin-main">
+                <div className="admin-main-header">
                     <p style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', margin: '0 0 0.4rem' }}>Admin · {seccionLabel}</p>
                     <h1 style={{ fontFamily: 'Bebas Neue', fontSize: '2.8rem', letterSpacing: '0.08em', color: '#fff', margin: 0, lineHeight: 1 }}>{seccionLabel}</h1>
                 </div>
-                <div style={{ flex: 1, padding: '2.5rem 3.5rem' }}>
+                <div className="admin-main-content">
                     {seccionActiva === 'presupuestos' && <SeccionPresupuestos onVerFactura={irAFactura} presupuestoDestacado={presupuestoDestacado} onLimpiarDestacado={() => setPresupuestoDestacado(null)} />}
                     {seccionActiva === 'facturas' && <SeccionFacturas facturaDestacada={facturaDestacada} onLimpiarDestacada={() => setFacturaDestacada(null)} />}
                     {seccionActiva === 'usuarios' && <SeccionUsuarios />}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { API_URL } from '../lib/api'
@@ -33,6 +34,12 @@ export default function MisDatos() {
         localidad: '', 
         provincia: ''
     })
+
+    const navigate = useNavigate()
+
+    useEffect(() => {
+        if (!usuario) navigate('/login')
+    }, [usuario])
 
     useEffect(() => {
         if (usuario) {
@@ -156,7 +163,7 @@ export default function MisDatos() {
         <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
 
             {/* Cabecera */}
-            <div style={{ padding: '3rem 4rem 2.5rem' }}>
+            <div className="contacto-cabecera">
                 <h1 style={{
                     fontFamily: 'Bebas Neue',
                     fontSize: '3.5rem',
@@ -172,13 +179,13 @@ export default function MisDatos() {
             </div>
 
             {/* Formulario */}
-            <div style={{ background: '#111', borderTop: '1px solid rgba(255,230,0,0.15)', padding: '3rem 4rem 6rem' }}>
+            <div className="contacto-content" style={{ background: '#111', borderTop: '1px solid rgba(255,230,0,0.15)' }}>
                 <div style={{ maxWidth: '640px' }}>
 
                     <form onSubmit={handleGuardar} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
                         {/* Nombre + Email */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div className="contacto-grid-2">
                             <div>
                                 <label style={labelStyle}>Nombre</label>
                                 <input
@@ -206,7 +213,7 @@ export default function MisDatos() {
                         </div>
 
                         {/* Teléfono + DNI */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div className="contacto-grid-2">
                             <div>
                                 <label style={labelStyle}>Teléfono</label>
                                 <input
@@ -248,7 +255,7 @@ export default function MisDatos() {
                         </div>
 
                         {/* CP + Localidad + Provincia */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 2fr', gap: '1rem' }}>
+                        <div className="misdatos-grid-cp">
                             <div>
                                 <label style={labelStyle}>C.P.</label>
                                 <input

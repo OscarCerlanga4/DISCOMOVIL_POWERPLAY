@@ -7,9 +7,17 @@ export default function Header() {
   const location = useLocation()
   const [scrolled, setScrolled] = useState()
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [menuMovil, setMenuMovil] = useState(false);
+  const [esMovil, setEsMovil] = useState(window.innerWidth < 900);
   const { usuario, logout } = useAuth();
   const { items } = useCarrito();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const onResize = () => setEsMovil(window.innerWidth < 900);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => { setScrolled(window.scrollY > 60) };
@@ -77,7 +85,7 @@ export default function Header() {
           position: "absolute",
           left: "50%",
           transform: "translateX(-50%)",
-          display: "flex",
+          display: esMovil ? "none" : "flex",
           gap: "2.5rem",
         }}>
           {[
@@ -109,9 +117,54 @@ export default function Header() {
         </nav>
 
         {/* Derecha */}
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "1rem" }}>
+        <div 
+          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "1rem" }}
+        >
+        {/* Botón hamburguesa - solo en móvil */}
+        {esMovil && (
+        <button
+          onClick={() => setMenuMovil(!menuMovil)}
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: "#FFE600",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            gap: "5px",
+            padding: "0.3rem",
+          }}
+          aria-label="Menú"
+        >
+          <span style={{
+            display: "block",
+            width: "22px",
+            height: "2px",
+            background: "#FFE600",
+            transition: "all 0.3s",
+            transform: menuMovil ? "rotate(45deg) translate(5px, 5px)" : "none",
+          }} />
+          <span style={{
+            display: "block",
+            width: "22px",
+            height: "2px",
+            background: "#FFE600",
+            transition: "all 0.3s",
+            opacity: menuMovil ? 0 : 1,
+          }} />
+          <span style={{
+            display: "block",
+            width: "22px",
+            height: "2px",
+            background: "#FFE600",
+            transition: "all 0.3s",
+            transform: menuMovil ? "rotate(-45deg) translate(5px, -5px)" : "none",
+          }} />
+        </button>
+      )}
 
-          {usuario ? (
+          {!esMovil && (usuario ? (
             <div
               style={{ position: "relative" }}
               onMouseEnter={() => setMenuAbierto(true)}
@@ -245,9 +298,10 @@ export default function Header() {
             >
               Iniciar sesión
             </Link>
-          )}
+          ))}
 
-          {/* Carrito */}
+          {/* Carrito - solo escritorio */}
+          {!esMovil && (
           <Link
             to="/carrito"
             style={{
@@ -301,8 +355,154 @@ export default function Header() {
               Carrito
             </span>
           </Link>
+          )}
         </div>
       </div>
+      {/* Menú móvil desplegable */}
+      {esMovil && menuMovil && (
+        <div style={{
+          background: "rgba(17,17,17,0.97)",
+          borderTop: "1px solid rgba(255,230,0,0.15)",
+          backdropFilter: "blur(12px)",
+          padding: "1rem 0",
+        }}>
+          {[
+            ["/", "Inicio"],
+            ["/eventos", "Eventos"],
+            ["/servicios", "Servicios"],
+            ["/contacto", "Contacto"],
+          ].map(([path, label]) => (
+            <Link
+              key={path}
+              to={path}
+              onClick={() => setMenuMovil(false)}
+              style={{
+                display: "block",
+                padding: "0.9rem 2rem",
+                color: "#fff",
+                textDecoration: "none",
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                transition: "color 0.2s, background 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "#FFE600";
+                e.currentTarget.style.background = "rgba(255,230,0,0.04)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "#fff";
+                e.currentTarget.style.background = "transparent";
+              }}
+            >
+              {label}
+            </Link>
+          ))}
+
+          {/* Separador con opciones de usuario */}
+          <div style={{ borderTop: "1px solid rgba(255,230,0,0.15)", marginTop: "0.5rem", paddingTop: "0.5rem" }}>
+            <Link
+              to="/carrito"
+              onClick={() => setMenuMovil(false)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                padding: "0.9rem 2rem",
+                color: "rgba(255,255,255,0.7)",
+                textDecoration: "none",
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 01-8 0" />
+              </svg>
+              Carrito {items.length > 0 && `(${items.length})`}
+            </Link>
+            {usuario ? (
+              <>
+                <Link
+                  to={usuario?.rol === 'admin' ? "/admin" : "/mis-pedidos"}
+                  onClick={() => setMenuMovil(false)}
+                  style={{
+                    display: "block",
+                    padding: "0.9rem 2rem",
+                    color: "rgba(255,255,255,0.7)",
+                    textDecoration: "none",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {usuario?.rol === 'admin' ? "Panel Admin" : "Mis pedidos"}
+                </Link>
+                <Link
+                  to="/mis-datos"
+                  onClick={() => setMenuMovil(false)}
+                  style={{
+                    display: "block",
+                    padding: "0.9rem 2rem",
+                    color: "rgba(255,255,255,0.7)",
+                    textDecoration: "none",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Mis datos
+                </Link>
+                <button
+                  onClick={() => { handleLogout(); setMenuMovil(false); }}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "0.9rem 2rem",
+                    color: "rgba(255,100,100,0.8)",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Cerrar sesión
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMenuMovil(false)}
+                style={{
+                  display: "block",
+                  padding: "0.9rem 2rem",
+                  color: "#FFE600",
+                  textDecoration: "none",
+                  fontSize: "0.8rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Iniciar sesión
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }
