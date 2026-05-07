@@ -282,6 +282,7 @@ export default function Servicios() {
 
     const handleGuardarDJ = (form) => {
         if (!form.nombre.trim() || !form.precio_hora) { setErrorDJ('Nombre y precio son obligatorios.'); return }
+        if (parseFloat(form.precio_hora) < 0) { setErrorDJ('El precio no puede ser un número negativo.'); return }
         setGuardandoDJ(true); setErrorDJ('')
         fetch(`${API_URL}/api/djs`, {
             method: 'POST',
@@ -301,6 +302,7 @@ export default function Servicios() {
 
     const handleGuardarEquipo = (form) => {
         if (!form.nombre.trim() || !form.precio_alquiler_hora || !form.stock_total) { setErrorEquipo('Nombre, precio y stock son obligatorios.'); return }
+        if (parseFloat(form.precio_alquiler_hora) < 0) { setErrorEquipo('El precio no puede ser un número negativo.'); return }
         setGuardandoEquipo(true); setErrorEquipo('')
         fetch(`${API_URL}/api/equipos`, {
             method: 'POST',
@@ -425,7 +427,7 @@ export default function Servicios() {
                         </div>
                         <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <h2 style={{ color: '#fff', fontFamily: 'Bebas Neue', fontSize: '1.8rem', letterSpacing: '0.08em', margin: 0 }}>{itemSeleccionado.nombre}</h2>
-                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>{itemSeleccionado.descripcion || 'Sin descripción'}</p>
+                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>{itemSeleccionado.descripcion || 'Sin descripción'}</p>
                             {itemSeleccionado.tabla === 'equipo' && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Stock disponible:</span>
