@@ -219,7 +219,8 @@ const update = (req, res) => {
                                                                         numero_factura: presupuestoCompleto.factura?.numero_factura,
                                                                         total: presupuestoCompleto.factura?.total,
                                                                         pdf_base64: pdfBase64,
-                                                                        nombre_empresa: empresa?.nombre_empresa || 'Power Play'
+                                                                        nombre_empresa: empresa?.nombre_empresa || 'Power Play',
+                                                                        url_pago: `${process.env.FRONTEND_URL}/pago/${presupuestoCompleto.factura?.id_factura}`
                                                                     });
                                                                 });
                                                         });
