@@ -88,4 +88,19 @@ const remove = (req, res)=>{
         });
 };
 
-module.exports = { getAll, getById, update, remove };
+const deleteAccount = (req, res) => {
+    const id = req.user.id
+
+    supabase.auth.admin.deleteUser(id)
+        .then(({ error }) => {
+            if (error) {
+                return res.status(500).send({ ok: false, error: error.message })
+            }
+            res.status(200).send({ ok: true, result: 'Cuenta eliminada correctamente' })
+        })
+        .catch(() => {
+            res.status(500).send({ ok: false, error: 'Error al eliminar la cuenta' })
+        })
+}
+
+module.exports = { getAll, getById, update, remove, deleteAccount };

@@ -425,6 +425,26 @@ export default function Carrito() {
                                     >×</button>
                                 </div>
                             ))}
+                            {items.some(i => i.tabla === 'dj') && (
+                                <div style={{
+                                    background: 'rgba(255,200,0,0.05)',
+                                    border: '1px solid rgba(255,200,0,0.2)',
+                                    padding: '1rem 1.25rem',
+                                    display: 'flex',
+                                    gap: '0.75rem',
+                                    alignItems: 'flex-start'
+                                }}>
+                                    <span style={{ fontSize: '1.1rem', flexShrink: 0, marginTop: '0.05rem' }}>⚠️</span>
+                                    <div>
+                                        <p style={{ color: '#FFE600', fontSize: '0.82rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', margin: '0 0 0.3rem' }}>
+                                            Disponibilidad sujeta a confirmación
+                                        </p>
+                                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', margin: 0, lineHeight: 1.6 }}>
+                                            Los DJs y orquestas pueden tener compromisos fuera de esta plataforma. Una vez realizada la reserva, nos pondremos en contacto contigo para confirmar su disponibilidad.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Columna derecha — resumen */}

@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { API_URL } from '../lib/api'
 
 export default function MisDatos() {
-    const { usuario, login } = useAuth()
+    const { usuario, login, logout } = useAuth()
 
     const [form, setForm] = useState({
         nombre: '',
@@ -24,6 +24,9 @@ export default function MisDatos() {
     const [mensajePassword, setMensajePassword] = useState(null)
     const [errorPassword, setErrorPassword] = useState(null)
     const [correoEnviado, setCorreoEnviado] = useState(false)
+    const [confirmarEliminar, setConfirmarEliminar] = useState(false)
+    const [eliminando, setEliminando] = useState(false)
+    const [errorEliminar, setErrorEliminar] = useState(null)
     const [errors, setErrors] = useState({
         nombre: '', 
         email: '',
@@ -130,6 +133,31 @@ export default function MisDatos() {
                 setCorreoEnviado(true)
             })
             .catch(() => setErrorPassword('Error al enviar el correo'))
+    }
+
+    const handleEliminarCuenta = () => {
+        setEliminando(true)
+        setErrorEliminar(null)
+        const token = localStorage.getItem('token')
+
+        fetch(`${API_URL}/api/usuarios/me`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    logout()
+                    navigate('/')
+                } else {
+                    setErrorEliminar(data.error || 'Error al eliminar la cuenta')
+                    setEliminando(false)
+                }
+            })
+            .catch(() => {
+                setErrorEliminar('Error al eliminar la cuenta')
+                setEliminando(false)
+            })
     }
 
     const inputStyle = {
@@ -374,6 +402,103 @@ export default function MisDatos() {
                         >
                             {correoEnviado ? 'Reenviar correo' : 'Cambiar contraseña'}
                         </button>
+                    </div>
+                    
+                    {/* Separador */}
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '3rem 0' }} />
+
+                    {/* Eliminar cuenta */}
+                    <div>
+                        <h2 style={{
+                            fontFamily: 'Bebas Neue',
+                            fontSize: '1.8rem',
+                            letterSpacing: '0.1em',
+                            color: '#ff4444',
+                            marginBottom: '0.5rem'
+                        }}>
+                            Eliminar cuenta
+                        </h2>
+                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+                            Se eliminarán tu cuenta y tus datos personales. Tus reservas anteriores se conservarán de forma anónima.
+                        </p>
+
+                        {!confirmarEliminar ? (
+                            <button
+                                onClick={() => setConfirmarEliminar(true)}
+                                style={{
+                                    background: 'transparent',
+                                    border: '1px solid rgba(255,68,68,0.4)',
+                                    color: '#ff4444',
+                                    fontFamily: 'Bebas Neue',
+                                    fontSize: '1rem',
+                                    letterSpacing: '0.15em',
+                                    padding: '0.75rem 2rem',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                }}
+                                onMouseEnter={e => {
+                                    e.currentTarget.style.background = 'rgba(255,68,68,0.08)'
+                                    e.currentTarget.style.borderColor = '#ff4444'
+                                }}
+                                onMouseLeave={e => {
+                                    e.currentTarget.style.background = 'transparent'
+                                    e.currentTarget.style.borderColor = 'rgba(255,68,68,0.4)'
+                                }}
+                            >
+                                Eliminar cuenta
+                            </button>
+                        ) : (
+                            <div style={{
+                                background: 'rgba(255,68,68,0.05)',
+                                border: '1px solid rgba(255,68,68,0.2)',
+                                padding: '1.25rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '1rem'
+                            }}>
+                                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: 0 }}>
+                                    ¿Seguro que quieres eliminar tu cuenta? Esta acción no se puede deshacer.
+                                </p>
+                                {errorEliminar && (
+                                    <p style={{ color: '#ff4444', fontSize: '0.85rem', margin: 0 }}>{errorEliminar}</p>
+                                )}
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <button
+                                        onClick={() => { setConfirmarEliminar(false); setErrorEliminar(null) }}
+                                        disabled={eliminando}
+                                        style={{
+                                            background: 'transparent',
+                                            border: '1px solid rgba(255,255,255,0.15)',
+                                            color: 'rgba(255,255,255,0.5)',
+                                            fontFamily: 'Bebas Neue',
+                                            fontSize: '1rem',
+                                            letterSpacing: '0.15em',
+                                            padding: '0.75rem 1.5rem',
+                                            cursor: 'pointer',
+                                        }}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleEliminarCuenta}
+                                        disabled={eliminando}
+                                        style={{
+                                            background: '#ff4444',
+                                            border: 'none',
+                                            color: '#fff',
+                                            fontFamily: 'Bebas Neue',
+                                            fontSize: '1rem',
+                                            letterSpacing: '0.15em',
+                                            padding: '0.75rem 1.5rem',
+                                            cursor: eliminando ? 'not-allowed' : 'pointer',
+                                            opacity: eliminando ? 0.6 : 1,
+                                        }}
+                                    >
+                                        {eliminando ? 'Eliminando...' : 'Sí, eliminar mi cuenta'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                 </div>

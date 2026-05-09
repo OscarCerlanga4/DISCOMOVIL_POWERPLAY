@@ -474,8 +474,8 @@ function SeccionPresupuestos({ onVerFactura, presupuestoDestacado, onLimpiarDest
                         const procesando = cambiando === p.id_presupuesto
                         const puedeActuar = p.estado === 'pendiente' || p.estado === 'aceptado_cliente'
                         return (
-                            <div key={p.id_presupuesto} id={`presupuesto-admin-${p.id_presupuesto}`} style={{ 
-                                background: '#141414', 
+                            <div key={p.id_presupuesto} id={`presupuesto-admin-${p.id_presupuesto}`} style={{
+                                background: '#141414',
                                 borderLeft: `3px solid ${ACCENT_PRES[p.estado] || 'rgba(255,255,255,0.1)'}`,
                                 outline: presupuestoDestacado === p.id_presupuesto ? '1px solid rgba(255,230,0,0.7)' : 'none',
                                 boxShadow: presupuestoDestacado === p.id_presupuesto ? '0 0 40px rgba(255,230,0,0.2)' : 'none',
@@ -559,7 +559,7 @@ function SeccionPresupuestos({ onVerFactura, presupuestoDestacado, onLimpiarDest
                                                 <p style={LABEL}>Ubicación</p>
                                                 <p style={{ color: '#fff', margin: '0.3rem 0 0', fontSize: '0.88rem', fontWeight: 600 }}>{p.reserva?.ubicacion || '—'}</p>
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                                                 <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', padding: '0.5rem 0.85rem' }}>
                                                     <p style={{ ...LABEL, marginBottom: '0.35rem' }}>Inicio</p>
                                                     <p style={{ color: '#fff', fontSize: '0.92rem', fontWeight: 700, margin: 0, lineHeight: 1.2 }}>{formatearSoloFecha(p.reserva?.fecha_inicio)}</p>
@@ -577,12 +577,12 @@ function SeccionPresupuestos({ onVerFactura, presupuestoDestacado, onLimpiarDest
                                         {(!p.detalle_presupuesto || p.detalle_presupuesto.length === 0) ? (
                                             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>Sin detalles registrados.</p>
                                         ) : (
-                                            <div style={{ overflowX: 'auto' }}>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.4rem 0.75rem', marginBottom: '0.25rem', minWidth: '400px' }}>
+                                            <div className="admin-lineas-tabla" style={{ overflowX: 'auto', width: '100%' }}>
+                                                <div className="admin-lineas-header" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.4rem 0.75rem', marginBottom: '0.25rem', minWidth: '400px' }}>
                                                     {['Concepto', 'Cantidad', 'Precio/hora', 'Subtotal'].map(h => <p key={h} style={{ ...LABEL, margin: 0 }}>{h}</p>)}
                                                 </div>
                                                 {p.detalle_presupuesto.map((d, i) => (
-                                                    <div key={d.id_detalle || i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.65rem 0.75rem', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', minWidth: '400px' }}>
+                                                    <div key={d.id_detalle || i} className="admin-lineas-fila" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.65rem 0.75rem', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', minWidth: '400px' }}>
                                                         <p style={{ color: '#fff', margin: 0, fontSize: '0.88rem' }}>{d.concepto || '—'}</p>
                                                         <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.88rem' }}>{d.cantidad ?? '—'}</p>
                                                         <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.88rem' }}>{parseFloat(d.precio_unitario || 0).toFixed(2)}€</p>
@@ -624,7 +624,7 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
     const [pagosMap, setPagosMap] = useState({})
     const [formPago, setFormPago] = useState({})
     const [guardandoPago, setGuardandoPago] = useState(null)
-    const [modalPago, setModalPago] = useState(null) // { id_factura, metodo, importe, numeroFactura, cliente }
+    const [modalPago, setModalPago] = useState(null)
     const token = localStorage.getItem('token')
 
     const cargar = () => {
@@ -788,7 +788,7 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
                                                 <p style={{ color: 'rgba(255,255,255,0.35)', margin: '0.2rem 0 0', fontSize: '0.8rem' }}>{r?.cliente_telefono || ''}</p>
                                                 <p style={{ color: 'rgba(255,255,255,0.35)', margin: '0.2rem 0 0', fontSize: '0.8rem' }}>{[r?.cliente_direccion, r?.cliente_codigo_postal, r?.cliente_localidad, r?.cliente_provincia].filter(Boolean).join(', ')}</p>
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                                                 <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', padding: '0.5rem 0.85rem' }}>
                                                     <p style={{ ...LABEL, marginBottom: '0.35rem' }}>Inicio</p>
                                                     <p style={{ color: '#fff', fontSize: '0.92rem', fontWeight: 700, margin: 0, lineHeight: 1.2 }}>{formatearSoloFecha(r?.fecha_inicio)}</p>
@@ -807,12 +807,12 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
                                         {(!f.presupuesto?.detalle_presupuesto || f.presupuesto.detalle_presupuesto.length === 0) ? (
                                             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>Sin detalles registrados.</p>
                                         ) : (
-                                            <div style={{ overflowX: 'auto' }}>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.4rem 0.75rem', marginBottom: '0.25rem', minWidth: '400px' }}>
+                                            <div className="admin-lineas-tabla" style={{ overflowX: 'auto', width: '100%' }}>
+                                                <div className="admin-lineas-header" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.4rem 0.75rem', marginBottom: '0.25rem', minWidth: '400px' }}>
                                                     {['Concepto', 'Cantidad', 'Precio/hora', 'Subtotal'].map(h => <p key={h} style={{ ...LABEL, margin: 0 }}>{h}</p>)}
                                                 </div>
                                                 {f.presupuesto.detalle_presupuesto.map((d, i) => (
-                                                    <div key={d.id_detalle || i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.65rem 0.75rem', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', minWidth: '400px' }}>
+                                                    <div key={d.id_detalle || i} className="admin-lineas-fila" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 130px 120px', padding: '0.65rem 0.75rem', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', minWidth: '400px' }}>
                                                         <p style={{ color: '#fff', margin: 0, fontSize: '0.88rem' }}>{d.concepto || '—'}</p>
                                                         <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.88rem' }}>{d.cantidad ?? '—'}</p>
                                                         <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.88rem' }}>{parseFloat(d.precio_unitario || 0).toFixed(2)}€</p>
@@ -1042,6 +1042,198 @@ function SeccionUsuarios() {
     )
 }
 
+// ── Sección Contactos ─────────────────────────────────────────────────────────
+function SeccionContactos() {
+    const [contactos, setContactos] = useState([])
+    const [cargando, setCargando] = useState(true)
+    const [abierto, setAbierto] = useState(null)
+    const [respondiendo, setRespondiendo] = useState(null)
+    const [textoRespuesta, setTextoRespuesta] = useState('')
+    const [enviando, setEnviando] = useState(false)
+    const token = localStorage.getItem('token')
+
+    useEffect(() => {
+        fetch(`${API_URL}/api/contactos`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => r.json())
+            .then(data => { if (data.ok) setContactos(data.result) })
+            .finally(() => setCargando(false))
+    }, [])
+
+    const toggleResponder = (e, id) => {
+        e.stopPropagation()
+        if (respondiendo === id) {
+            setRespondiendo(null)
+            setTextoRespuesta('')
+        } else {
+            setRespondiendo(id)
+            setTextoRespuesta('')
+        }
+    }
+
+    const handleResponder = (id) => {
+        if (!textoRespuesta.trim()) return
+        setEnviando(true)
+        fetch(`${API_URL}/api/contactos/${id}/responder`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ respuesta: textoRespuesta })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    setContactos(prev => prev.map(c => c.id_contacto === id ? data.result : c))
+                    setRespondiendo(null)
+                    setTextoRespuesta('')
+                }
+            })
+            .finally(() => setEnviando(false))
+    }
+
+    if (cargando) return <p style={{ color: 'rgba(255,255,255,0.3)', fontFamily: 'Bebas Neue', letterSpacing: '0.1em' }}>Cargando...</p>
+
+    if (contactos.length === 0) return (
+        <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.9rem' }}>No hay contactos todavía.</p>
+    )
+
+    return (
+        <div>
+            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.82rem', marginBottom: '1.5rem' }}>
+                {contactos.length} mensaje{contactos.length !== 1 ? 's' : ''}
+                {' · '}
+                {contactos.filter(c => !c.respondido).length} sin responder
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {contactos.map(c => (
+                    <div key={c.id_contacto} style={{
+                        background: '#141414',
+                        borderLeft: `3px solid ${c.respondido ? '#60c060' : '#FFE600'}`,
+                    }}>
+                        {/* ── Cabecera de fila ── */}
+                        <div
+                            onClick={() => setAbierto(abierto === c.id_contacto ? null : c.id_contacto)}
+                            className="admin-contacto-fila-header" style={{ padding: '1rem 1.75rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', cursor: 'pointer' }}
+                        >
+                            <div style={{ flex: '1', minWidth: '120px' }}>
+                                <p style={LABEL}>Nombre</p>
+                                <p style={{ color: '#fff', margin: '0.2rem 0 0', fontSize: '0.9rem', fontWeight: 600 }}>{c.nombre}</p>
+                            </div>
+                            <div className="admin-contacto-campo-email" style={{ flex: '2', minWidth: '180px' }}>
+                                <p style={LABEL}>Email</p>
+                                <p style={{ color: 'rgba(255,255,255,0.55)', margin: '0.2rem 0 0', fontSize: '0.88rem' }}>{c.email}</p>
+                            </div>
+                            <div className="admin-contacto-campo-asunto" style={{ flex: '2', minWidth: '160px' }}>
+                                <p style={LABEL}>Asunto</p>
+                                <p style={{ color: 'rgba(255,255,255,0.55)', margin: '0.2rem 0 0', fontSize: '0.88rem' }}>{c.titulo_problema}</p>
+                            </div>
+                            <div>
+                                <p style={LABEL}>Tipo</p>
+                                <p style={{ color: 'rgba(255,255,255,0.55)', margin: '0.2rem 0 0', fontSize: '0.88rem', textTransform: 'capitalize' }}>{c.tipo_contacto}</p>
+                            </div>
+                            <div>
+                                <p style={LABEL}>Fecha</p>
+                                <p style={{ color: 'rgba(255,255,255,0.55)', margin: '0.2rem 0 0', fontSize: '0.88rem' }}>{formatearSoloFecha(c.fecha)}</p>
+                            </div>
+
+                            {/* Badge + botón Responder al lado */}
+                            <div
+                                className="admin-contacto-badge-wrap" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <span style={{
+                                    background: c.respondido ? 'rgba(96,192,96,0.12)' : 'rgba(255,200,0,0.12)',
+                                    color: c.respondido ? '#60c060' : '#FFE600',
+                                    padding: '0.2rem 0.65rem', fontSize: '0.68rem',
+                                    fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase'
+                                }}>
+                                    {c.respondido ? 'Respondido' : 'Sin responder'}
+                                </span>
+                                {!c.respondido && (
+                                    <button
+                                        onClick={e => toggleResponder(e, c.id_contacto)}
+                                        style={{
+                                            background: respondiendo === c.id_contacto ? 'rgba(255,230,0,0.1)' : 'transparent',
+                                            border: '1px solid rgba(255,230,0,0.35)',
+                                            color: '#FFE600',
+                                            fontFamily: 'Bebas Neue',
+                                            fontSize: '0.72rem',
+                                            letterSpacing: '0.1em',
+                                            padding: '0.2rem 0.6rem',
+                                            cursor: 'pointer',
+                                            transition: 'background 0.15s',
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        {respondiendo === c.id_contacto ? 'Cancelar ✕' : 'Responder ▾'}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* ── Panel de respuesta inline (sin necesidad de expandir) ── */}
+                        {respondiendo === c.id_contacto && !c.respondido && (
+                            <div style={{ padding: '0 1.75rem 1.25rem', borderTop: '1px solid rgba(255,230,0,0.1)' }}>
+                                <div style={{ paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    {/* Mensaje del usuario — arriba */}
+                                    <div style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.07)', padding: '1rem' }}>
+                                        <p style={LABEL}>Mensaje recibido</p>
+                                        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: '0.4rem 0 0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{c.descripcion}</p>
+                                    </div>
+                                    {/* Textarea de respuesta — debajo */}
+                                    <textarea
+                                        value={textoRespuesta}
+                                        onChange={e => setTextoRespuesta(e.target.value)}
+                                        rows={5}
+                                        placeholder="Escribe tu respuesta..."
+                                        style={{
+                                            ...inputStyle,
+                                            resize: 'vertical',
+                                            fontFamily: 'Inter, sans-serif',
+                                            fontSize: '0.88rem'
+                                        }}
+                                        onFocus={e => e.target.style.borderColor = '#FFE600'}
+                                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                                    />
+                                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                        <button
+                                            onClick={() => { setRespondiendo(null); setTextoRespuesta('') }}
+                                            style={btnRojo}
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            onClick={() => handleResponder(c.id_contacto)}
+                                            disabled={enviando || !textoRespuesta.trim()}
+                                            style={{ ...btnVerde, opacity: (enviando || !textoRespuesta.trim()) ? 0.5 : 1 }}
+                                        >
+                                            {enviando ? 'Enviando...' : 'Enviar respuesta'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ── Expansión: mensaje completo ── */}
+                        {abierto === c.id_contacto && (
+                            <div style={{ padding: '0 1.75rem 1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div style={{ paddingTop: '1.25rem' }}>
+                                    <p style={LABEL}>Mensaje</p>
+                                    <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: '0.4rem 0 0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{c.descripcion}</p>
+                                </div>
+                                {c.respondido && c.respuesta && (
+                                    <div style={{ marginTop: '1.25rem', background: 'rgba(96,192,96,0.05)', border: '1px solid rgba(96,192,96,0.15)', padding: '1rem' }}>
+                                        <p style={LABEL}>Respuesta enviada</p>
+                                        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', margin: '0.4rem 0 0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{c.respuesta}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
 // ── Sección Empresa ───────────────────────────────────────────────────────────
 function SeccionEmpresa() {
     const [form, setForm] = useState({ nombre_empresa: '', cif: '', direccion: '', codigo_postal: '', localidad: '', provincia: '', telefono: '', email: '', logo_url: '', iban: '' })
@@ -1173,6 +1365,7 @@ export default function Admin() {
         { id: 'presupuestos', label: 'Presupuestos' },
         { id: 'facturas', label: 'Facturas' },
         { id: 'usuarios', label: 'Usuarios' },
+        { id: 'contactos', label: 'Contactos' },
         { id: 'empresa', label: 'Empresa' },
     ]
 
@@ -1207,6 +1400,7 @@ export default function Admin() {
                     {seccionActiva === 'presupuestos' && <SeccionPresupuestos onVerFactura={irAFactura} presupuestoDestacado={presupuestoDestacado} onLimpiarDestacado={() => setPresupuestoDestacado(null)} />}
                     {seccionActiva === 'facturas' && <SeccionFacturas facturaDestacada={facturaDestacada} onLimpiarDestacada={() => setFacturaDestacada(null)} />}
                     {seccionActiva === 'usuarios' && <SeccionUsuarios />}
+                    {seccionActiva === 'contactos' && <SeccionContactos />}
                     {seccionActiva === 'empresa' && <SeccionEmpresa />}
                 </div>
             </div>

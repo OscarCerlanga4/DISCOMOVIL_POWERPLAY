@@ -141,6 +141,25 @@ const create = (req, res) => {
                             // Si la API de rutas falla, no bloqueamos la reserva
                         }
                     }
+                    
+                    // Si no hay reservas vecinas, el equipo está en Tauste → verificar viaje desde allí
+                    if (reservasVecinas.length === 0) {
+                        const ahora = new Date()
+                        const gapHastaEvento = new Date(fecha_inicio) - ahora
+                        const ocho_horas = 8 * 60 * 60 * 1000
+                        if (gapHastaEvento >= 0 && gapHastaEvento < ocho_horas) {
+                            try {
+                                const minutosViaje = await calcularTiempoViaje('Tauste, Zaragoza', ubicacion)
+                                if (minutosViaje !== null && minutosViaje * 60 * 1000 > gapHastaEvento) {
+                                    const gapMin = Math.floor(gapHastaEvento / 60000)
+                                    return res.status(400).send({
+                                        ok: false,
+                                        error: `El equipo no tiene tiempo suficiente para desplazarse desde Tauste hasta el evento (necesita ${minutosViaje} min, disponibles ${gapMin} min)`
+                                    })
+                                }
+                            } catch (_) {}
+                        }
+                    }
 
                     // Paso 3: comprobar solapamiento de DJs
                     const idsDjs = djs;
@@ -201,6 +220,25 @@ const create = (req, res) => {
                                         if (minutosViaje !== null && minutosViaje * 60 * 1000 > gapDespues) {
                                             const gapMin = Math.floor(gapDespues / 60000)
                                             return res.status(400).send({ ok: false, error: `Un equipo no tiene tiempo para desplazarse entre ubicaciones (necesita ${minutosViaje} min, disponibles ${gapMin} min (Aproximadamente))` })
+                                        }
+                                    } catch (_) {}
+                                }
+                            }
+
+                            // Si no hay reservas vecinas, el DJ está en Tauste → verificar viaje desde allí
+                            if (reservasVecinas.length === 0) {
+                                const ahora = new Date()
+                                const gapHastaEvento = new Date(fecha_inicio) - ahora
+                                const ocho_horas = 8 * 60 * 60 * 1000
+                                if (gapHastaEvento >= 0 && gapHastaEvento < ocho_horas) {
+                                    try {
+                                        const minutosViaje = await calcularTiempoViaje('Tauste, Zaragoza', ubicacion)
+                                        if (minutosViaje !== null && minutosViaje * 60 * 1000 > gapHastaEvento) {
+                                            const gapMin = Math.floor(gapHastaEvento / 60000)
+                                            return res.status(400).send({
+                                                ok: false,
+                                                error: `El DJ no tiene tiempo suficiente para desplazarse desde Tauste hasta el evento (necesita ${minutosViaje} min, disponibles ${gapMin} min)`
+                                            })
                                         }
                                     } catch (_) {}
                                 }
