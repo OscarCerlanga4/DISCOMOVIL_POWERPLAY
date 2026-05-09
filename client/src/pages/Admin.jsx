@@ -1043,7 +1043,7 @@ function SeccionUsuarios() {
 }
 
 // ── Sección Contactos ─────────────────────────────────────────────────────────
-function SeccionContactos() {
+function SeccionContactos({ contactoDestacado, onLimpiarDestacado }) {
     const [contactos, setContactos] = useState([])
     const [cargando, setCargando] = useState(true)
     const [abierto, setAbierto] = useState(null)
@@ -1058,6 +1058,18 @@ function SeccionContactos() {
             .then(data => { if (data.ok) setContactos(data.result) })
             .finally(() => setCargando(false))
     }, [])
+
+    useEffect(() => {
+        if (!contactoDestacado || contactos.length === 0) return
+        const timerScroll = setTimeout(() => {
+            const el = document.getElementById(`contacto-admin-${contactoDestacado}`)
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 100)
+        const timerLimpiar = setTimeout(() => {
+            if (onLimpiarDestacado) onLimpiarDestacado()
+        }, 2500)
+        return () => { clearTimeout(timerScroll); clearTimeout(timerLimpiar) }
+    }, [contactoDestacado, contactos])
 
     const toggleResponder = (e, id) => {
         e.stopPropagation()
@@ -1104,9 +1116,12 @@ function SeccionContactos() {
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 {contactos.map(c => (
-                    <div key={c.id_contacto} style={{
+                    <div key={c.id_contacto} id={`contacto-admin-${c.id_contacto}`} style={{
                         background: '#141414',
                         borderLeft: `3px solid ${c.respondido ? '#60c060' : '#FFE600'}`,
+                        outline: contactoDestacado === c.id_contacto ? '1px solid rgba(255,230,0,0.7)' : 'none',
+                        boxShadow: contactoDestacado === c.id_contacto ? '0 0 40px rgba(255,230,0,0.2)' : 'none',
+                        transition: 'outline 0.3s, box-shadow 0.3s',
                     }}>
                         {/* ── Cabecera de fila ── */}
                         <div
@@ -1334,6 +1349,7 @@ export default function Admin() {
     const [seccionActiva, setSeccionActiva] = useState('presupuestos')
     const [presupuestoDestacado, setPresupuestoDestacado] = useState(null)
     const [facturaDestacada, setFacturaDestacada] = useState(null)
+    const [contactoDestacado, setContactoDestacado] = useState(null)
 
     const irAPresupuesto = (idPresupuesto) => {
         setPresupuestoDestacado(idPresupuesto)
@@ -1345,6 +1361,11 @@ export default function Admin() {
         setSeccionActiva('facturas')
     }
 
+    const irAContacto = (idContacto) => {
+        setContactoDestacado(idContacto)
+        setSeccionActiva('contactos')
+    }
+
     useEffect(() => {
         if (usuario && usuario.rol !== 'admin') navigate('/')
     }, [usuario])
@@ -1353,6 +1374,8 @@ export default function Admin() {
         const params = new URLSearchParams(window.location.search)
         const idPres = params.get('presupuesto')
         if (idPres) irAPresupuesto(parseInt(idPres))
+        const idContacto = params.get('contacto')
+        if (idContacto) irAContacto(parseInt(idContacto))
     }, [])
 
     useEffect(() => {
@@ -1400,7 +1423,7 @@ export default function Admin() {
                     {seccionActiva === 'presupuestos' && <SeccionPresupuestos onVerFactura={irAFactura} presupuestoDestacado={presupuestoDestacado} onLimpiarDestacado={() => setPresupuestoDestacado(null)} />}
                     {seccionActiva === 'facturas' && <SeccionFacturas facturaDestacada={facturaDestacada} onLimpiarDestacada={() => setFacturaDestacada(null)} />}
                     {seccionActiva === 'usuarios' && <SeccionUsuarios />}
-                    {seccionActiva === 'contactos' && <SeccionContactos />}
+                    {seccionActiva === 'contactos' && <SeccionContactos contactoDestacado={contactoDestacado} onLimpiarDestacado={() => setContactoDestacado(null)} />}
                     {seccionActiva === 'empresa' && <SeccionEmpresa />}
                 </div>
             </div>

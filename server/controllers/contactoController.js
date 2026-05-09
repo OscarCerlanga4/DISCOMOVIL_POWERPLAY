@@ -57,13 +57,15 @@ const create = (req, res) => {
                 .single()
                 .then(({ data: empresa }) => {
                     return llamarN8N(process.env.N8N_WEBHOOK_CONTACTO_RECIBIDO, {
+                        id_contacto: data[0].id_contacto,
                         nombre,
                         email,
                         titulo_problema,
                         tipo_contacto,
                         descripcion,
                         nombre_empresa: empresa?.nombre_empresa || 'Power Play',
-                        admin_email: empresa?.email
+                        admin_email: empresa?.email,
+                        url_panel: `${process.env.FRONTEND_URL}/admin?contacto=${data[0].id_contacto}`
                     });
                 })
                 .catch(err => console.error('Error llamando a N8N (contacto recibido):', err.message));
