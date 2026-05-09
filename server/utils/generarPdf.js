@@ -1,5 +1,6 @@
 const { jsPDF } = require('jspdf');
-require('jspdf-autotable');
+const _autoTableMod = require('jspdf-autotable');
+const autoTable = typeof _autoTableMod === 'function' ? _autoTableMod : (_autoTableMod.default || _autoTableMod);
 
 const cargarImagenBase64 = async (url) => {
     try {
@@ -149,10 +150,6 @@ const generarPdfPresupuesto = async (presupuesto, empresa) => {
     y += 12;
 
     const detalles = presupuesto.detalle_presupuesto || [];
-    require('jspdf-autotable').default ? 
-        require('jspdf-autotable').default(doc, {}) : null;
-    
-    const autoTable = require('jspdf-autotable');
     autoTable(doc, {
         startY: y,
         head: [['CONCEPTO', 'CANT.', 'PRECIO/HORA', 'SUBTOTAL']],
@@ -273,7 +270,6 @@ const generarPdfFactura = async (presupuesto, empresa) => {
     y += 12;
 
     const detalles = presupuesto.detalle_presupuesto || [];
-    const autoTable = require('jspdf-autotable');
     autoTable(doc, {
         startY: y,
         head: [['CONCEPTO', 'CANT.', 'PRECIO/HORA', 'SUBTOTAL']],
