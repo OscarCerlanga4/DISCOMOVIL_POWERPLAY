@@ -117,6 +117,15 @@ export default function GoogleMapsPicker({ value, onUbicacionSelect }) {
         })
     }, [abierto])
 
+    useEffect(() => {
+        if (abierto) {
+            document.body.style.overflow = 'hidden'
+        } else {
+            document.body.style.overflow = ''
+        }
+        return () => { document.body.style.overflow = '' }
+    }, [abierto])
+
     const handleConfirmar = () => {
         if (!textoConfirmado) return
         onUbicacionSelect(textoConfirmado, desglose)

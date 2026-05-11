@@ -558,6 +558,9 @@ function SeccionPresupuestos({ onVerFactura, presupuestoDestacado, onLimpiarDest
                                             <div>
                                                 <p style={LABEL}>Ubicación</p>
                                                 <p style={{ color: '#fff', margin: '0.3rem 0 0', fontSize: '0.88rem', fontWeight: 600 }}>{p.reserva?.ubicacion || '—'}</p>
+                                                <p style={{ color: 'rgba(255,255,255,0.35)', margin: '0.4rem 0 0', fontSize: '0.8rem' }}>{p.reserva?.cliente_dni_nie_cif || ''}</p>
+                                                <p style={{ color: 'rgba(255,255,255,0.35)', margin: '0.2rem 0 0', fontSize: '0.8rem' }}>{p.reserva?.cliente_telefono || ''}</p>
+                                                <p style={{ color: 'rgba(255,255,255,0.35)', margin: '0.2rem 0 0', fontSize: '0.8rem' }}>{[p.reserva?.cliente_direccion, p.reserva?.cliente_codigo_postal, p.reserva?.cliente_localidad, p.reserva?.cliente_provincia].filter(Boolean).join(', ')}</p>
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                                                 <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', padding: '0.5rem 0.85rem' }}>
@@ -680,10 +683,20 @@ function SeccionFacturas({ facturaDestacada, onLimpiarDestacada }) {
             .finally(() => setGuardandoPago(null))
     }
 
-    const contar = (id) => id === 'todos' ? facturas.length : facturas.filter(f => (f.estado_factura || 'pendiente') === id).length
+    const METODOS_PAGO = ['efectivo', 'transferencia', 'tarjeta']
+
+    const contar = (id) => {
+        if (id === 'todos') return facturas.length
+        if (METODOS_PAGO.includes(id)) return facturas.filter(f => (f.pago || []).some(p => p.metodo_pago === id)).length
+        return facturas.filter(f => (f.estado_factura || 'pendiente') === id).length
+    }
 
     const filtradas = facturas
-        .filter(f => filtro === 'todos' || (f.estado_factura || 'pendiente') === filtro)
+        .filter(f => {
+            if (filtro === 'todos') return true
+            if (METODOS_PAGO.includes(filtro)) return (f.pago || []).some(p => p.metodo_pago === filtro)
+            return (f.estado_factura || 'pendiente') === filtro
+        })
         .filter(f => {
             if (!busqueda.trim()) return true
             const q = busqueda.toLowerCase()

@@ -536,7 +536,7 @@ export default function Eventos() {
                                         )}
 
                                         {evento.descripcion && (
-                                            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, margin: 0 }}>
+                                            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
                                                 {evento.descripcion}
                                             </p>
                                         )}

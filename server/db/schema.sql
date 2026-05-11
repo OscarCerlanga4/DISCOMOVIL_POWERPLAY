@@ -38,9 +38,9 @@ CREATE TYPE estado_reserva_enum AS ENUM (
 -- Estado del ciclo de aprobación del presupuesto
 CREATE TYPE estado_presupuesto_enum AS ENUM (
     'pendiente',
-    'aceptado_cliente',
     'aceptado',
-    'rechazado'
+    'rechazado',
+    'aceptado_cliente'
 );
 
 -- Estado de pago de una factura
@@ -146,6 +146,8 @@ CREATE TABLE IF NOT EXISTS public.contacto (
     tipo_contacto   tipo_contacto_enum  NOT NULL,
     descripcion     TEXT                NOT NULL,
     fecha           DATE                NOT NULL DEFAULT CURRENT_DATE
+    respondido      BOOLEAN             NOT NULL DEFAULT false,
+    respuesta       TEXT     
 );
 
 -- 7. reserva
@@ -265,6 +267,16 @@ CREATE TABLE IF NOT EXISTS public.pago (
 CREATE TABLE IF NOT EXISTS public.keepalive (
     id        INTEGER      NOT NULL PRIMARY KEY DEFAULT 1,
     last_ping TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.token_accion (
+    id           UUID         NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+    token        TEXT         NOT NULL DEFAULT encode(gen_random_bytes(32), 'hex'),
+    tipo         TEXT         NOT NULL,
+    id_referencia INTEGER     NOT NULL,
+    usado        BOOLEAN      DEFAULT false,
+    expires_at   TIMESTAMPTZ  DEFAULT (now() + '2 days'::interval),
+    created_at   TIMESTAMPTZ  DEFAULT now()
 );
 
 INSERT INTO public.keepalive (id) VALUES (1) ON CONFLICT DO NOTHING;

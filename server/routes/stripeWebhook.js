@@ -39,7 +39,7 @@ router.post('/', express.raw({ type: 'application/json' }), (req, res) => {
                 .from('pago')
                 .insert({
                     id_factura,
-                    metodo_pago: 'stripe',
+                    metodo_pago: 'tarjeta',
                     importe,
                     referencia_pago: intent.id
                 })

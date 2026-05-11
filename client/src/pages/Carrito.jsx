@@ -41,6 +41,15 @@ export default function Carrito() {
             .catch(() => {})
     }, [fechaInicio, fechaFin])
 
+    useEffect(() => {
+        if (mostrarModal) {
+            document.body.style.overflow = 'hidden'
+        } else {
+            document.body.style.overflow = ''
+        }
+        return () => { document.body.style.overflow = '' }
+    }, [mostrarModal])
+
     const ahora = toLocalISO(new Date())
     const minFechaFin = fechaInicio
         ? toLocalISO(new Date(new Date(fechaInicio).getTime() + 60 * 60 * 1000))
@@ -188,6 +197,7 @@ export default function Carrito() {
         fontSize: '0.9rem',
         outline: 'none',
         width: '100%',
+        maxWidth: '100%',
         transition: 'border-color 0.2s',
         boxSizing: 'border-box',
     }
@@ -226,6 +236,8 @@ export default function Carrito() {
                         flexDirection: 'column',
                         gap: '1.25rem',
                         animation: 'slideUp 0.25s ease',
+                        maxHeight: 'calc(100vh - 3rem)',
+                        overflowY: 'auto',
                     }}>
                         {/* Cabecera modal */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -361,23 +373,22 @@ export default function Carrito() {
 
                                     {/* Info */}
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <p style={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem', margin: '0 0 0.35rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        <p style={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem', margin: '0 0 0.5rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                             {item.nombre}
                                         </p>
-                                        <span style={{
-                                            display: 'inline-block', fontSize: '0.7rem', fontWeight: 700,
-                                            letterSpacing: '0.1em', textTransform: 'uppercase',
-                                            color: '#FFE600', background: 'rgba(255,230,0,0.08)',
-                                            border: '1px solid rgba(255,230,0,0.2)', padding: '0.2rem 0.55rem',
-                                        }}>
-                                            {getBadgeLabel(item)}
-                                        </span>
-                                    </div>
+                                        {/* Fila inferior: badge + cantidad + precio */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                                            <span style={{
+                                                display: 'inline-block', fontSize: '0.7rem', fontWeight: 700,
+                                                letterSpacing: '0.1em', textTransform: 'uppercase',
+                                                color: '#FFE600', background: 'rgba(255,230,0,0.08)',
+                                                border: '1px solid rgba(255,230,0,0.2)', padding: '0.2rem 0.55rem',
+                                                flexShrink: 0,
+                                            }}>
+                                                {getBadgeLabel(item)}
+                                            </span>
 
-                                    {/* Cantidad */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        {item.tabla === 'equipo' ? (
-                                            <>
+                                            {item.tabla === 'equipo' ? (
                                                 <button
                                                     onClick={() => {
                                                         const max = disponibilidadEquipos[item._id] ?? item.stock_total ?? 99
@@ -391,24 +402,26 @@ export default function Carrito() {
                                                         fontSize: '1.1rem', display: 'flex',
                                                         alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.2s',
                                                         opacity: item.cantidad >= (disponibilidadEquipos[item._id] ?? item.stock_total ?? 99) ? 0.3 : 1,
+                                                        flexShrink: 0,
                                                     }}
                                                     onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.borderColor = '#FFE600' }}
                                                     onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
                                                 >+</button>
-                                            </>
-                                        ) : (
-                                            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>1 unidad</span>
-                                        )}
-                                    </div>
+                                            ) : (
+                                                <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                                    1 unidad
+                                                </span>
+                                            )}
 
-                                    {/* Precio */}
-                                    <div style={{ textAlign: 'right', minWidth: '90px', flexShrink: 0 }}>
-                                        <p style={{ color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '1.6rem', letterSpacing: '0.05em', margin: 0, lineHeight: 1 }}>
-                                            {item.precio * item.cantidad}€
-                                        </p>
-                                        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', margin: '0.3rem 0 0' }}>
-                                            {item.precio}€ {item.precioLabel}
-                                        </p>
+                                            <div style={{ marginLeft: 'auto', textAlign: 'right', flexShrink: 0 }}>
+                                                <p style={{ color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '1.6rem', letterSpacing: '0.05em', margin: 0, lineHeight: 1 }}>
+                                                    {item.precio * item.cantidad}€
+                                                </p>
+                                                <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.75rem', margin: '0.3rem 0 0' }}>
+                                                    {item.precio}€ {item.precioLabel}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Eliminar */}
@@ -418,6 +431,7 @@ export default function Carrito() {
                                             background: 'transparent', border: 'none',
                                             color: 'rgba(255,255,255,0.2)', cursor: 'pointer',
                                             fontSize: '1.4rem', padding: '0.25rem', transition: 'color 0.2s', flexShrink: 0,
+                                            alignSelf: 'flex-start',
                                         }}
                                         onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
                                         onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
