@@ -14,6 +14,7 @@
 - [Pagar una factura](#pagar-una-factura)
 - [Mis datos personales](#mis-datos-personales)
 - [Cambiar contraseña](#cambiar-contraseña)
+- [Descargar documentos](#descargar-documentos)
 - [Contacto](#contacto)
 
 ---
@@ -27,7 +28,7 @@
 3. Elige una contraseña segura y confirma el registro.
 
 > [!IMPORTANT]
-> El DNI/NIE/CIF debe ser válido y único. No podrás registrarte con un documento ya en uso.
+> El DNI/NIE/CIF y el correo debe ser válido y único. No podrás registrarte con un documento ya en uso.
 
 ### Iniciar sesión
 
@@ -92,10 +93,20 @@ En la sección **Mis Pedidos** puedes ver el historial de todas tus reservas y e
 
 ## Aceptar o rechazar un presupuesto
 
+Puedes hacerlo de dos formas:
+
+**Desde la plataforma:**
 1. Ve a **Mis Pedidos**.
 2. Localiza el presupuesto con estado **Pendiente**.
 3. Revisa el desglose de conceptos, precios y el total con IVA (21%).
 4. Pulsa **Aceptar** o **Rechazar** según tu decisión.
+
+**Desde el email:**
+1. Cuando se genere el presupuesto, recibirás un correo con dos botones: **Aceptar presupuesto** y **Rechazar presupuesto**.
+2. Pulsa el botón correspondiente directamente desde el email.
+
+> [!IMPORTANT]
+> Los enlaces del email son de **un solo uso** y tienen una validez de **48 horas**. Una vez usados o expirados, deberás gestionar el presupuesto desde la plataforma.
 
 > [!IMPORTANT]
 > Al aceptar el presupuesto, confirmas que estás de acuerdo con los precios y condiciones. El administrador recibirá tu confirmación y procederá a validar la reserva definitivamente.
@@ -128,9 +139,6 @@ Una vez que el administrador confirme tu reserva, se generará automáticamente 
 2. Puedes modificar: nombre, teléfono, DNI/NIE/CIF, dirección, localidad, provincia y código postal.
 3. Pulsa **Guardar cambios** cuando termines.
 
-> [!WARNING]
-> Cambiar el email requiere verificación adicional. Si cambias tu email, asegúrate de tener acceso a la nueva dirección antes de guardar.
-
 ---
 
 ## Cambiar contraseña
@@ -142,6 +150,20 @@ Una vez que el administrador confirme tu reserva, se generará automáticamente 
 
 > [!CAUTION]
 > Por seguridad, después de cambiar la contraseña se cerrará tu sesión y tendrás que volver a iniciar sesión con la nueva contraseña.
+
+---
+
+## Descargar documentos
+
+Puedes descargar en PDF tanto el presupuesto como la factura de cualquier reserva.
+
+1. Ve a **Mis Pedidos**.
+2. Localiza la reserva que quieras.
+3. Pulsa **Ver presupuesto** o **Ver factura** según lo que necesites.
+4. Dentro del documento, pulsa **Descargar PDF**.
+
+> [!NOTE]
+> El PDF incluye el logo y los datos fiscales de la empresa, el desglose de conceptos, el subtotal y el total con IVA (21%).
 
 ---
 

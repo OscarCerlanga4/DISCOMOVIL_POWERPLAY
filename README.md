@@ -2,7 +2,7 @@
 
 <br />
 
-# ⚡ DISCOMOVIL POWER PLAY
+# ⚡ DISCOMOVIL POWER PLAY ⚡
 
 ### Plataforma web de gestión de reservas para eventos de sonido e iluminación
 
@@ -37,6 +37,8 @@ Cliente explora servicios → Añade al carrito → Solicita reserva
 Aplicación genera presupuesto → Cliente acepta o rechaza
          ↓
 Admin confirma → Factura generada automáticamente → Cliente paga con Stripe
+         ↓
+N8N envía notificaciones automáticas por email en cada paso del proceso
 ```
 
 ---
@@ -48,7 +50,7 @@ Admin confirma → Factura generada automáticamente → Cliente paga con Stripe
 - Catálogo de equipos y DJs con disponibilidad en tiempo real
 - Carrito con selección de fechas y servicios
 - Panel personal con historial de reservas y pedidos
-- Aceptar o rechazar presupuestos recibidos
+- Aceptar o rechazar presupuestos recibidos por email (enlace de un solo uso)
 - Descarga de presupuestos y facturas en **PDF**
 - Pago online seguro con **Stripe**
 - Gestión de datos personales y contraseña
@@ -61,6 +63,8 @@ Admin confirma → Factura generada automáticamente → Cliente paga con Stripe
 - Creación manual de reservas asignando datos de cliente
 - Configuración de los datos y logo de la empresa
 - Control de disponibilidad por fechas
+- Gestión de contactos recibidos con respuesta directa desde el panel
+- Notificaciones automáticas por email en cada cambio de estado (N8N)
 
 ---
 
@@ -75,6 +79,8 @@ Admin confirma → Factura generada automáticamente → Cliente paga con Stripe
 | Pagos | Stripe | Procesamiento de pagos seguro |
 | PDFs | jsPDF + jspdf-autotable | Generación de documentos en el navegador |
 | Almacenamiento | Supabase Storage | Subida y gestión de imágenes |
+| Automatizaciones | N8N (Hostinger) | Flujos de trabajo y correos transaccionales |
+| Geolocalización | Google Maps API | Geolocalización de equipos y distancias |
 | Paquetes | pnpm (monorepo) | Gestión de dependencias del workspace |
 | Despliegue | Render | Frontend estático + backend web service |
 
@@ -194,6 +200,8 @@ La carpeta `/docs` contiene la documentación técnica completa del proyecto:
 | `07_diseno_logico.pdf` | Modelo lógico relacional |
 | `08_diseno_normalizado.pdf` | Diseño normalizado de tablas |
 | `09_diseno_fisico.pdf` | Diseño físico e implementación en Supabase |
+| `admin.md` | Manual de uso para administradores |
+| `usuario.md` | Manual de uso para clientes |
 
 ---
 
@@ -208,6 +216,28 @@ Las variables de entorno se configuran directamente en el dashboard de Render, s
 
 > [!NOTE]
 > El webhook de Stripe en producción apunta directamente a la URL pública del backend en Render, por lo que **no es necesario** ejecutar la Stripe CLI en producción.
+
+---
+
+## 📝 Changelog
+
+### [v2.0.1] - 2026-05-11
+- Documentación técnica y manuales de usuario actualizados a v2.0.0
+
+### [v2.0.0] - 2026-05-11
+- Sistema completo de presupuestos y facturas con generación en PDF
+- Integración de pagos con Stripe (PaymentIntents + webhooks)
+- Automatizaciones de correo con N8N para todos los flujos del negocio
+- Panel de administración completo (DJs, equipos, reservas, presupuestos, facturas, pagos, contactos, eventos)
+- Geolocalización de equipos con Google Maps API
+- Subida de imágenes a Supabase Storage
+- Tokens de un solo uso para aceptar/rechazar presupuestos por email
+- Formulario de contacto con respuesta desde el panel de admin
+- Modo mantenimiento configurable via variable de entorno
+- Enlace directo desde emails de N8N al panel de admin con efecto de resaltado
+
+### [v1.0.0] - 2026-04-07
+- Primera versión estable: autenticación, catálogo de equipos y DJs, reservas básicas y panel de administración inicial
 
 ---
 

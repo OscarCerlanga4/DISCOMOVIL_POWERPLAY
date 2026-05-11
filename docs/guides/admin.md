@@ -15,6 +15,8 @@
 - [Gestión de eventos](#gestión-de-eventos)
 - [Gestión de reservas](#gestión-de-reservas)
 - [Gestión de presupuestos](#gestión-de-presupuestos)
+- [Gestión de facturas y pagos](#gestión-de-facturas-y-pagos)
+- [Gestión de contactos](#gestión-de-contactos)
 - [Datos de la empresa](#datos-de-la-empresa)
 
 ---
@@ -84,7 +86,7 @@ Desde aquí puedes publicar los eventos y actuaciones del calendario público.
 3. (Opcional) Sube una imagen del cartel o flyer.
 4. Pulsa **Guardar**.
 
-### Editar y eliminar
+### Editar
 
 El proceso es idéntico al de equipos y DJs.
 
@@ -146,6 +148,9 @@ Aquí gestionas los presupuestos generados a partir de las reservas. El flujo de
 > [!NOTE]
 > La factura se genera con el número correlativo `FAC-{AÑO}-{XXXX}` de forma automática en el momento de la confirmación.
 
+> [!NOTE]
+> En cada cambio de estado del presupuesto, **N8N envía automáticamente un email** tanto al cliente como al administrador informando del nuevo estado. No es necesaria ninguna acción manual para las notificaciones.
+
 ### Rechazar un presupuesto
 
 1. Localiza el presupuesto.
@@ -153,6 +158,73 @@ Aquí gestionas los presupuestos generados a partir de las reservas. El flujo de
 
 > [!WARNING]
 > Rechazar un presupuesto es una acción irreversible. El cliente recibirá la actualización de estado en su panel de **Mis Pedidos**.
+
+---
+
+## Gestión de facturas y pagos
+
+Una vez que confirmas un presupuesto, el sistema genera la factura automáticamente con número correlativo `FAC-{AÑO}-{XXXX}`.
+
+### Ver facturas
+
+La sección **Facturas** muestra todas las facturas del sistema con su estado:
+
+| Estado | Descripción |
+|---|---|
+| 🟡 **Pendiente** | Factura generada, pago aún no recibido |
+| 🟢 **Pagada** | El cliente ha completado el pago |
+
+### Descargar factura en PDF
+
+1. Localiza la factura en la lista.
+2. Pulsa **Descargar PDF**.
+
+> [!TIP]
+> Guarda los PDFs de facturas pagadas para tu contabilidad. El documento incluye todos los datos fiscales de la empresa y del cliente.
+
+### Registrar un pago
+
+Los pagos realizados mediante Stripe se registran **automáticamente** cuando el cliente paga desde la plataforma. No es necesaria ninguna acción manual.
+
+Si un cliente paga por otro medio (transferencia, efectivo), puedes registrarlo manualmente:
+
+1. Ve a la sección **Pagos** dentro del panel.
+2. Pulsa **Registrar pago**.
+3. Selecciona la factura correspondiente, el importe y el método de pago.
+4. Confirma.
+
+> [!NOTE]
+> Si se registra el importe total de la factura, esta pasa automáticamente a estado **Pagada** y se notifica al cliente por email.
+
+> [!WARNING]
+> Un pago registrado manualmente **no** puede deshacerse desde el panel. Si cometes un error, corrígelo directamente en Supabase.
+
+---
+
+## Gestión de contactos
+
+Desde esta sección puedes ver todos los mensajes recibidos a través del formulario de contacto de la web y responderlos directamente.
+
+### Ver mensajes de contacto
+
+La lista muestra todos los mensajes con su estado (**Pendiente** / **Respondido**), el nombre del remitente, el tipo de consulta y la fecha.
+
+### Acceder a un contacto desde el email
+
+Cuando llega un nuevo mensaje, recibes un email de notificación con un botón **VER EN EL PANEL DE ADMIN →**. Al pulsar ese botón:
+
+1. Se abre el panel de administración en la sección de **Contactos**.
+2. El mensaje correspondiente se resalta automáticamente en amarillo para identificarlo de inmediato.
+
+### Responder un mensaje
+
+1. Localiza el mensaje en la lista (puedes usar el enlace del email para ir directo).
+2. Pulsa **Responder**.
+3. Escribe tu respuesta en el campo de texto.
+4. Pulsa **Enviar respuesta**.
+
+> [!NOTE]
+> Al enviar la respuesta, el cliente recibe automáticamente un email con el texto que hayas escrito. El mensaje pasa a estado **Respondido**.
 
 ---
 
