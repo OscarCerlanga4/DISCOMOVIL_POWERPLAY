@@ -389,6 +389,32 @@ export default function Carrito() {
                                             </span>
 
                                             {item.tabla === 'equipo' ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+                                                {/* Botón − */}
+                                                <button
+                                                    onClick={() => {
+                                                        if (item.cantidad > 1) cambiarCantidad(item._id, item.tabla, item.cantidad - 1)
+                                                        else eliminar(item._id, item.tabla)
+                                                    }}
+                                                    style={{
+                                                        width: '28px', height: '28px', background: 'transparent',
+                                                        border: '1px solid rgba(255,255,255,0.15)', color: '#fff',
+                                                        cursor: 'pointer', fontSize: '1rem', display: 'flex',
+                                                        alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.2s',
+                                                    }}
+                                                    onMouseEnter={e => e.currentTarget.style.borderColor = '#ff4444'}
+                                                    onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
+                                                >−</button>
+
+                                                {/* Número de unidades */}
+                                                <span style={{
+                                                    color: '#fff', fontSize: '0.85rem', fontWeight: 600,
+                                                    minWidth: '1.5rem', textAlign: 'center',
+                                                }}>
+                                                    {item.cantidad}
+                                                </span>
+
+                                                {/* Botón + */}
                                                 <button
                                                     onClick={() => {
                                                         const max = disponibilidadEquipos[item._id] ?? item.stock_total ?? 99
@@ -396,22 +422,22 @@ export default function Carrito() {
                                                     }}
                                                     disabled={item.cantidad >= (disponibilidadEquipos[item._id] ?? item.stock_total ?? 99)}
                                                     style={{
-                                                        width: '32px', height: '32px', background: 'transparent',
+                                                        width: '28px', height: '28px', background: 'transparent',
                                                         border: '1px solid rgba(255,255,255,0.15)', color: '#fff',
                                                         cursor: item.cantidad >= (disponibilidadEquipos[item._id] ?? item.stock_total ?? 99) ? 'not-allowed' : 'pointer',
-                                                        fontSize: '1.1rem', display: 'flex',
+                                                        fontSize: '1rem', display: 'flex',
                                                         alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.2s',
                                                         opacity: item.cantidad >= (disponibilidadEquipos[item._id] ?? item.stock_total ?? 99) ? 0.3 : 1,
-                                                        flexShrink: 0,
                                                     }}
                                                     onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.borderColor = '#FFE600' }}
                                                     onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
                                                 >+</button>
-                                            ) : (
-                                                <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                                                    1 unidad
-                                                </span>
-                                            )}
+                                            </div>
+                                        ) : (
+                                            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                                1 unidad
+                                            </span>
+                                        )}
 
                                             <div style={{ marginLeft: 'auto', textAlign: 'right', flexShrink: 0 }}>
                                                 <p style={{ color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '1.6rem', letterSpacing: '0.05em', margin: 0, lineHeight: 1 }}>

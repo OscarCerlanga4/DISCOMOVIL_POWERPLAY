@@ -15,6 +15,9 @@ export default function MisPedidos() {
     const [accionando, setAccionando] = useState(null)
     const [filtroTipo, setFiltroTipo] = useState('presupuestos')
     const [filtroEstado, setFiltroEstado] = useState('todos')
+    const [filtroFactura, setFiltroFactura] = useState('todos')
+    const [abiertoDesplegableFactura, setAbiertoDesplegableFactura] = useState(false)
+    const [abiertoDesplegablePresupuesto, setAbiertoDesplegablePresupuesto] = useState(false)
     const [presupuestoDestacado, setPresupuestoDestacado] = useState(null)
     const [facturaDestacada, setFacturaDestacada] = useState(null)
     const [searchParams] = useSearchParams()
@@ -65,6 +68,13 @@ export default function MisPedidos() {
     const facturas = presupuestos
         .filter(p => p.factura !== null && p.factura !== undefined)
         .sort((a, b) => b.id_presupuesto - a.id_presupuesto)
+
+    const facturasFiltradas = facturas.filter(p => {
+        if (filtroFactura === 'todos') return true
+        if (filtroFactura === 'pagada') return p.factura?.estado_factura === 'pagada'
+        if (filtroFactura === 'pendiente') return p.factura?.estado_factura !== 'pagada'
+        return true
+    })
 
     const contarEstado = (estado) => presupuestos.filter(p => p.estado === estado).length
 
@@ -535,6 +545,12 @@ export default function MisPedidos() {
         { valor: 'rechazado', label: 'Rechazado', count: contarEstado('rechazado') },
     ]
 
+    const chipsFactura = [
+        { valor: 'todos', label: 'Todos', count: facturas.length },
+        { valor: 'pagada', label: 'Pagada', count: facturas.filter(p => p.factura?.estado_factura === 'pagada').length },
+        { valor: 'pendiente', label: 'Pendiente de pago', count: facturas.filter(p => p.factura?.estado_factura !== 'pagada').length },
+    ]
+
     return (
         <div style={{ background: '#0d0d0d', minHeight: '100vh', paddingTop: '80px' }}>
 
@@ -581,34 +597,138 @@ export default function MisPedidos() {
                 </div>
 
                 {filtroTipo === 'presupuestos' && (
-                    <div style={{ display: 'flex', gap: '0.5rem', padding: '0.85rem 0', flexWrap: 'wrap' }}>
-                        {chipsFiltro.map(chip => {
-                            const activo = filtroEstado === chip.valor
-                            return (
-                                <button key={chip.valor} onClick={() => setFiltroEstado(chip.valor)}
-                                    style={{
-                                        background: activo ? '#FFE600' : 'rgba(255,255,255,0.04)',
-                                        border: `1px solid ${activo ? '#FFE600' : 'rgba(255,255,255,0.1)'}`,
-                                        color: activo ? '#000' : 'rgba(255,255,255,0.5)',
-                                        fontFamily: 'Bebas Neue', fontSize: '0.82rem', letterSpacing: '0.1em',
-                                        padding: '0.3rem 0.9rem', cursor: 'pointer', transition: 'all 0.18s',
-                                        display: 'flex', alignItems: 'center', gap: '0.4rem'
-                                    }}
-                                    onMouseEnter={e => { if (!activo) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' } }}
-                                    onMouseLeave={e => { if (!activo) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)' } }}
-                                >
-                                    {chip.label}
-                                    {chip.count > 0 && (
-                                        <span style={{
-                                            fontSize: '0.6rem', fontFamily: 'sans-serif', fontWeight: 700,
-                                            background: activo ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.08)',
-                                            padding: '0.05rem 0.4rem', borderRadius: '999px'
-                                        }}>{chip.count}</span>
-                                    )}
-                                </button>
-                            )
-                        })}
-                    </div>
+                    <>
+                        {/* Desktop */}
+                        <div className="filtro-desktop" style={{ gap: '0.5rem', padding: '0.85rem 0', flexWrap: 'wrap' }}>
+                            {chipsFiltro.map(chip => {
+                                const activo = filtroEstado === chip.valor
+                                return (
+                                    <button key={chip.valor} onClick={() => setFiltroEstado(chip.valor)}
+                                        style={{
+                                            background: activo ? '#FFE600' : 'rgba(255,255,255,0.04)',
+                                            border: `1px solid ${activo ? '#FFE600' : 'rgba(255,255,255,0.1)'}`,
+                                            color: activo ? '#000' : 'rgba(255,255,255,0.5)',
+                                            fontFamily: 'Bebas Neue', fontSize: '0.82rem', letterSpacing: '0.1em',
+                                            padding: '0.3rem 0.9rem', cursor: 'pointer', transition: 'all 0.18s',
+                                            display: 'flex', alignItems: 'center', gap: '0.4rem'
+                                        }}
+                                        onMouseEnter={e => { if (!activo) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' } }}
+                                        onMouseLeave={e => { if (!activo) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)' } }}
+                                    >
+                                        {chip.label}
+                                        {chip.count > 0 && (
+                                            <span style={{
+                                                fontSize: '0.6rem', fontFamily: 'sans-serif', fontWeight: 700,
+                                                background: activo ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.08)',
+                                                padding: '0.05rem 0.4rem', borderRadius: '999px'
+                                            }}>{chip.count}</span>
+                                        )}
+                                    </button>
+                                )
+                            })}
+                        </div>
+
+                        {/* Móvil */}
+                        <div className="filtro-movil" style={{ position: 'relative', marginBottom: '1rem' }}>
+                            <button className="filtro-trigger" onClick={() => setAbiertoDesplegablePresupuesto(!abiertoDesplegablePresupuesto)}>
+                                {chipsFiltro.find(c => c.valor === filtroEstado)?.label || 'Filtrar'}
+                                <span style={{ fontSize: '0.75rem', opacity: 0.6, marginLeft: '0.25rem' }}>
+                                    ({chipsFiltro.find(c => c.valor === filtroEstado)?.count ?? presupuestos.length})
+                                </span>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ marginLeft: 'auto' }}>
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </button>
+                            {abiertoDesplegablePresupuesto && (
+                                <>
+                                    <div style={{ position: 'fixed', inset: 0, zIndex: 49 }} onClick={() => setAbiertoDesplegablePresupuesto(false)} />
+                                    <div className="filtro-dropdown-menu">
+                                        {chipsFiltro.map(chip => (
+                                            <button key={chip.valor}
+                                                onClick={() => { setFiltroEstado(chip.valor); setAbiertoDesplegablePresupuesto(false) }}
+                                                style={{
+                                                    color: filtroEstado === chip.valor ? '#FFE600' : 'rgba(255,255,255,0.6)',
+                                                    background: filtroEstado === chip.valor ? 'rgba(255,230,0,0.08)' : 'transparent'
+                                                }}
+                                                onMouseEnter={e => { e.currentTarget.style.color = '#FFE600'; e.currentTarget.style.background = 'rgba(255,230,0,0.04)' }}
+                                                onMouseLeave={e => { e.currentTarget.style.color = filtroEstado === chip.valor ? '#FFE600' : 'rgba(255,255,255,0.6)'; e.currentTarget.style.background = filtroEstado === chip.valor ? 'rgba(255,230,0,0.08)' : 'transparent' }}
+                                            >
+                                                {chip.label}
+                                                <span style={{ opacity: 0.45, fontSize: '0.75rem', marginLeft: '0.4rem' }}>({chip.count})</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </>
+                )}
+                {filtroTipo === 'facturas' && (
+                    <>
+                        {/* Desktop */}
+                        <div className="filtro-desktop" style={{ gap: '0.5rem', padding: '0.85rem 0', flexWrap: 'wrap' }}>
+                            {chipsFactura.map(chip => {
+                                const activo = filtroFactura === chip.valor
+                                return (
+                                    <button key={chip.valor} onClick={() => setFiltroFactura(chip.valor)}
+                                        style={{
+                                            background: activo ? '#FFE600' : 'rgba(255,255,255,0.04)',
+                                            border: `1px solid ${activo ? '#FFE600' : 'rgba(255,255,255,0.1)'}`,
+                                            color: activo ? '#000' : 'rgba(255,255,255,0.5)',
+                                            fontFamily: 'Bebas Neue', fontSize: '0.82rem', letterSpacing: '0.1em',
+                                            padding: '0.3rem 0.9rem', cursor: 'pointer', transition: 'all 0.18s',
+                                            display: 'flex', alignItems: 'center', gap: '0.4rem'
+                                        }}
+                                        onMouseEnter={e => { if (!activo) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)' } }}
+                                        onMouseLeave={e => { if (!activo) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)' } }}
+                                    >
+                                        {chip.label}
+                                        {chip.count > 0 && (
+                                            <span style={{
+                                                fontSize: '0.6rem', fontFamily: 'sans-serif', fontWeight: 700,
+                                                background: activo ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.08)',
+                                                padding: '0.05rem 0.4rem', borderRadius: '999px'
+                                            }}>{chip.count}</span>
+                                        )}
+                                    </button>
+                                )
+                            })}
+                        </div>
+
+                        {/* Móvil */}
+                        <div className="filtro-movil" style={{ position: 'relative', marginBottom: '1rem' }}>
+                            <button className="filtro-trigger" onClick={() => setAbiertoDesplegableFactura(!abiertoDesplegableFactura)}>
+                                {chipsFactura.find(c => c.valor === filtroFactura)?.label || 'Filtrar'}
+                                <span style={{ fontSize: '0.75rem', opacity: 0.6, marginLeft: '0.25rem' }}>
+                                    ({chipsFactura.find(c => c.valor === filtroFactura)?.count ?? facturas.length})
+                                </span>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ marginLeft: 'auto' }}>
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </button>
+                            {abiertoDesplegableFactura && (
+                                <>
+                                    <div style={{ position: 'fixed', inset: 0, zIndex: 49 }} onClick={() => setAbiertoDesplegableFactura(false)} />
+                                    <div className="filtro-dropdown-menu">
+                                        {chipsFactura.map(chip => (
+                                            <button key={chip.valor}
+                                                onClick={() => { setFiltroFactura(chip.valor); setAbiertoDesplegableFactura(false) }}
+                                                style={{
+                                                    color: filtroFactura === chip.valor ? '#FFE600' : 'rgba(255,255,255,0.6)',
+                                                    background: filtroFactura === chip.valor ? 'rgba(255,230,0,0.08)' : 'transparent'
+                                                }}
+                                                onMouseEnter={e => { e.currentTarget.style.color = '#FFE600'; e.currentTarget.style.background = 'rgba(255,230,0,0.04)' }}
+                                                onMouseLeave={e => { e.currentTarget.style.color = filtroFactura === chip.valor ? '#FFE600' : 'rgba(255,255,255,0.6)'; e.currentTarget.style.background = filtroFactura === chip.valor ? 'rgba(255,230,0,0.08)' : 'transparent' }}
+                                            >
+                                                {chip.label}
+                                                <span style={{ opacity: 0.45, fontSize: '0.75rem', marginLeft: '0.4rem' }}>({chip.count})</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
 
@@ -788,7 +908,7 @@ export default function MisPedidos() {
                     <>
                         {facturas.length === 0 && (
                             <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-                                <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '1rem' }}>Aún no tienes ninguna factura</p>
+                                <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '1rem' }}>{filtroFactura === 'todos' ? 'Aún no tienes ninguna factura' : 'No hay facturas con este estado'}</p>
                                 <p style={{ color: 'rgba(255,255,255,0.12)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
                                     Las facturas se generan cuando Power Play confirma tu reserva
                                 </p>
@@ -796,7 +916,7 @@ export default function MisPedidos() {
                         )}
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {facturas.map(p => {
+                            {facturasFiltradas.map(p => {
                                 const f = p.factura
                                 const pagada = f.estado_factura === 'pagada'
                                 return (

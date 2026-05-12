@@ -196,7 +196,7 @@ export default function Pago() {
 
                 {/* Botón cerrar */}
                 <button
-                    onClick={() => navigate('/mis-pedidos')}
+                    onClick={() => { window.location.href = '/mis-pedidos' }}
                     style={{
                         position: 'absolute', top: '1.25rem', right: '1.25rem',
                         background: 'transparent', border: 'none',
