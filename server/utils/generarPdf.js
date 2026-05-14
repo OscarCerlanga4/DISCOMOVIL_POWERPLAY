@@ -19,14 +19,14 @@ const formatearFecha = (fecha) => {
     if (!fecha) return '—';
     const d = new Date(fecha);
     if (isNaN(d)) return '—';
-    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Madrid' });
 };
 
 const formatearFechaHora = (fecha) => {
     if (!fecha) return '—';
     const d = new Date(fecha);
     if (isNaN(d)) return '—';
-    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Madrid' });
 };
 
 const dibujarCabeceraEmpresa = (doc, margen, y, logoBase64, empresa) => {

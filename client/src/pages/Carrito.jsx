@@ -35,7 +35,7 @@ export default function Carrito() {
     useEffect(() => {
         if (!fechaInicio || !fechaFin) { setDisponibilidadEquipos({}); return }
         if (new Date(fechaFin) <= new Date(fechaInicio)) return
-        fetch(`${API_URL}/api/disponibilidad?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`)
+        fetch(`${API_URL}/api/disponibilidad?fecha_inicio=${new Date(fechaInicio).toISOString()}&fecha_fin=${new Date(fechaFin).toISOString()}`)
             .then(r => r.json())
             .then(data => { if (data.ok) setDisponibilidadEquipos(data.disponibilidad_equipos || {}) })
             .catch(() => {})
@@ -106,8 +106,8 @@ export default function Carrito() {
         const equiposItems = items.filter(i => i.tabla === 'equipo').map(i => ({ id_equipo: i._id, cantidad: i.cantidad }))
 
         const body = {
-            fecha_inicio: fechaInicio,
-            fecha_fin: fechaFin,
+            fecha_inicio: new Date(fechaInicio).toISOString(),
+            fecha_fin: new Date(fechaFin).toISOString(),
             ubicacion,
             djs: djsIds,
             equipos: equiposItems
