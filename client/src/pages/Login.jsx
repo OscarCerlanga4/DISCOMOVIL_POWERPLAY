@@ -43,7 +43,14 @@ export default function Login() {
     const data = await res.json()
 
     if (!data.ok) {
-      setError(data.error)
+      const mensajesError = {
+          'invalid login credentials': 'Correo electrónico o contraseña incorrectos.',
+          'email not confirmed': 'Debes confirmar tu correo electrónico antes de iniciar sesión.',
+      }
+      const msgLower = data.error?.toLowerCase() ?? ''
+      const mensajeTraducido = Object.entries(mensajesError).find(([key]) => msgLower.includes(key))?.[1]
+          ?? 'Error al iniciar sesión. Inténtalo de nuevo.'
+      setError(mensajeTraducido)
       setLoading(false)
       return
     }

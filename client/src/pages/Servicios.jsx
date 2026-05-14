@@ -218,12 +218,12 @@ export default function Servicios() {
 
     useEffect(() => {
         if (!fechaInicio || !fechaFin) { setOcupados({ equipos_ocupados: [], djs_ocupados: [] }); return }
-        if (new Date(fechaFin) <= new Date(fechaInicio)) return
-        const now = new Date().toISOString().slice(0, 16)
-        if (fechaInicio < now) return
-        const minFin = new Date(new Date(fechaInicio).getTime() + 60 * 60 * 1000).toISOString().slice(0, 16)
-        if (fechaFin < minFin) return
-        fetch(`${API_URL}/api/disponibilidad?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`)
+        if (new Date(fechaFin) <= new Date(fechaInicio)) { setOcupados({ equipos_ocupados: [], djs_ocupados: [] }); return }
+        const now = toLocalISO(new Date())
+        if (fechaInicio < now) { setOcupados({ equipos_ocupados: [], djs_ocupados: [] }); return }
+        const minFin = toLocalISO(new Date(new Date(fechaInicio).getTime() + 60 * 60 * 1000))
+        if (fechaFin < minFin) { setOcupados({ equipos_ocupados: [], djs_ocupados: [] }); return }
+        fetch(`${API_URL}/api/disponibilidad?fecha_inicio=${new Date(fechaInicio).toISOString()}&fecha_fin=${new Date(fechaFin).toISOString()}`)
             .then(r => r.json())
             .then(data => { if (data.ok) setOcupados({ equipos_ocupados: data.equipos_ocupados, djs_ocupados: data.djs_ocupados }) })
             .catch(() => { })
@@ -653,7 +653,14 @@ export default function Servicios() {
                 <div className="servicios-count">
                     <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>
                         {filtrados.length} {filtrados.length === 1 ? 'servicio' : 'servicios'} disponibles
-                        {fechaActiva && <span style={{ color: 'rgba(255,230,0,0.5)', marginLeft: '0.5rem' }}>— filtrando por disponibilidad</span>}
+                        {(precioActivo !== 'todo' || fechaActiva) && (
+                        <span style={{ color: 'rgba(255,230,0,0.5)', marginLeft: '0.5rem' }}>
+                            — filtrando por {[
+                                precioActivo !== 'todo' && `precio (${precioLabel})`,
+                                fechaActiva && 'disponibilidad'
+                            ].filter(Boolean).join(' y ')}
+                        </span>
+                    )}
                     </p>
                 </div>
 
