@@ -1,6 +1,7 @@
 const { jsPDF } = require('jspdf');
 const _autoTableMod = require('jspdf-autotable');
 const autoTable = typeof _autoTableMod === 'function' ? _autoTableMod : (_autoTableMod.default || _autoTableMod);
+const { supabase } = require('../db/supabase');
 
 const cargarImagenBase64 = async (url) => {
     try {
@@ -68,6 +69,78 @@ const dibujarCabeceraEmpresa = (doc, margen, y, logoBase64, empresa) => {
     }
 
     return y + boxH + 8;
+};
+
+const obtenerEmpresa = async () => {
+    const { data } = await supabase.from('datos_empresa').select('*').single();
+    return data;
+};
+
+const dibujarSeccionCliente = (doc, reserva, margen, y) => {
+    doc.setFillColor(247, 247, 247);
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.3);
+    doc.rect(margen, y, 174, 32, 'FD');
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(130, 130, 130);
+    doc.text('CLIENTE', margen + 5, y + 6);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(30, 30, 30);
+    doc.text(reserva?.cliente_nombre || '', margen + 5, y + 13);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(80, 80, 80);
+    doc.text(`DNI/CIF: ${reserva?.cliente_dni_nie_cif || ''}`, margen + 5, y + 19);
+    doc.text(reserva?.cliente_direccion || '', margen + 5, y + 25);
+    const cpCliente = [reserva?.cliente_codigo_postal, reserva?.cliente_localidad, reserva?.cliente_provincia].filter(Boolean).join(', ');
+    doc.text(cpCliente, margen + 95, y + 13);
+    doc.text(`Email: ${reserva?.cliente_email || ''}`, margen + 95, y + 19);
+    doc.text(`Tel: ${reserva?.cliente_telefono || ''}`, margen + 95, y + 25);
+    return y + 40;
+};
+
+const dibujarSeccionFechas = (doc, reserva, margen, y) => {
+    const colIzq = margen, colDer = margen + 95;
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(130, 130, 130);
+    doc.text('INICIO', colIzq, y);
+    doc.text('UBICACIÓN', colDer, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(50, 50, 50);
+    doc.text(formatearFechaHora(reserva?.fecha_inicio), colIzq, y);
+    doc.text(doc.splitTextToSize(reserva?.ubicacion || '—', 210 - margen - colDer), colDer, y);
+    y += 9;
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(130, 130, 130);
+    doc.text('FIN', colIzq, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(50, 50, 50);
+    doc.text(formatearFechaHora(reserva?.fecha_fin), colIzq, y);
+    return y + 12;
+};
+
+const dibujarTablaDetalle = (doc, detalles, y, margen) => {
+    autoTable(doc, {
+        startY: y,
+        head: [['CONCEPTO', 'CANT.', 'PRECIO/HORA', 'SUBTOTAL']],
+        body: detalles.length > 0
+            ? detalles.map(d => [d.concepto, d.cantidad, `${parseFloat(d.precio_unitario).toFixed(2)} €`, `${parseFloat(d.subtotal).toFixed(2)} €`])
+            : [['Sin detalles disponibles', '', '', '']],
+        headStyles: { fillColor: [255, 230, 0], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8.5, cellPadding: 4 },
+        bodyStyles: { fontSize: 8.5, textColor: [50, 50, 50], cellPadding: 3.5 },
+        alternateRowStyles: { fillColor: [250, 250, 250] },
+        columnStyles: { 0: { cellWidth: 85 }, 1: { cellWidth: 20, halign: 'center' }, 2: { cellWidth: 38, halign: 'right' }, 3: { cellWidth: 31, halign: 'right' } },
+        margin: { left: margen, right: margen }
+    });
+    return doc.lastAutoTable.finalY + 10;
 };
 
 const generarPdfPresupuesto = async (presupuesto, empresa) => {
@@ -192,14 +265,14 @@ const generarPdfPresupuesto = async (presupuesto, empresa) => {
     return Buffer.from(doc.output('arraybuffer')).toString('base64');
 };
 
-const generarPdfFactura = async (presupuesto, empresa) => {
+const generarPdfFactura = async (presupuesto) => {
+    const empresa = await obtenerEmpresa();
     const f = presupuesto.factura;
     const doc = new jsPDF();
     const margen = 18;
     let y = margen;
 
     const logoBase64 = empresa?.logo_url ? await cargarImagenBase64(empresa.logo_url) : null;
-
     y = dibujarCabeceraEmpresa(doc, margen, y, logoBase64, empresa);
 
     doc.setDrawColor(255, 230, 0);
@@ -222,68 +295,10 @@ const generarPdfFactura = async (presupuesto, empresa) => {
     doc.text(`Estado: ${f.estado_factura === 'pagada' ? 'Pagada' : 'Pendiente de pago'}`, 210 - margen, y + 6, { align: 'right' });
     y += 14;
 
-    doc.setFillColor(247, 247, 247);
-    doc.setDrawColor(220, 220, 220);
-    doc.setLineWidth(0.3);
-    doc.rect(margen, y, 174, 32, 'FD');
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(130, 130, 130);
-    doc.text('CLIENTE', margen + 5, y + 6);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(30, 30, 30);
-    doc.text(presupuesto.reserva?.cliente_nombre || '', margen + 5, y + 13);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(80, 80, 80);
-    doc.text(`DNI/CIF: ${presupuesto.reserva?.cliente_dni_nie_cif || ''}`, margen + 5, y + 19);
-    doc.text(presupuesto.reserva?.cliente_direccion || '', margen + 5, y + 25);
-    const cpCliente = [presupuesto.reserva?.cliente_codigo_postal, presupuesto.reserva?.cliente_localidad, presupuesto.reserva?.cliente_provincia].filter(Boolean).join(', ');
-    doc.text(cpCliente, margen + 95, y + 13);
-    doc.text(`Email: ${presupuesto.reserva?.cliente_email || ''}`, margen + 95, y + 19);
-    doc.text(`Tel: ${presupuesto.reserva?.cliente_telefono || ''}`, margen + 95, y + 25);
-    y += 40;
+    y = dibujarSeccionCliente(doc, presupuesto.reserva, margen, y);
+    y = dibujarSeccionFechas(doc, presupuesto.reserva, margen, y);
+    y = dibujarTablaDetalle(doc, presupuesto.detalle_presupuesto || [], y, margen);
 
-    const colIzq = margen, colDer = margen + 95;
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(130, 130, 130);
-    doc.text('INICIO', colIzq, y);
-    doc.text('UBICACIÓN', colDer, y);
-    y += 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(50, 50, 50);
-    doc.text(formatearFechaHora(presupuesto.reserva?.fecha_inicio), colIzq, y);
-    doc.text(doc.splitTextToSize(presupuesto.reserva?.ubicacion || '—', 210 - margen - colDer), colDer, y);
-    y += 9;
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(130, 130, 130);
-    doc.text('FIN', colIzq, y);
-    y += 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(50, 50, 50);
-    doc.text(formatearFechaHora(presupuesto.reserva?.fecha_fin), colIzq, y);
-    y += 12;
-
-    const detalles = presupuesto.detalle_presupuesto || [];
-    autoTable(doc, {
-        startY: y,
-        head: [['CONCEPTO', 'CANT.', 'PRECIO/HORA', 'SUBTOTAL']],
-        body: detalles.length > 0
-            ? detalles.map(d => [d.concepto, d.cantidad, `${parseFloat(d.precio_unitario).toFixed(2)} €`, `${parseFloat(d.subtotal).toFixed(2)} €`])
-            : [['Sin detalles disponibles', '', '', '']],
-        headStyles: { fillColor: [255, 230, 0], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 8.5, cellPadding: 4 },
-        bodyStyles: { fontSize: 8.5, textColor: [50, 50, 50], cellPadding: 3.5 },
-        alternateRowStyles: { fillColor: [250, 250, 250] },
-        columnStyles: { 0: { cellWidth: 85 }, 1: { cellWidth: 20, halign: 'center' }, 2: { cellWidth: 38, halign: 'right' }, 3: { cellWidth: 31, halign: 'right' } },
-        margin: { left: margen, right: margen }
-    });
-
-    y = doc.lastAutoTable.finalY + 10;
     const col1 = 125, col2 = 210 - margen;
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');

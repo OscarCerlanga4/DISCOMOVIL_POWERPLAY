@@ -14,19 +14,10 @@ export function CarritoProvider({ children }) {
 
     useEffect(() => {
         localStorage.setItem('carrito', JSON.stringify(items))
-    }, [items])
-
-    useEffect(() => {
         localStorage.setItem('carrito_fecha_inicio', fechaInicio)
-    }, [fechaInicio])
-
-    useEffect(() => {
         localStorage.setItem('carrito_fecha_fin', fechaFin)
-    }, [fechaFin])
-
-    useEffect(() => {
         localStorage.setItem('carrito_ubicacion', ubicacion)
-    }, [ubicacion])
+    }, [items, fechaInicio, fechaFin, ubicacion])
 
     const { usuario } = useAuth()
 

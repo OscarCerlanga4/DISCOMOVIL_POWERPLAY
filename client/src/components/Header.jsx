@@ -5,10 +5,10 @@ import { useCarrito } from "../contexts/CarritoContext";
 
 export default function Header() {
   const location = useLocation()
-  const [scrolled, setScrolled] = useState()
+  const [scrolled, setScrolled] = useState(false)
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [menuMovil, setMenuMovil] = useState(false);
-  const [esMovil, setEsMovil] = useState(window.innerWidth < 900);
+  const [esMovil, setEsMovil] = useState(() => window.innerWidth < 900)
   const { usuario, logout } = useAuth();
   const { items } = useCarrito();
   const navigate = useNavigate();

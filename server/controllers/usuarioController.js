@@ -35,40 +35,35 @@ const getById = (req, res)=>{
         });
 };
 
-const update = (req, res) => {
-    const camposPermitidos = ['nombre', 'telefono', 'dni_nie_cif', 'direccion', 'codigo_postal', 'localidad', 'provincia', 'email']
-    const datosActualizar = {}
+const update = async (req, res) => {
+    const camposPermitidos = ['nombre', 'telefono', 'dni_nie_cif', 'direccion', 'codigo_postal', 'localidad', 'provincia', 'email'];
+    const datosActualizar = {};
 
     camposPermitidos.forEach(campo => {
-        if (req.body[campo] !== undefined) {
-            datosActualizar[campo] = req.body[campo]
-        }
-    })
+        if (req.body[campo] !== undefined) datosActualizar[campo] = req.body[campo];
+    });
 
     if (Object.keys(datosActualizar).length === 0) {
-        return res.status(400).send({ ok: false, error: 'No hay campos válidos para actualizar' })
+        return res.status(400).send({ ok: false, error: 'No hay campos válidos para actualizar' });
     }
 
-    const actualizarTabla = supabase
-        .from('usuario')
-        .update(datosActualizar)
-        .eq('id_usuario', req.params.id)
-        .then(({ error }) => {
-            if (error) throw new Error(error.message)
-        })
+    try {
+        const promesas = [
+            supabase.from('usuario').update(datosActualizar).eq('id_usuario', req.params.id)
+        ];
+        if (datosActualizar.email) {
+            promesas.push(supabase.auth.admin.updateUserById(req.params.id, { email: datosActualizar.email }));
+        }
 
-    const actualizarAuth = datosActualizar.email
-        ? supabase.auth.admin.updateUserById(req.params.id, { email: datosActualizar.email })
-            .then(({ error }) => { if (error) throw new Error(error.message) })
-        : Promise.resolve()
+        const resultados = await Promise.all(promesas);
+        for (const { error } of resultados) {
+            if (error) return res.status(500).send({ ok: false, error: error.message });
+        }
 
-    Promise.all([actualizarTabla, actualizarAuth])
-        .then(() => {
-            res.status(200).send({ ok: true, result: 'Usuario actualizado correctamente' })
-        })
-        .catch(error => {
-            res.status(500).send({ ok: false, error: error.message })
-        })
+        res.status(200).send({ ok: true, result: 'Usuario actualizado correctamente' });
+    } catch (error) {
+        res.status(500).send({ ok: false, error: error.message });
+    }
 };
 
 const remove = (req, res)=>{

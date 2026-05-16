@@ -221,6 +221,18 @@ Las variables de entorno se configuran directamente en el dashboard de Render, s
 
 ## 📝 Changelog
 
+### [v2.1.0] - 2026-05-14
+- Corregidos errores relacionados con la visualización de los productos en el carrito
+- Resuelta la actualización incorrecta del estado de los pedidos
+- Corregidos errores durante el proceso de pago
+- Corregidos múltiples errores de diseño responsivo y contenido incorrecto en la vista de administración
+- Actualizada base de datos para representar correctamente la estructura de la BB.DD. en Supabase
+- Las fechas ahora se muestran correctamente en hora española (timezone de Madrid) en todos los apartados afectados
+- Añadido texto descriptivo al filtro de búsqueda de los servicios
+- Mensaje de error traducido al español del Login
+- Añadidas páginas de Condiciciones de Uso y privacidad
+- Optimización de código y corrección de bugs
+
 ### [v2.0.1] - 2026-05-11
 - Documentación técnica y manuales de usuario actualizados a v2.0.0
 

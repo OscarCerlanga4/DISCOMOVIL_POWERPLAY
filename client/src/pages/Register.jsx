@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { API_URL } from '../lib/api'
+import { inputStyle, labelStyle } from '../lib/formStyles'
+import { emailRegex, telefonoRegex, dniNieCifRegex, cpRegex } from '../lib/validators'
 
 const provincias = [
   'Álava', 'Albacete', 'Alicante', 'Almería', 'Asturias', 'Ávila',
@@ -13,27 +15,6 @@ const provincias = [
   'Segovia', 'Sevilla', 'Soria', 'Tarragona', 'Teruel', 'Toledo',
   'Valencia', 'Valladolid', 'Vizcaya', 'Zamora', 'Zaragoza'
 ]
-
-const inputStyle = {
-  background: '#141414',
-  border: '1px solid rgba(255,255,255,0.1)',
-  color: '#fff',
-  padding: '0.75rem 1rem',
-  fontSize: '0.9rem',
-  outline: 'none',
-  transition: 'border-color 0.2s',
-  width: '100%',
-}
-
-const labelStyle = {
-  fontSize: '0.75rem',
-  fontWeight: 700,
-  letterSpacing: '0.1em',
-  textTransform: 'uppercase',
-  color: 'rgba(255,255,255,0.5)',
-  marginBottom: '0.4rem',
-  display: 'block',
-}
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -68,10 +49,6 @@ export default function Register() {
 
   const validate = () => {
     const e = {}
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    const telefonoRegex = /^[6789]\d{8}$/
-    const dniNieCifRegex = /^(\d{8}[A-Z]|[XYZ]\d{7}[A-Z]|[A-Z]\d{7}[A-Z0-9])$/i
-    const cpRegex = /^(?:0[1-9]|[1-4]\d|5[0-2])\d{3}$/
 
     if (!form.nombre.trim() || form.nombre.trim().length < 3)
       e.nombre = 'Introduce un nombre válido (mínimo 3 caracteres)'

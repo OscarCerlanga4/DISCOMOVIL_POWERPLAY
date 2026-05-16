@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { API_URL } from '../lib/api'
+import { inputStyle, labelStyle } from '../lib/formStyles'
+import { emailRegex } from '../lib/validators'
 
 export default function Contacto() {
   const [form, setForm] = useState({
@@ -24,7 +26,6 @@ export default function Contacto() {
 
   const validate = () => {
     const e = {}
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
     if (!form.nombre.trim() || form.nombre.trim().length < 3)
       e.nombre = 'Introduce un nombre válido (mínimo 3 caracteres)'
@@ -64,27 +65,6 @@ export default function Contacto() {
     setLoading(false)
     setForm({ nombre: '', email: '', titulo_problema: '', tipo_contacto: '', descripcion: '' })
     setErrors({ nombre: '', email: '', titulo_problema: '', tipo_contacto: '', descripcion: '' })
-  }
-
-  const inputStyle = {
-    background: '#141414',
-    border: '1px solid rgba(255,255,255,0.1)',
-    color: '#fff',
-    padding: '0.75rem 1rem',
-    fontSize: '0.9rem',
-    outline: 'none',
-    width: '100%',
-    transition: 'border-color 0.2s',
-  }
-
-  const labelStyle = {
-    fontSize: '0.75rem',
-    fontWeight: 700,
-    letterSpacing: '0.1em',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.5)',
-    marginBottom: '0.4rem',
-    display: 'block'
   }
 
   const getOnBlur = (field) => (e) => {

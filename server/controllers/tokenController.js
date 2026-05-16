@@ -37,7 +37,7 @@ const usarToken = async (req, res) => {
 
         if (presupuestoCompleto) {
             const { generarPdfPresupuesto } = require('../utils/generarPdf');
-            generarPdfPresupuesto(presupuestoCompleto, empresa).then(pdfBase64 => {
+            generarPdfPresupuesto(presupuestoCompleto).then(pdfBase64 => {
                 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
                 llamarN8N(process.env.N8N_WEBHOOK_CLIENTE_ACEPTA, {
                     cliente_nombre: presupuestoCompleto.reserva?.cliente_nombre,

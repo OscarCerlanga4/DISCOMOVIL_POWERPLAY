@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { API_URL } from '../lib/api'
+import { useSearchParams } from 'react-router-dom'
 
 export default function Login() {
   const { login } = useAuth()
@@ -12,7 +13,8 @@ export default function Login() {
   const [errors, setErrors] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const errorParams = new URLSearchParams(window.location.search).get('error')
+  const [searchParams] = useSearchParams()
+  const errorParams = searchParams.get('error')
   const [errorOAuth, setErrorOAuth] = useState(
       errorParams === 'no-cuenta' ? 'No tienes cuenta registrada. Regístrate primero.' : null
   )
