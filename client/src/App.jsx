@@ -19,6 +19,8 @@ import ActualizarPassword from './pages/ActualizarPassword'
 import Admin from './pages/Admin'
 import Mantenimiento from './pages/Mantenimiento'
 import PresupuestoConfirmado from './pages/PresupuestoConfirmado'
+import PoliticasPrivacidad from './pages/PoliticasPrivacidad'
+import CondicionesUso from './pages/CondicionesUso'
 import { useAuth } from './contexts/AuthContext'
 
 function ScrollToTop() {
@@ -79,6 +81,8 @@ function AppContent() {
                 <Route path="/actualizar-password" element={<ActualizarPassword />} />
                 <Route path="/admin" element={<RutaAdmin><Admin /></RutaAdmin>} />
                 <Route path="/presupuesto-confirmado" element={<PresupuestoConfirmado />} />
+                <Route path="/politicas-privacidad" element={<PoliticasPrivacidad />} />
+                <Route path="/condiciones-uso" element={<CondicionesUso />} />
                 <Route path="/mantenimiento" element={<RutaMantenimiento />} />
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>

@@ -158,6 +158,7 @@ export default function Footer() {
               </li>
             </ul>
           </div>
+          
         </div>
 
         {/* Línea divisoria */}
@@ -172,10 +173,28 @@ export default function Footer() {
             gap: "1rem",
           }}
         >
-          <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.2)" }}>
-            © {new Date().getFullYear()} Discomóvil Powerplay · Todos los
-            derechos reservados
+          <div style={{ display: "flex", alignItems: "center", gap: "1.25rem", flexWrap: "wrap" }}>
+          <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.2)", margin: 0 }}>
+            © {new Date().getFullYear()} Discomóvil Powerplay · Todos los derechos reservados
           </p>
+          <Link
+            to="/politicas-privacidad"
+            style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.2)", textDecoration: "none", transition: "color 0.2s" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.2)")}
+          >
+            Privacidad
+          </Link>
+          <span style={{ color: "rgba(255,255,255,0.1)", fontSize: "0.8rem" }}>·</span>
+          <Link
+            to="/condiciones-uso"
+            style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.2)", textDecoration: "none", transition: "color 0.2s" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.2)")}
+          >
+            Condiciones de Uso
+          </Link>
+        </div>
 
           {/* Redes sociales */}
           <div style={{ display: "flex", gap: "1rem" }}>
