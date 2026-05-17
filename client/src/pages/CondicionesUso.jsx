@@ -1,3 +1,6 @@
+// Página estática de Condiciones de Uso. Usa las funciones locales seccion() y parrafo()
+// para generar secciones con estilos coherentes sin repetir el marcado de estilo.
+
 export default function CondicionesUso() {
   const seccion = (titulo) => (
     <h2

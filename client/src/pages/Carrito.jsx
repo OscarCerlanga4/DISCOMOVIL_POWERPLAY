@@ -1,3 +1,9 @@
+// Página del carrito de compra. Muestra los ítems seleccionados, permite configurar
+// fechas y ubicación del evento usando GoogleMapsPicker.
+// Los admins pueden añadir datos del cliente manual mediante un modal adicional.
+// toLocalISO convierte una fecha JS a formato datetime-local (YYYY-MM-DDTHH:mm) sin desplazamiento UTC.
+// Al confirmar envía POST a /api/reservas y vacía el carrito si tiene éxito.
+
 import { useState, useEffect, useRef } from 'react'
 import { useCarrito } from '../contexts/CarritoContext'
 import { useAuth } from '../contexts/AuthContext'

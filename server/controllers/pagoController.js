@@ -1,3 +1,7 @@
+// Controlador de pagos. Soporta pagos parciales: acumula importes y marca la factura
+// como 'pagada' solo cuando el total abonado cubre el importe completo.
+// crearIntencion crea un PaymentIntent de Stripe validando que el importe no supere el saldo pendiente.
+
 const { supabase } = require('../db/supabase');
 const { llamarN8N } = require('../utils/n8n');
 

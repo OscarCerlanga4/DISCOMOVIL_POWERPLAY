@@ -1,3 +1,6 @@
+// Página de contacto. Valida todos los campos antes de enviar y muestra errores inline.
+// Tras enviar correctamente muestra un mensaje de confirmación y permite enviar otro mensaje.
+
 import { useState } from 'react'
 import { API_URL } from '../lib/api'
 import { inputStyle, labelStyle } from '../lib/formStyles'

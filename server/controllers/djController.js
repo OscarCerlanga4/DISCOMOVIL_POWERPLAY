@@ -1,3 +1,5 @@
+// Controlador CRUD para la tabla dj.
+
 const { supabase } = require('../db/supabase');
 
 const getAll = (req, res) => {

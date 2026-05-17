@@ -1,3 +1,7 @@
+// Controlador CRUD de usuarios. update usa una lista blanca de campos permitidos para evitar
+// modificaciones no autorizadas; si se actualiza el email también se sincroniza en Supabase Auth.
+// deleteAccount elimina al usuario de Supabase Auth (la fila en 'usuario' se elimina en cascada).
+
 const { supabase } = require('../db/supabase');
 
 const getAll = (req, res)=>{

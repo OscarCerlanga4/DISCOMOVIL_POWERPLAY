@@ -1,3 +1,6 @@
+// Página de mantenimiento. Se muestra cuando el sitio está temporalmente fuera de servicio.
+// Incluye un indicador de estado con animación de pulso (CSS keyframes inline).
+
 export default function Mantenimiento() {
     return (
         <div style={{

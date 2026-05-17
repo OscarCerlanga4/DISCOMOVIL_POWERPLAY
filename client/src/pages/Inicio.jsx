@@ -1,3 +1,10 @@
+// Página de inicio (landing). Tiene cuatro secciones:
+// 1. Hero: imagen de fondo a pantalla completa con nombre y flecha animada de scroll.
+// 2. Cómo funciona: pasos del proceso (elegir → presupuesto → disfrutar), envueltos en FadeSection.
+// 3. Eventos: enlace a la agenda de eventos.
+// 4. Contacto: CTA para ir al formulario de contacto.
+// FadeSection usa IntersectionObserver para animar la entrada de cada bloque al hacer scroll.
+
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 

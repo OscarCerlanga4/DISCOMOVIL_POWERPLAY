@@ -1,3 +1,11 @@
+// Página de pedidos del usuario (presupuestos y facturas). Características principales:
+// - Carga presupuestos y datos de empresa en paralelo al montar.
+// - Dos pestañas: Presupuestos (con filtros por estado) y Facturas (con filtros pagada/pendiente).
+// - El cliente puede aceptar o rechazar presupuestos pendientes directamente desde aquí.
+// - Genera PDFs de presupuesto y factura en el cliente usando jsPDF + jspdf-autotable.
+// - Si llega el parámetro ?presupuesto=ID en la URL, hace scroll y resalta ese presupuesto.
+// - diasRestantes() calcula la cuenta atrás hasta que expira la validez del presupuesto.
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate, useSearchParams } from 'react-router-dom'

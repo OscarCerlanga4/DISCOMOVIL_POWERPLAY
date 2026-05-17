@@ -1,3 +1,8 @@
+// Página de listado de eventos. Permite filtrar por búsqueda de texto y por próximos/todos.
+// Los admins pueden crear nuevos eventos y editar los existentes mediante modales superpuestos.
+// El formulario de creación y edición es compartido a través de formLayout().
+// useMemo evita recalcular la lista filtrada en cada render innecesario.
+
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import SubidaImagen from '../components/SubidaImagen'

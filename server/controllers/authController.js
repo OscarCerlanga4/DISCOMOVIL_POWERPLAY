@@ -1,3 +1,7 @@
+// Controlador de autenticación: registro, login y obtención del perfil del usuario.
+// Usa supabaseAuth (clave anónima) para signUp/signInWithPassword,
+// y supabase (clave de servicio) para leer/escribir en la tabla usuario.
+
 const { supabase, supabaseAuth } = require('../db/supabase');
 
 const register = async (req, res) => {

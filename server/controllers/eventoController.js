@@ -1,3 +1,6 @@
+// Controlador CRUD para la tabla evento.
+// getAll devuelve los eventos ordenados por fecha ascendente para mostrarlos cronológicamente.
+
 const { supabase } = require('../db/supabase');
 
 const getAll = (req, res) => {

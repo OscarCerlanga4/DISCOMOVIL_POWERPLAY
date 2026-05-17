@@ -1,3 +1,8 @@
+// Página de confirmación de acción sobre presupuesto (aceptado / rechazado / inválido).
+// Se muestra tras redirigir desde el enlace de email con token de un solo uso.
+// Lee el parámetro ?estado= de la URL y muestra el icono y mensaje correspondiente.
+// Si el usuario está autenticado, ofrece un botón para ir a "Mis pedidos".
+
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 

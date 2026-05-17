@@ -1,3 +1,7 @@
+// Servicio de tiempo de viaje usando la API Routes v2 de Google Maps (computeRoutes).
+// Solo solicita el campo 'routes.duration' para minimizar el tamaño de la respuesta.
+// Devuelve los minutos de viaje redondeados hacia arriba, o null si no hay ruta disponible.
+
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY
 
 async function calcularTiempoViaje(origen, destino) {

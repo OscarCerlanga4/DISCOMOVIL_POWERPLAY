@@ -1,3 +1,6 @@
+// Controlador de la tabla pivote incluye (equipo ↔ reserva).
+// Gestiona qué equipos y en qué cantidad están asignados a cada reserva.
+
 const { supabase } = require('../db/supabase');
 
 const getByReserva = (req, res) => {

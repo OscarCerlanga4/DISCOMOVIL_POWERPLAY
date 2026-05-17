@@ -1,3 +1,7 @@
+// Controlador de disponibilidad para un rango de fechas dado.
+// Busca reservas solapantes (no canceladas), luego consulta contrata e incluye
+// para determinar qué DJs están ocupados y qué stock de equipo queda disponible.
+
 const { supabase } = require('../db/supabase')
 
 const getDisponibilidad = async (req, res) => {

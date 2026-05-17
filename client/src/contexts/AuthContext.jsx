@@ -1,3 +1,11 @@
+// Contexto de autenticación. AuthProvider gestiona la sesión del usuario:
+// - Al montar, comprueba si existe una sesión activa de Supabase (OAuth) o un token en localStorage,
+//   y llama a /api/auth/me para obtener el perfil completo desde la tabla usuario.
+// - Si el usuario existe en Supabase Auth pero no en la tabla usuario (OAuth sin registro previo),
+//   lo redirige a /login?error=no-cuenta para que se registre.
+// - Escucha onAuthStateChange para reaccionar a login OAuth y logout.
+// - Los hijos del provider no se renderizan hasta que la carga inicial termina (evita flashes).
+
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { API_URL } from '../lib/api'

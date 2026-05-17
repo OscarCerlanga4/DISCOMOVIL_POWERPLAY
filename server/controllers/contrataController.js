@@ -1,3 +1,6 @@
+// Controlador de la tabla pivote contrata (DJ ↔ reserva).
+// Gestiona qué DJs están asignados a cada reserva.
+
 const { supabase } = require('../db/supabase');
 
 const getByReserva = (req, res) => {

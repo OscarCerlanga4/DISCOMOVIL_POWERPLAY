@@ -1,3 +1,9 @@
+// Genera PDFs de presupuesto y factura usando jsPDF + jspdf-autotable.
+// cargarImagenBase64 descarga el logo desde Supabase Storage y lo incrusta en base64 para
+// que funcione en entornos Node sin acceso al DOM. formatearFecha/formatearFechaHora usan
+// timezone Europe/Madrid para coincidir con el resto de la aplicación.
+// generarPdfPresupuesto y generarPdfFactura devuelven un Buffer listo para adjuntar al email de N8N.
+
 const { jsPDF } = require('jspdf');
 const _autoTableMod = require('jspdf-autotable');
 const autoTable = typeof _autoTableMod === 'function' ? _autoTableMod : (_autoTableMod.default || _autoTableMod);

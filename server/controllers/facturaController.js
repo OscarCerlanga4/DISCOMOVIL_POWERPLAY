@@ -1,3 +1,7 @@
+// Controlador de facturas. getAll incluye relaciones completas (pago, presupuesto, reserva)
+// para evitar peticiones adicionales en el panel de admin.
+// getMisFacturas filtra por usuario navegando la cadena: factura → presupuesto → reserva → id_usuario.
+
 const { supabase } = require('../db/supabase');
 
 const getAll = (req, res) => {

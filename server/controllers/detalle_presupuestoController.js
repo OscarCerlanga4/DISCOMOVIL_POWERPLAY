@@ -1,3 +1,6 @@
+// Controlador CRUD de las líneas de detalle de presupuesto.
+// Cada línea representa un concepto (equipo o DJ) con cantidad, precio unitario y subtotal.
+
 const { supabase } = require('../db/supabase');
 
 const getAll = (req, res) => {

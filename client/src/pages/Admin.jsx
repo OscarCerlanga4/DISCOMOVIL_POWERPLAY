@@ -1,3 +1,9 @@
+// Panel de administración. Organizado en 7 secciones accesibles por tab:
+// Presupuestos, Facturas, Reservas, Usuarios, Contactos, Empresa y Servicios (DJs/Equipos).
+// Cada sección carga sus datos al montarse o al cambiar de tab. Los PDFs de presupuesto
+// y factura se generan en el cliente con jsPDF + jspdf-autotable. La subida de imágenes
+// de DJs y equipos se delega al componente SubidaImagen (base64 → Supabase Storage).
+
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'

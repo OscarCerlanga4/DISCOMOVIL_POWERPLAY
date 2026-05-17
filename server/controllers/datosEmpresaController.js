@@ -1,3 +1,6 @@
+// Controlador de datos de la empresa. Siempre opera sobre el único registro existente (id_empresa = 1).
+// GET no requiere autenticación; PUT está protegido por el middleware de admin.
+
 const { supabase } = require('../db/supabase');
 
 const getAll = (req, res) => {

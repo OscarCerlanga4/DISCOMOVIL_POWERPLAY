@@ -1,3 +1,12 @@
+// Controlador de reservas. El endpoint create ejecuta 10 pasos en secuencia:
+// 1. Obtener datos del usuario (o datos de cliente manual si es admin).
+// 2. Verificar solapamiento exacto de equipos y viabilidad de desplazamiento (ventana 8h con Google Maps).
+// 3. Verificar solapamiento exacto de DJs y viabilidad de desplazamiento.
+// 4-6. Insertar reserva, registros en 'incluye' (equipos) y 'contrata' (DJs).
+// 7-8. Obtener precios y calcular base imponible + IVA.
+// 9-10. Insertar presupuesto (validez 48h) y sus líneas de detalle.
+// Tras enviar la respuesta HTTP: genera PDF, crea tokens de aceptar/rechazar y llama a N8N.
+
 const { supabase } = require('../db/supabase');
 const { calcularTiempoViaje } = require('../services/mapsService')
 const { llamarN8N } = require('../utils/n8n');

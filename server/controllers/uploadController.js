@@ -1,3 +1,7 @@
+// Controlador de subida de imágenes al bucket 'imagenes' de Supabase Storage.
+// Recibe la imagen en base64, la convierte a Buffer y genera un nombre de archivo único
+// (timestamp + sufijo aleatorio) para evitar colisiones. Devuelve la URL pública.
+
 const { supabase } = require('../db/supabase');
 
 const uploadImagen = (req, res) => {

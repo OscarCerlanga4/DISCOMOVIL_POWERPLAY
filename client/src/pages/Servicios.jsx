@@ -1,3 +1,8 @@
+// Catálogo de servicios (DJs y equipos). Permite al admin crear, editar y eliminar ítems
+// con subida de imagen a Supabase Storage. Los usuarios pueden añadir ítems al carrito
+// (los DJs solo una vez; los equipos acumulan cantidad). toLocalISO normaliza las fechas
+// del carrito al formato datetime-local sin desfase de zona horaria.
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'

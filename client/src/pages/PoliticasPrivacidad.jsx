@@ -1,3 +1,6 @@
+// Página estática de Política de Privacidad. Usa las mismas funciones helper seccion() y parrafo()
+// que CondicionesUso.jsx para mantener un estilo visual coherente entre ambas páginas legales.
+
 export default function PoliticasPrivacidad() {
   const seccion = (titulo) => (
     <h2

@@ -1,3 +1,8 @@
+// Página de restablecimiento de contraseña. Accesible a través del enlace de email enviado por Supabase.
+// Espera el evento PASSWORD_RECOVERY de Supabase antes de mostrar el formulario (para garantizar
+// que la sesión temporal ya está activa). Valida mínimo 6 caracteres y coincidencia de ambos campos.
+// Tras actualizar la contraseña redirige al inicio después de 2 segundos.
+
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'

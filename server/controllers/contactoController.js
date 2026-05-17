@@ -1,3 +1,7 @@
+// Controlador de mensajes de contacto del formulario público.
+// create responde inmediatamente y dispara el webhook de N8N en segundo plano (fire-and-forget).
+// responder marca el contacto como respondido y envía la respuesta al cliente vía N8N.
+
 const { supabase } = require('../db/supabase');
 const { llamarN8N } = require('../utils/n8n');
 

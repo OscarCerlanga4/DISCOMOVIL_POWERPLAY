@@ -1,3 +1,8 @@
+// Página de registro de nuevos usuarios. Incluye todos los campos de dirección española
+// (con dropdown de las 52 provincias) para rellenar automáticamente los datos del cliente en reservas.
+// Todos los campos son obligatorios y se validan con los regex de lib/validators.
+// Tras el registro exitoso redirige al login.
+
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { API_URL } from '../lib/api'

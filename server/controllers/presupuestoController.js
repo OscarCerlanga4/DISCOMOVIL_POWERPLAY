@@ -1,3 +1,9 @@
+// Controlador de presupuestos. El endpoint update aplica control de acceso por rol:
+// - usuario: solo puede aceptar o rechazar sus propios presupuestos.
+// - admin: puede confirmar (estado 'aceptado'), lo que genera automáticamente una factura con
+//   número correlativo (FAC-YYYY-XXXX), confirma la reserva y envía PDF + notificación N8N.
+// Los webhooks N8N se ejecutan en modo fire-and-forget (la respuesta HTTP ya fue enviada).
+
 const { supabase } = require('../db/supabase');
 const { llamarN8N } = require('../utils/n8n');
 const { generarPdfPresupuesto, generarPdfFactura } = require('../utils/generarPdf');

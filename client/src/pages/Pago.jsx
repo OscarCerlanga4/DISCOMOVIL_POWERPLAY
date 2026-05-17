@@ -1,3 +1,10 @@
+// Página de pago de facturas. Soporta pago total y pago parcial.
+// Flujo: inicio → selección de método → tarjeta (Stripe Elements) | efectivo.
+// FormularioPago es el subcomponente que encapsula el hook useStripe/useElements
+// y llama a stripe.confirmPayment(); cuando el pago se confirma, notifica al backend para registrarlo.
+// crearIntencion llama al backend para crear un PaymentIntent validando que el importe
+// no supera el saldo pendiente de la factura.
+
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { loadStripe } from '@stripe/stripe-js'

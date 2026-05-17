@@ -1,3 +1,5 @@
+// Controlador CRUD para la tabla equipo (incluye stock_total para gestión de disponibilidad).
+
 const { supabase } = require('../db/supabase');
 
 const getAll = (req, res) => {

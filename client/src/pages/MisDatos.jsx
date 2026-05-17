@@ -1,3 +1,9 @@
+// Página de perfil del usuario. Tiene tres secciones:
+// 1. Formulario de datos personales (nombre, email, teléfono, dirección completa).
+// 2. Cambio de contraseña: envía un correo de restablecimiento via Supabase resetPasswordForEmail.
+// 3. Eliminación de cuenta: requiere confirmación explícita antes de llamar al endpoint DELETE.
+// Los validadores se importan de lib/validators para centralizar las reglas de formato.
+
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'

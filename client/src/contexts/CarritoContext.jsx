@@ -1,3 +1,7 @@
+// Contexto del carrito de compra. Persiste ítems, fechas y ubicación en localStorage.
+// Los DJs solo se pueden añadir una vez; los equipos aumentan su cantidad si ya están en el carrito.
+// El carrito se vacía automáticamente cuando el usuario cierra sesión.
+
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
 

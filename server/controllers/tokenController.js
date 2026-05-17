@@ -1,3 +1,7 @@
+// Controlador de tokens de acción de un solo uso (para aceptar/rechazar presupuestos por email).
+// Valida que el token sea válido (no usado y no expirado), lo marca como usado,
+// ejecuta la acción correspondiente y redirige al frontend con el estado resultante.
+
 const { supabase } = require('../db/supabase');
 const { llamarN8N } = require('../utils/n8n');
 

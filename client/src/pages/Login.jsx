@@ -1,3 +1,9 @@
+// Página de inicio de sesión. Soporta login con email/contraseña (a través del backend)
+// y OAuth con Google y GitHub (directamente con Supabase Auth).
+// Los mensajes de error de Supabase se traducen al español.
+// Si el usuario llega con ?error=no-cuenta (redirigido por AuthContext tras OAuth sin registro),
+// muestra un aviso explicativo.
+
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
