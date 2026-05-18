@@ -31,8 +31,8 @@ export default function PoliticasPrivacidad() {
   );
 
   return (
-    <div style={{ background: "#0d0d0d", minHeight: "100vh", padding: "4rem 2rem" }}>
-      <div style={{ maxWidth: "860px", margin: "0 auto" }}>
+    <div style={{ background: "#0d0d0d", minHeight: "100vh", paddingTop: "80px" }}>
+      <div style={{ maxWidth: "860px", margin: "0 auto", padding: "3rem 2rem 4rem" }}>
         <h1
           style={{
             fontFamily: "Bebas Neue",

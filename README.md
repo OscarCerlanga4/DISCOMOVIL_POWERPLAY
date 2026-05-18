@@ -16,6 +16,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Stripe](https://img.shields.io/badge/Stripe-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://stripe.com/)
 [![pnpm](https://img.shields.io/badge/pnpm-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io/)
+[![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://cloudflare.com/)
 
 <br />
 
@@ -83,6 +84,7 @@ N8N envía notificaciones automáticas por email en cada paso del proceso
 | Geolocalización | Google Maps API | Geolocalización de equipos y distancias |
 | Paquetes | pnpm (monorepo) | Gestión de dependencias del workspace |
 | Despliegue | Render | Frontend estático + backend web service |
+| Seguridad / CDN | Cloudflare | Proxy inverso, DDoS, SSL y caché |
 
 ---
 
@@ -217,9 +219,22 @@ Las variables de entorno se configuran directamente en el dashboard de Render, s
 > [!NOTE]
 > El webhook de Stripe en producción apunta directamente a la URL pública del backend en Render, por lo que **no es necesario** ejecutar la Stripe CLI en producción.
 
+> [!NOTE]
+> El tráfico pasa por **Cloudflare** antes de llegar a Render. La app es accesible
+> en `https://powerplay.tauste-automat.com` y la API en `https://api.tauste-automat.com`.
+
 ---
 
 ## 📝 Changelog
+
+### [v2.1.1] - 2026-05-18
+- Las fechas ahora se muestran correctamente en hora española (timezone de Madrid) en todos los apartados afectados
+- Corrección del dominio en la configuración de autenticación de Supabase tras el cambio de dominio
+- Añadido texto descriptivo al filtro de búsqueda de los servicios
+- Mensaje de error traducido al español del Login
+- Añadidas páginas de Condiciones de Uso y privacidad
+- Cloudflare configurado como proxy inverso: DDoS, SSL Full Strict, Always HTTPS, Bot Fight Mode y HTTP/3
+- Optimización de código y corrección de bugs
 
 ### [v2.1.0] - 2026-05-14
 - Corregidos errores relacionados con la visualización de los productos en el carrito
@@ -227,11 +242,6 @@ Las variables de entorno se configuran directamente en el dashboard de Render, s
 - Corregidos errores durante el proceso de pago
 - Corregidos múltiples errores de diseño responsivo y contenido incorrecto en la vista de administración
 - Actualizada base de datos para representar correctamente la estructura de la BB.DD. en Supabase
-- Las fechas ahora se muestran correctamente en hora española (timezone de Madrid) en todos los apartados afectados
-- Añadido texto descriptivo al filtro de búsqueda de los servicios
-- Mensaje de error traducido al español del Login
-- Añadidas páginas de Condiciciones de Uso y privacidad
-- Optimización de código y corrección de bugs
 
 ### [v2.0.1] - 2026-05-11
 - Documentación técnica y manuales de usuario actualizados a v2.0.0
