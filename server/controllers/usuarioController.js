@@ -20,23 +20,31 @@ const getAll = (req, res)=>{
         });
 };
 
-const getById = (req, res)=>{
-    supabase
-        .from('usuario')
-        .select('*')
-        .eq('id_usuario', req.params.id)
-        .then(({ data, error})=>{
-            if(error){
-                res.status(500).send({ ok: false, error: error.message });
-            }else if(data.length === 0){
-                res.status(404).send({ ok: false, error: "Usuario no encontrado" });
-            }else{
-                res.status(200).send({ ok: true, result: data[0] });
-            }
-        })
-        .catch(error=>{
-            res.status(500).send({ ok: false, error: "Error al obtener el usuario" } );
-        });
+const getById = async (req, res) => {
+    try {
+        const { data: rolData, error: rolError } = await supabase
+            .from('usuario').select('rol').eq('id_usuario', req.user.id);
+        if (rolError || !rolData.length) {
+            return res.status(500).send({ ok: false, error: 'Error al verificar permisos' });
+        }
+        const rol = rolData[0].rol;
+
+        if (rol !== 'admin' && req.params.id !== req.user.id) {
+            return res.status(403).send({ ok: false, error: 'No tienes permiso para ver este usuario' });
+        }
+
+        const { data, error } = await supabase
+            .from('usuario').select('*').eq('id_usuario', req.params.id);
+        if (error) {
+            return res.status(500).send({ ok: false, error: error.message });
+        }
+        if (data.length === 0) {
+            return res.status(404).send({ ok: false, error: 'Usuario no encontrado' });
+        }
+        res.status(200).send({ ok: true, result: data[0] });
+    } catch (error) {
+        res.status(500).send({ ok: false, error: 'Error al obtener el usuario' });
+    }
 };
 
 const update = async (req, res) => {
@@ -52,6 +60,17 @@ const update = async (req, res) => {
     }
 
     try {
+        const { data: rolData, error: rolError } = await supabase
+            .from('usuario').select('rol').eq('id_usuario', req.user.id);
+        if (rolError || !rolData.length) {
+            return res.status(500).send({ ok: false, error: 'Error al verificar permisos' });
+        }
+        const rol = rolData[0].rol;
+
+        if (rol !== 'admin' && req.params.id !== req.user.id) {
+            return res.status(403).send({ ok: false, error: 'No tienes permiso para modificar este usuario' });
+        }
+
         const promesas = [
             supabase.from('usuario').update(datosActualizar).eq('id_usuario', req.params.id)
         ];

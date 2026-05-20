@@ -21,9 +21,10 @@ const getByReserva = (req, res) => {
 };
 
 const create = (req, res) => {
+    const { id_reserva, id_dj } = req.body;
     supabase
         .from('contrata')
-        .insert(req.body)
+        .insert({ id_reserva, id_dj })
         .select()
         .then(({ data, error }) => {
             if (error) {

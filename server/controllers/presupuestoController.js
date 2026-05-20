@@ -25,23 +25,33 @@ const getAll = (req, res) => {
         });
 };
 
-const getById = (req, res) => {
-    supabase
-        .from('presupuesto')
-        .select('*')
-        .eq('id_presupuesto', req.params.id)
-        .then(({ data, error }) => {
-            if (error) {
-                res.status(500).send({ ok: false, error: error.message });
-            } else if (data.length === 0) {
-                res.status(404).send({ ok: false, error: 'Presupuesto no encontrado' });
-            } else {
-                res.status(200).send({ ok: true, result: data[0] });
-            }
-        })
-        .catch(() => {
-            res.status(500).send({ ok: false, error: 'Error al obtener el presupuesto' });
-        });
+const getById = async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('presupuesto')
+            .select('*, reserva(id_usuario)')
+            .eq('id_presupuesto', req.params.id);
+        if (error) {
+            return res.status(500).send({ ok: false, error: error.message });
+        }
+        if (data.length === 0) {
+            return res.status(404).send({ ok: false, error: 'Presupuesto no encontrado' });
+        }
+
+        const { data: rolData } = await supabase
+            .from('usuario').select('rol').eq('id_usuario', req.user.id);
+        const rol = rolData?.[0]?.rol;
+
+        if (rol !== 'admin' && data[0].reserva?.id_usuario !== req.user.id) {
+            return res.status(403).send({ ok: false, error: 'No tienes permiso para ver este presupuesto' });
+        }
+
+        // Devolver solo los campos del presupuesto (sin el join de reserva usado para el check)
+        const { reserva: _reserva, ...presupuesto } = data[0];
+        res.status(200).send({ ok: true, result: presupuesto });
+    } catch (error) {
+        res.status(500).send({ ok: false, error: 'Error al obtener el presupuesto' });
+    }
 };
 
 const create = (req, res) => {
@@ -224,14 +234,14 @@ const remove = (req, res) => {
 const getMisPresupuestos = (req, res) => {
     supabase
         .from('presupuesto')
-        .select('*, reserva(id_usuario, fecha_inicio, fecha_fin, ubicacion, cliente_nombre, cliente_email, cliente_telefono, cliente_dni_nie_cif, cliente_direccion, cliente_codigo_postal, cliente_localidad, cliente_provincia), detalle_presupuesto(*), factura(*)')
+        .select('*, reserva!inner(id_usuario, fecha_inicio, fecha_fin, ubicacion, cliente_nombre, cliente_email, cliente_telefono, cliente_dni_nie_cif, cliente_direccion, cliente_codigo_postal, cliente_localidad, cliente_provincia), detalle_presupuesto(*), factura(*)')
+        .eq('reserva.id_usuario', req.user.id)
+        .order('id_presupuesto', { ascending: false })
         .then(({ data, error }) => {
             if (error) {
                 return res.status(500).send({ ok: false, error: error.message });
             }
-
-            const misPresupuestos = data.filter(p => p.reserva.id_usuario === req.user.id);
-            res.status(200).send({ ok: true, result: misPresupuestos });
+            res.status(200).send({ ok: true, result: data });
         })
         .catch(() => {
             res.status(500).send({ ok: false, error: 'Error al obtener los presupuestos' });

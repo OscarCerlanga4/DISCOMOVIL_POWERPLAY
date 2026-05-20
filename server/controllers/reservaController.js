@@ -28,23 +28,29 @@ const getAll = (req, res) => {
         });
 };
 
-const getById = (req, res) => {
-    supabase
-        .from('reserva')
-        .select('*')
-        .eq('id_reserva', req.params.id)
-        .then(({ data, error }) => {
-            if (error) {
-                res.status(500).send({ ok: false, error: error.message });
-            } else if (data.length === 0) {
-                res.status(404).send({ ok: false, error: 'Reserva no encontrada' });
-            } else {
-                res.status(200).send({ ok: true, result: data[0] });
-            }
-        })
-        .catch(error => {
-            res.status(500).send({ ok: false, error: 'Error al obtener la reserva' });
-        });
+const getById = async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('reserva').select('*').eq('id_reserva', req.params.id);
+        if (error) {
+            return res.status(500).send({ ok: false, error: error.message });
+        }
+        if (data.length === 0) {
+            return res.status(404).send({ ok: false, error: 'Reserva no encontrada' });
+        }
+
+        const { data: rolData } = await supabase
+            .from('usuario').select('rol').eq('id_usuario', req.user.id);
+        const rol = rolData?.[0]?.rol;
+
+        if (rol !== 'admin' && data[0].id_usuario !== req.user.id) {
+            return res.status(403).send({ ok: false, error: 'No tienes permiso para ver esta reserva' });
+        }
+
+        res.status(200).send({ ok: true, result: data[0] });
+    } catch (error) {
+        res.status(500).send({ ok: false, error: 'Error al obtener la reserva' });
+    }
 };
 
 const create = async (req, res) => {
