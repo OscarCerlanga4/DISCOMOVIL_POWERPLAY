@@ -76,7 +76,8 @@ export function CarritoProvider({ children }) {
         localStorage.removeItem('carrito_ubicacion')
     }
 
-    const total = items.reduce((acc, item) => acc + item.precio * item.cantidad, 0)
+    const horas = (fechaInicio && fechaFin) ? (new Date(fechaFin) - new Date(fechaInicio)) / (1000 * 60 * 60) : 0
+    const total = horas > 0 ? items.reduce((acc, item) => acc + item.precio * item.cantidad * horas, 0) : 0
 
     return (
         <CarritoContext.Provider value={{

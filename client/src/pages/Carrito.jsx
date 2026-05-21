@@ -614,11 +614,11 @@ export default function Carrito() {
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                                 <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Total estimado</span>
-                                <span style={{ color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '2rem', letterSpacing: '0.05em' }}>{total}€</span>
+                                <span style={{ color: '#FFE600', fontFamily: 'Bebas Neue', fontSize: '2rem', letterSpacing: '0.05em' }}>{total > 0 ? total.toFixed(2) : '—'}€</span>
                             </div>
 
                             <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.75rem', margin: 0 }}>
-                                El precio final puede variar según las horas del evento
+                                Precio estimado sin IVA. El precio final se confirmará al generar el presupuesto.
                             </p>
 
                             {error && (
