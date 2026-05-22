@@ -1,5 +1,5 @@
 // Página de listado de eventos. Permite filtrar por búsqueda de texto y por próximos/todos.
-// Los admins pueden crear nuevos eventos y editar los existentes mediante modales superpuestos.
+// Los admins pueden crear nuevos eventos, editar y borrar los existentes mediante modales superpuestos.
 // El formulario de creación y edición es compartido a través de formLayout().
 // useMemo evita recalcular la lista filtrada en cada render innecesario.
 
@@ -26,6 +26,8 @@ export default function Eventos() {
     const [errorsForm, setErrorsForm] = useState({ titulo: '', fecha: '', lugar: '' })
     const [errorsEdicion, setErrorsEdicion] = useState({ titulo: '', fecha: '', lugar: '' })
     const [filtroAbierto, setFiltroAbierto] = useState(false)
+    const [modalBorrar, setModalBorrar] = useState(null)
+    const [borrandoId, setBorrandoId] = useState(null)
 
     const cargarEventos = () => {
         fetch(`${API_URL}/api/eventos`)
@@ -149,6 +151,25 @@ export default function Eventos() {
             })
             .catch(() => setErrorEdicion('Error de conexión.'))
             .finally(() => setGuardandoEdicion(false))
+    }
+
+    const ejecutarBorrado = () => {
+        const id = modalBorrar.id_evento
+        setBorrandoId(id)
+        setModalBorrar(null)
+        fetch(`${API_URL}/api/eventos/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    setEventos(prev => prev.filter(e => e.id_evento !== id))
+                    if (editandoId === id) setEditandoId(null)
+                }
+            })
+            .catch(() => {})
+            .finally(() => setBorrandoId(null))
     }
 
     const inputStyle = {
@@ -466,7 +487,7 @@ export default function Eventos() {
 
                                     {/* Datos */}
                                     <div style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
-                                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
+                                        <div className="eventos-card-cabecera">
                                             <h2 style={{
                                                 fontFamily: 'Bebas Neue',
                                                 fontSize: 'clamp(1.8rem, 3vw, 2.5rem)',
@@ -477,24 +498,43 @@ export default function Eventos() {
                                                 {evento.titulo}
                                             </h2>
                                             {usuario?.rol === 'admin' && (
-                                                <button
-                                                    onClick={() => handleAbrirEdicion(evento)}
-                                                    style={{
-                                                        background: estaEditando ? 'transparent' : '#FFE600',
-                                                        color: estaEditando ? 'rgba(255,255,255,0.4)' : '#000',
-                                                        border: estaEditando ? '1px solid rgba(255,255,255,0.15)' : 'none',
-                                                        padding: '0.5rem 1.4rem',
-                                                        fontWeight: 700,
-                                                        fontSize: '0.75rem',
-                                                        letterSpacing: '0.1em',
-                                                        textTransform: 'uppercase',
-                                                        cursor: 'pointer',
-                                                        transition: 'all 0.2s',
-                                                        flexShrink: 0
-                                                    }}
-                                                >
-                                                    {estaEditando ? 'Cerrar' : 'Editar'}
-                                                </button>
+                                                <div className="eventos-card-botones">
+                                                    <button
+                                                        onClick={() => handleAbrirEdicion(evento)}
+                                                        style={{
+                                                            background: estaEditando ? 'transparent' : '#FFE600',
+                                                            color: estaEditando ? 'rgba(255,255,255,0.4)' : '#000',
+                                                            border: estaEditando ? '1px solid rgba(255,255,255,0.15)' : 'none',
+                                                            padding: '0.5rem 1.4rem',
+                                                            fontWeight: 700,
+                                                            fontSize: '0.75rem',
+                                                            letterSpacing: '0.1em',
+                                                            textTransform: 'uppercase',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        {estaEditando ? 'Cerrar' : 'Editar'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setModalBorrar(evento)}
+                                                        disabled={borrandoId === evento.id_evento}
+                                                        style={{
+                                                            background: borrandoId === evento.id_evento ? 'transparent' : '#c0392b',
+                                                            color: borrandoId === evento.id_evento ? 'rgba(255,255,255,0.4)' : '#fff',
+                                                            border: borrandoId === evento.id_evento ? '1px solid rgba(255,255,255,0.15)' : 'none',
+                                                            padding: '0.5rem 1.4rem',
+                                                            fontWeight: 700,
+                                                            fontSize: '0.75rem',
+                                                            letterSpacing: '0.1em',
+                                                            textTransform: 'uppercase',
+                                                            cursor: borrandoId === evento.id_evento ? 'not-allowed' : 'pointer',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        {borrandoId === evento.id_evento ? '...' : 'Borrar'}
+                                                    </button>
+                                                </div>
                                             )}
                                         </div>
 
@@ -552,6 +592,69 @@ export default function Eventos() {
                     })}
                 </div>
             </div>
+
+            {/* ── Modal confirmación borrado ── */}
+            {modalBorrar && (
+            <div
+                onClick={() => setModalBorrar(null)}
+                style={{
+                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 1000, backdropFilter: 'blur(4px)'
+                }}
+            >
+                <div
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                        background: '#141414', borderTop: '3px solid #c0392b',
+                        padding: '2.5rem 2.5rem 2rem', width: '90%', maxWidth: '420px',
+                        boxShadow: '0 24px 80px rgba(0,0,0,0.6)'
+                    }}
+                >
+                    <p style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', margin: '0 0 1.25rem' }}>
+                        Borrar evento
+                    </p>
+                    <p style={{ color: '#fff', fontSize: '0.9rem', margin: '0 0 0.5rem', fontWeight: 700 }}>
+                        {modalBorrar.titulo}
+                    </p>
+                    <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', margin: '0 0 1.75rem' }}>
+                        {formatFecha(modalBorrar.fecha)} · {modalBorrar.lugar}
+                    </p>
+                    <div style={{ background: '#0d0d0d', border: '1px solid rgba(255,68,68,0.15)', padding: '1rem 1.25rem', marginBottom: '2rem' }}>
+                        <p style={{ color: 'rgba(255,68,68,0.85)', fontSize: '0.82rem', margin: 0, lineHeight: 1.5 }}>
+                            ¿Seguro que quieres borrar este evento? Esta acción es irreversible y no se puede deshacer.
+                        </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <button
+                            onClick={() => setModalBorrar(null)}
+                            style={{
+                                background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)',
+                                fontFamily: 'Bebas Neue', fontSize: '0.85rem', letterSpacing: '0.12em',
+                                padding: '0.55rem 1.1rem', cursor: 'pointer', flex: 1, textAlign: 'center'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'}
+                            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={ejecutarBorrado}
+                            style={{
+                                background: '#c0392b', border: 'none', color: '#fff',
+                                fontFamily: 'Bebas Neue', fontSize: '0.85rem', letterSpacing: '0.12em',
+                                padding: '0.55rem 1.1rem', cursor: 'pointer', flex: 1, textAlign: 'center',
+                                transition: 'opacity 0.2s'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                        >
+                            Borrar evento
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         </div>
     )
 }

@@ -161,6 +161,17 @@ body > a[href*="stripe.com"][style*="position: fixed"] {
     padding: 2rem 1.5rem 4rem;
   }
 }
+.eventos-card-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.eventos-card-botones {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
 @media (max-width: 700px) {
   .eventos-cabecera { padding: 1.5rem 1rem; }
   .eventos-content  { padding: 1.5rem 1rem 3rem; }
@@ -168,6 +179,13 @@ body > a[href*="stripe.com"][style*="position: fixed"] {
   .eventos-card-imagen {
     width: 100%;
     min-width: unset;
+  }
+  .eventos-card-cabecera {
+    flex-direction: column;
+  }
+  .eventos-card-botones {
+    order: -1;
+    align-self: flex-end;
   }
 }
 

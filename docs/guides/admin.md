@@ -90,6 +90,15 @@ Desde aquí puedes publicar los eventos y actuaciones del calendario público.
 
 El proceso es idéntico al de equipos y DJs.
 
+### Eliminar un evento
+
+1. Localiza el evento en la lista pública de **Eventos**.
+2. Pulsa **Borrar** (botón rojo junto a **Editar**).
+3. Confirma la acción en el diálogo que aparece.
+
+> [!WARNING]
+> Eliminar un evento es una acción irreversible. El evento desaparece inmediatamente de la web y no puede recuperarse desde el panel.
+
 > [!NOTE]
 > Los eventos aparecen en la sección pública **Eventos** ordenados por fecha. Los eventos pasados siguen visibles hasta que los elimines manualmente.
 
