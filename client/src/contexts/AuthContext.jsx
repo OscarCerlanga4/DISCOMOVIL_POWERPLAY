@@ -14,9 +14,10 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null)
+  const [token, setToken] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [errorOAuth, setErrorOAuth] = useState(null)
-  
+
   const cargarUsuario = async (token) => {
     try {
       const res = await fetch(`${API_URL}/api/auth/me`, {
@@ -25,10 +26,12 @@ export function AuthProvider({ children }) {
       const data = await res.json()
       if (data.ok) {
         localStorage.setItem('token', token)
+        setToken(token)
         setUsuario(data.usuario)
         setErrorOAuth(null)
       } else {
         localStorage.removeItem('token')
+        setToken(null)
         setUsuario(null)
         supabase.auth.signOut()
         setErrorOAuth('No tienes cuenta registrada. Regístrate primero.')
@@ -38,6 +41,7 @@ export function AuthProvider({ children }) {
       }
     } catch {
       localStorage.removeItem('token')
+      setToken(null)
       setUsuario(null)
     }
   }
@@ -76,12 +80,13 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem('token')
+    setToken(null)
     setUsuario(null)
     supabase.auth.signOut()
   }
 
   return (
-    <AuthContext.Provider value={{ usuario, cargando, login, logout, errorOAuth }}>
+    <AuthContext.Provider value={{ usuario, token, cargando, login, logout, errorOAuth }}>
       {!cargando && children}
     </AuthContext.Provider>
   )
