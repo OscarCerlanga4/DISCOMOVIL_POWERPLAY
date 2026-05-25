@@ -105,7 +105,7 @@ const update = async (req, res) => {
         // ── Presupuesto rechazado → cancelar reserva ──
         if (req.body.estado === 'rechazado') {
             await supabase.from('reserva').update({ estado_reserva: 'cancelada' }).eq('id_reserva', presupuestoActualizado.id_reserva);
-
+            await supabase.from('token_accion').update({ usado: true }).eq('id_referencia', presupuestoActualizado.id_presupuesto).in('tipo', ['aceptar_presupuesto', 'rechazar_presupuesto']);
             res.status(200).send({ ok: true, result: presupuestoActualizado });
 
             // Fire-and-forget N8N
@@ -126,6 +126,7 @@ const update = async (req, res) => {
 
         // ── Cliente acepta presupuesto ──
         if (req.body.estado === 'aceptado_cliente') {
+            await supabase.from('token_accion').update({ usado: true }).eq('id_referencia', presupuestoActualizado.id_presupuesto).in('tipo', ['aceptar_presupuesto', 'rechazar_presupuesto']);
             res.status(200).send({ ok: true, result: presupuestoActualizado });
 
             // Fire-and-forget N8N
@@ -135,7 +136,7 @@ const update = async (req, res) => {
                 .then(({ data: presupuestoCompleto }) => {
                     if (!presupuestoCompleto) return;
                     return supabase.from('datos_empresa').select('*').single()
-                        .then(({ data: empresa }) => generarPdfPresupuesto(presupuestoCompleto)
+                        .then(({ data: empresa }) => generarPdfPresupuesto(presupuestoCompleto, empresa)
                             .then(pdfBase64 => {
                                 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
                                 return llamarN8N(process.env.N8N_WEBHOOK_CLIENTE_ACEPTA, {

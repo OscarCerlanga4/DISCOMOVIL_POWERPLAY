@@ -95,17 +95,30 @@ const create = async (req, res) => {
         const idsEquipos = equipos.map(e => e.id_equipo);
         const { data: incluyeData, error: incluyeError } = await supabase
             .from('incluye')
-            .select('id_equipo, reserva(fecha_inicio, fecha_fin, estado_reserva, ubicacion)')
+            .select('id_equipo, cantidad, reserva(fecha_inicio, fecha_fin, estado_reserva, ubicacion)')
             .in('id_equipo', idsEquipos);
         if (incluyeError) return res.status(500).send({ ok: false, error: incluyeError.message });
 
-        const solapamientoExactoEquipos = incluyeData.some(item => {
+        const solapantes = incluyeData.filter(item => {
             const r = item.reserva;
             if (r.estado_reserva === 'cancelada') return false;
             return new Date(fecha_inicio) < new Date(r.fecha_fin) && new Date(fecha_fin) > new Date(r.fecha_inicio);
         });
-        if (solapamientoExactoEquipos) {
-            return res.status(400).send({ ok: false, error: 'Uno o más equipos no están disponibles en esas fechas' });
+        const cantidadesReservadas = {};
+        solapantes.forEach(item => {
+            cantidadesReservadas[item.id_equipo] = (cantidadesReservadas[item.id_equipo] || 0) + item.cantidad;
+        });
+        const { data: stockData } = await supabase
+            .from('equipo').select('id_equipo, stock_total').in('id_equipo', idsEquipos);
+        const stockMap = {};
+        stockData.forEach(e => { stockMap[e.id_equipo] = e.stock_total; });
+        const equipoSinStock = equipos.find(e => {
+            const reservado = cantidadesReservadas[e.id_equipo] || 0;
+            const stock = stockMap[e.id_equipo] || 1;
+            return reservado + e.cantidad > stock;
+        });
+        if (equipoSinStock) {
+            return res.status(400).send({ ok: false, error: 'Uno o más equipos no tienen suficiente stock disponible en esas fechas' });
         }
 
         const ocho_horas = 8 * 60 * 60 * 1000;
@@ -277,7 +290,7 @@ const create = async (req, res) => {
         const presupuestoCompleto = { ...presupuesto, reserva, detalle_presupuesto: detalleData };
         supabase.from('datos_empresa').select('*').single()
             .then(({ data: empresa }) => Promise.all([
-                generarPdfPresupuesto(presupuestoCompleto),
+                generarPdfPresupuesto(presupuestoCompleto, empresa),
                 supabase.from('token_accion')
                     .insert([
                         { tipo: 'aceptar_presupuesto', id_referencia: presupuesto.id_presupuesto },
