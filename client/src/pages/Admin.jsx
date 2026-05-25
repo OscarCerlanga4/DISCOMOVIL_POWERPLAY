@@ -1270,6 +1270,7 @@ function SeccionContactos({ contactoDestacado, onLimpiarDestacado }) {
 
 // ── Sección Empresa ───────────────────────────────────────────────────────────
 function SeccionEmpresa() {
+    const { token } = useAuth()
     const [form, setForm] = useState({ nombre_empresa: '', cif: '', direccion: '', codigo_postal: '', localidad: '', provincia: '', telefono: '', email: '', logo_url: '', iban: '' })
     const [cargando, setCargando] = useState(true)
     const [guardando, setGuardando] = useState(false)
@@ -1305,7 +1306,7 @@ function SeccionEmpresa() {
         setMensaje(null)
         fetch(`${API_URL}/api/datosEmpresas`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify(form)
         })
             .then(r => r.json())
